@@ -1,0 +1,43 @@
+{
+  "Version": 2,
+  "Generation": "202610101626425310713-17e58d25",
+  "Hash": "DD3C97EB419D228FE0675058661A5C8AAB098BDCEF34F917C25F41316D7790DB",
+  "SavedUtc": "2026-10-10T16:26:42.5413085Z",
+  "Chunks": {
+    "-1,1,0": {
+      "Hash": "18B92DCE9A462EFE4D01B47792476C534F989CA322E7EA3F623031D7C94C492F",
+      "Encoding": "sparse",
+      "ModifiedCount": 7
+    },
+    "0,1,0": {
+      "Hash": "5D420A4BD2A4147C4A5CE0C54FC54404A8483EEC3848BE9236B1A01E74E5B3E0",
+      "Encoding": "sparse",
+      "ModifiedCount": 12
+    },
+    "1,0,0": {
+      "Hash": "F7787A146C5AA6F2472C80A88DD89B26B2C65C1CF3C51E5F6DC108A208496AFC",
+      "Encoding": "sparse",
+      "ModifiedCount": 18
+    },
+    "1,1,0": {
+      "Hash": "F6B85FFDE237DA399199C375516B94CE2BDD90D5AFF046272E76F59106CB87CB",
+      "Encoding": "sparse",
+      "ModifiedCount": 17
+    },
+    "1,1,1": {
+      "Hash": "CC7F720F01DBD8CF8D0358EA50C2F966166CF2BF1337F1279F51B8521704D33F",
+      "Encoding": "sparse",
+      "ModifiedCount": 2
+    },
+    "2,1,1": {
+      "Hash": "0D1662C042C975666E4FDF16872DF4CF3B123FA176BA35592BA03EC837C25EC1",
+      "Encoding": "sparse",
+      "ModifiedCount": 5
+    },
+    "2,1,2": {
+      "Hash": "9351BE625E93ED83BA637DAD427CCDA04E7493B4761EC7562B364E43CAF118B4",
+      "Encoding": "sparse",
+      "ModifiedCount": 2
+    }
+  }
+}

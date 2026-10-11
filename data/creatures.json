@@ -1,0 +1,8 @@
+[
+  {"Id":"deer","Name":"林鹿","Color":"#c3a479","Health":25,"Speed":3,"Damage":0,"Range":1,"Hostile":false,"Drop":"meat","Attack":"none"},
+  {"Id":"boar","Name":"野猪","Color":"#847766","Health":45,"Speed":2.5,"Damage":12,"Range":5,"Hostile":false,"Drop":"leather","Attack":"charge","Windup":0.85,"Cooldown":2.8,"AttackSpeed":8,"AttackDuration":0.65,"AttackRadius":0.65},
+  {"Id":"skitter","Name":"洞穴爬行者","Color":"#879b70","Health":25,"Speed":3.8,"Damage":8,"Range":1.5,"Hostile":true,"Drop":"fiber","Attack":"bite","Windup":0.28,"Cooldown":0.9},
+  {"Id":"husk","Name":"荒野游魂","Color":"#6a918f","Health":40,"Speed":2,"Damage":15,"Range":1.8,"Hostile":true,"Drop":"coal","Attack":"melee","Windup":0.85,"Cooldown":2.2},
+  {"Id":"sentinel","Name":"遗迹哨兵","Color":"#bd876d","Health":65,"Speed":1.5,"Damage":18,"Range":14,"Hostile":true,"Drop":"iron_ingot","Attack":"bolt","Windup":1,"Cooldown":2.6,"AttackSpeed":10,"AttackDuration":2.8,"AttackRadius":0.12},
+  {"Id":"guardian","Name":"余烬守护者","Color":"#e0ac62","Health":220,"Speed":1.7,"Damage":30,"Range":4.5,"Hostile":true,"Drop":"beacon_sigil","Attack":"slam","Windup":1.4,"Cooldown":3.4,"AttackRadius":3.1}
+]

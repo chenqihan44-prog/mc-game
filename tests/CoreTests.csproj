@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><LangVersion>12</LangVersion></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../src/Core/**/*.cs" />
+    <Compile Include="../src/Items/**/*.cs" />
+    <Compile Include="../src/World/**/*.cs" />
+    <Compile Include="../src/Persistence/**/*.cs" />
+    <Compile Include="../src/Creatures/CreatureState.cs" />
+    <Compile Include="../src/Creatures/CreatureDef.cs" />
+    <Compile Include="../src/Creatures/CreaturePopulation.cs" />
+    <Compile Include="../src/Creatures/CombatGeometry.cs" />
+    <Compile Include="../src/Creatures/ProjectileState.cs" />
+    <Compile Include="../src/Rendering/VoxelMesher.cs" />
+    <Compile Include="../src/Audio/ProceduralAudio.cs" />
+  </ItemGroup>
+</Project>

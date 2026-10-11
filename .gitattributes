@@ -1,0 +1,11 @@
+* text=auto
+
+*.dll binary
+*.exe binary
+*.pck binary
+*.zip binary
+*.png binary
+*.chunk binary
+
+# Save fixtures contain byte hashes; preserve their original bytes.
+tests/fixtures/published-format*/worlds/** binary

@@ -1,0 +1,703 @@
+[
+  {
+    "Name": "木板",
+    "Id": "plank",
+    "Station": "hand",
+    "Inputs": {
+      "wood": 1
+    },
+    "Output": "plank",
+    "Seconds": 0,
+    "Count": 4
+  },
+  {
+    "Name": "木棍",
+    "Id": "stick",
+    "Station": "hand",
+    "Inputs": {
+      "plank": 1
+    },
+    "Output": "stick",
+    "Seconds": 0,
+    "Count": 4
+  },
+  {
+    "Name": "石镐",
+    "Id": "stone_pick",
+    "Station": "hand",
+    "Inputs": {
+      "stick": 2,
+      "stone": 3
+    },
+    "Output": "stone_pick",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "石斧",
+    "Id": "stone_axe",
+    "Station": "hand",
+    "Inputs": {
+      "stick": 2,
+      "stone": 3
+    },
+    "Output": "stone_axe",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "石剑",
+    "Id": "stone_sword",
+    "Station": "hand",
+    "Inputs": {
+      "stick": 2,
+      "stone": 3
+    },
+    "Output": "stone_sword",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "石铲",
+    "Id": "stone_shovel",
+    "Station": "hand",
+    "Inputs": {
+      "stick": 2,
+      "stone": 3
+    },
+    "Output": "stone_shovel",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "铁镐",
+    "Id": "iron_pick",
+    "Station": "workbench",
+    "Inputs": {
+      "stick": 2,
+      "iron_ingot": 3
+    },
+    "Output": "iron_pick",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "铁斧",
+    "Id": "iron_axe",
+    "Station": "workbench",
+    "Inputs": {
+      "stick": 2,
+      "iron_ingot": 3
+    },
+    "Output": "iron_axe",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "铁剑",
+    "Id": "iron_sword",
+    "Station": "workbench",
+    "Inputs": {
+      "stick": 2,
+      "iron_ingot": 3
+    },
+    "Output": "iron_sword",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "铁铲",
+    "Id": "iron_shovel",
+    "Station": "workbench",
+    "Inputs": {
+      "stick": 2,
+      "iron_ingot": 3
+    },
+    "Output": "iron_shovel",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "晶矿镐",
+    "Id": "crystal_pick",
+    "Station": "workbench",
+    "Inputs": {
+      "stick": 2,
+      "crystal": 3
+    },
+    "Output": "crystal_pick",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "晶矿斧",
+    "Id": "crystal_axe",
+    "Station": "workbench",
+    "Inputs": {
+      "stick": 2,
+      "crystal": 3
+    },
+    "Output": "crystal_axe",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "晶矿剑",
+    "Id": "crystal_sword",
+    "Station": "workbench",
+    "Inputs": {
+      "stick": 2,
+      "crystal": 3
+    },
+    "Output": "crystal_sword",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "晶矿铲",
+    "Id": "crystal_shovel",
+    "Station": "workbench",
+    "Inputs": {
+      "stick": 2,
+      "crystal": 3
+    },
+    "Output": "crystal_shovel",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "工作台",
+    "Id": "workbench",
+    "Station": "hand",
+    "Inputs": {
+      "plank": 4
+    },
+    "Output": "workbench",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "营火",
+    "Id": "campfire",
+    "Station": "hand",
+    "Inputs": {
+      "stone": 3,
+      "wood": 3
+    },
+    "Output": "campfire",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "熔炉",
+    "Id": "furnace",
+    "Station": "workbench",
+    "Inputs": {
+      "stone": 8
+    },
+    "Output": "furnace",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "木箱",
+    "Id": "chest",
+    "Station": "workbench",
+    "Inputs": {
+      "plank": 8
+    },
+    "Output": "chest",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "床",
+    "Id": "bed",
+    "Station": "workbench",
+    "Inputs": {
+      "cloth": 3,
+      "plank": 3
+    },
+    "Output": "bed",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "耕地",
+    "Id": "farmland",
+    "Station": "hand",
+    "Inputs": {
+      "stick": 1,
+      "dirt": 2
+    },
+    "Output": "farmland",
+    "Seconds": 0,
+    "Count": 2
+  },
+  {
+    "Name": "书架",
+    "Id": "bookshelf",
+    "Station": "workbench",
+    "Inputs": {
+      "cloth": 2,
+      "plank": 4
+    },
+    "Output": "bookshelf",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "圆石",
+    "Id": "cobble",
+    "Station": "hand",
+    "Inputs": {
+      "stone": 1
+    },
+    "Output": "cobble",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "遗迹石砖",
+    "Id": "ruin_brick",
+    "Station": "workbench",
+    "Inputs": {
+      "stone": 4
+    },
+    "Output": "ruin_brick",
+    "Seconds": 0,
+    "Count": 4
+  },
+  {
+    "Name": "砂岩",
+    "Id": "sandstone",
+    "Station": "workbench",
+    "Inputs": {
+      "sand": 4
+    },
+    "Output": "sandstone",
+    "Seconds": 0,
+    "Count": 4
+  },
+  {
+    "Name": "木楼梯",
+    "Id": "stairs",
+    "Station": "workbench",
+    "Inputs": {
+      "plank": 3
+    },
+    "Output": "stairs",
+    "Seconds": 0,
+    "Count": 4
+  },
+  {
+    "Name": "木台阶",
+    "Id": "slab",
+    "Station": "hand",
+    "Inputs": {
+      "plank": 3
+    },
+    "Output": "slab",
+    "Seconds": 0,
+    "Count": 6
+  },
+  {
+    "Name": "木门",
+    "Id": "door",
+    "Station": "workbench",
+    "Inputs": {
+      "stick": 2,
+      "plank": 6
+    },
+    "Output": "door",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "窗框",
+    "Id": "window",
+    "Station": "workbench",
+    "Inputs": {
+      "glass": 2,
+      "plank": 2
+    },
+    "Output": "window",
+    "Seconds": 0,
+    "Count": 2
+  },
+  {
+    "Name": "栅栏",
+    "Id": "fence",
+    "Station": "hand",
+    "Inputs": {
+      "stick": 2,
+      "plank": 2
+    },
+    "Output": "fence",
+    "Seconds": 0,
+    "Count": 3
+  },
+  {
+    "Name": "石柱",
+    "Id": "pillar",
+    "Station": "workbench",
+    "Inputs": {
+      "stone": 2
+    },
+    "Output": "pillar",
+    "Seconds": 0,
+    "Count": 2
+  },
+  {
+    "Name": "屋顶",
+    "Id": "roof",
+    "Station": "workbench",
+    "Inputs": {
+      "stone": 3
+    },
+    "Output": "roof",
+    "Seconds": 0,
+    "Count": 4
+  },
+  {
+    "Name": "地砖",
+    "Id": "tile",
+    "Station": "workbench",
+    "Inputs": {
+      "clay": 2
+    },
+    "Output": "tile",
+    "Seconds": 0,
+    "Count": 4
+  },
+  {
+    "Name": "羊毛块",
+    "Id": "wool",
+    "Station": "workbench",
+    "Inputs": {
+      "cloth": 4
+    },
+    "Output": "wool",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "地毯",
+    "Id": "rug",
+    "Station": "hand",
+    "Inputs": {
+      "cloth": 2
+    },
+    "Output": "rug",
+    "Seconds": 0,
+    "Count": 3
+  },
+  {
+    "Name": "提灯",
+    "Id": "lantern",
+    "Station": "workbench",
+    "Inputs": {
+      "coal": 1,
+      "iron_ingot": 2,
+      "glass": 1
+    },
+    "Output": "lantern",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "大理石",
+    "Id": "marble",
+    "Station": "workbench",
+    "Inputs": {
+      "stone": 4,
+      "crystal": 1
+    },
+    "Output": "marble",
+    "Seconds": 0,
+    "Count": 4
+  },
+  {
+    "Name": "铜块",
+    "Id": "copper_block",
+    "Station": "workbench",
+    "Inputs": {
+      "copper_ingot": 4
+    },
+    "Output": "copper_block",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "磨制玄武岩",
+    "Id": "polished_basalt",
+    "Station": "workbench",
+    "Inputs": {
+      "basalt": 2
+    },
+    "Output": "polished_basalt",
+    "Seconds": 0,
+    "Count": 2
+  },
+  {
+    "Name": "红砖",
+    "Id": "brick",
+    "Station": "furnace",
+    "Inputs": {
+      "coal": 1,
+      "clay": 2
+    },
+    "Output": "brick",
+    "Seconds": 8,
+    "Count": 4
+  },
+  {
+    "Name": "玻璃",
+    "Id": "glass",
+    "Station": "furnace",
+    "Inputs": {
+      "coal": 1,
+      "sand": 2
+    },
+    "Output": "glass",
+    "Seconds": 6,
+    "Count": 2
+  },
+  {
+    "Name": "铁锭",
+    "Id": "iron_ingot",
+    "Station": "furnace",
+    "Inputs": {
+      "coal": 1,
+      "raw_iron": 2
+    },
+    "Output": "iron_ingot",
+    "Seconds": 8,
+    "Count": 2
+  },
+  {
+    "Name": "铜锭",
+    "Id": "copper_ingot",
+    "Station": "furnace",
+    "Inputs": {
+      "coal": 1,
+      "copper_ore": 2
+    },
+    "Output": "copper_ingot",
+    "Seconds": 8,
+    "Count": 2
+  },
+  {
+    "Name": "木炭",
+    "Id": "charcoal",
+    "Station": "furnace",
+    "Inputs": {
+      "wood": 2
+    },
+    "Output": "charcoal",
+    "Seconds": 6,
+    "Count": 2
+  },
+  {
+    "Name": "植物纤维",
+    "Id": "fiber",
+    "Station": "hand",
+    "Inputs": {
+      "leaves": 2
+    },
+    "Output": "fiber",
+    "Seconds": 0,
+    "Count": 4
+  },
+  {
+    "Name": "绳索",
+    "Id": "rope",
+    "Station": "hand",
+    "Inputs": {
+      "fiber": 3
+    },
+    "Output": "rope",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "布料",
+    "Id": "cloth",
+    "Station": "workbench",
+    "Inputs": {
+      "fiber": 4
+    },
+    "Output": "cloth",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "弓",
+    "Id": "bow",
+    "Station": "workbench",
+    "Inputs": {
+      "stick": 3,
+      "rope": 2
+    },
+    "Output": "bow",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "箭",
+    "Id": "arrow",
+    "Station": "hand",
+    "Inputs": {
+      "stick": 1,
+      "stone": 1
+    },
+    "Output": "arrow",
+    "Seconds": 0,
+    "Count": 8
+  },
+  {
+    "Name": "盾牌",
+    "Id": "shield",
+    "Station": "workbench",
+    "Inputs": {
+      "iron_ingot": 1,
+      "plank": 5
+    },
+    "Output": "shield",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "莓果汤",
+    "Id": "cooked_berry",
+    "Station": "campfire",
+    "Inputs": {
+      "berry": 3,
+      "wood": 1
+    },
+    "Output": "cooked_berry",
+    "Seconds": 5,
+    "Count": 1
+  },
+  {
+    "Name": "面包",
+    "Id": "bread",
+    "Station": "campfire",
+    "Inputs": {
+      "grain": 3,
+      "wood": 1
+    },
+    "Output": "bread",
+    "Seconds": 6,
+    "Count": 1
+  },
+  {
+    "Name": "炖胡萝卜",
+    "Id": "cooked_carrot",
+    "Station": "campfire",
+    "Inputs": {
+      "carrot": 2,
+      "wood": 1
+    },
+    "Output": "cooked_carrot",
+    "Seconds": 5,
+    "Count": 1
+  },
+  {
+    "Name": "烤马铃薯",
+    "Id": "baked_potato",
+    "Station": "campfire",
+    "Inputs": {
+      "wood": 1,
+      "potato": 2
+    },
+    "Output": "baked_potato",
+    "Seconds": 5,
+    "Count": 1
+  },
+  {
+    "Name": "熟肉",
+    "Id": "cooked_meat",
+    "Station": "campfire",
+    "Inputs": {
+      "meat": 1,
+      "wood": 1
+    },
+    "Output": "cooked_meat",
+    "Seconds": 5,
+    "Count": 1
+  },
+  {
+    "Name": "小麦种子",
+    "Id": "wheat_seed",
+    "Station": "hand",
+    "Inputs": {
+      "grain": 1
+    },
+    "Output": "wheat_seed",
+    "Seconds": 0,
+    "Count": 2
+  },
+  {
+    "Name": "胡萝卜种子",
+    "Id": "carrot_seed",
+    "Station": "hand",
+    "Inputs": {
+      "carrot": 1
+    },
+    "Output": "carrot_seed",
+    "Seconds": 0,
+    "Count": 2
+  },
+  {
+    "Name": "马铃薯种薯",
+    "Id": "potato_seed",
+    "Station": "hand",
+    "Inputs": {
+      "potato": 1
+    },
+    "Output": "potato_seed",
+    "Seconds": 0,
+    "Count": 2
+  },
+  {
+    "Name": "地图",
+    "Id": "map",
+    "Station": "workbench",
+    "Inputs": {
+      "coal": 1,
+      "cloth": 2
+    },
+    "Output": "map",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "灯塔符印",
+    "Id": "beacon_sigil",
+    "Station": "workbench",
+    "Inputs": {
+      "iron_ingot": 4,
+      "crystal": 3
+    },
+    "Output": "beacon_sigil",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Name": "黏土",
+    "Id": "clay",
+    "Station": "hand",
+    "Inputs": {
+      "dirt": 2,
+      "sand": 1
+    },
+    "Output": "clay",
+    "Seconds": 0,
+    "Count": 3
+  },
+  {"Id":"iron_helmet","Name":"铁头盔","Inputs":{"iron_ingot":5},"Output":"iron_helmet","Station":"workbench"},
+  {"Id":"iron_chestplate","Name":"铁胸甲","Inputs":{"iron_ingot":8},"Output":"iron_chestplate","Station":"workbench"},
+  {"Id":"iron_leggings","Name":"铁护腿","Inputs":{"iron_ingot":7},"Output":"iron_leggings","Station":"workbench"},
+  {"Id":"iron_boots","Name":"铁靴子","Inputs":{"iron_ingot":4},"Output":"iron_boots","Station":"workbench"}
+]

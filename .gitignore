@@ -1,0 +1,34 @@
+# Local toolchain, Godot caches, generated builds and test output
+.tools/
+.godot/
+**/bin/
+**/obj/
+builds/
+test-results/
+
+# Editor and operating-system state
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local secrets and temporary files
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pfx
+*.p12
+*.pem
+*.key
+*.tmp
+*.temp
+*.log
+*.dmp
+**/.saving.lock
