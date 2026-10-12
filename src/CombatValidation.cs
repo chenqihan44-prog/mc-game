@@ -29,13 +29,13 @@ public partial class Game
             await Until(()=>renderer!.IsTerrainReady(player!.GlobalPosition),"initial terrain");await Frames(8);
             var enemy=Add("husk",new(0,37.02f,-6));enemy.SetPhysicsProcess(false);world!.State.Creative=false;
             world.State.Inventory.Slots[0]=new("bow",1);world.State.Inventory.Slots[1]=new("arrow",3);selected=0;player!.Camera.LookAt(enemy.GlobalPosition+Vector3.Up*.9f);
-            double enemyHealth=enemy.State.Health;Check(Attack()&&world.State.Inventory.Count("arrow")==2&&enemy.State.Health==enemyHealth,"bow should consume once and delay damage");
+            double enemyHealth=enemy.State.Health;Check(Attack()&&world.State.Inventory.Count("arrow")==2&&enemy.State.Health==enemyHealth&&world.State.Inventory.Slots[0]!.Durability==383,"bow should consume/wear once and delay damage");
             await Until(()=>projectiles!.CreatureHits==1,"arrow impact");Check(enemy.State.Health==Math.Max(0,enemyHealth-catalog.Items["bow"].Power*2),"arrow damage");
             player.Camera.LookAt(new Vector3(10,38,-6));enemyHealth=enemy.State.Health;Check(Attack()&&world.State.Inventory.Count("arrow")==1,"miss still consumes one arrow");
             await Until(()=>projectiles!.Active==0,"miss expiry");Check(enemy.State.Health==enemyHealth,"miss damaged creature");
-            world.State.Inventory.Remove("arrow",1);Check(Attack()&&projectiles!.Active==0&&world.State.Inventory.Count("arrow")==0,"empty bow fired");
+            world.State.Inventory.Remove("arrow",1);Check(Attack()&&projectiles!.Active==0&&world.State.Inventory.Count("arrow")==0&&world.State.Inventory.Slots[0]!.Durability==382,"empty bow fired or wore");
             for(int i=0;i<ProjectileFlight.Limit;i++)Check(projectiles!.Fire(new(){Position=[0,38,0],Velocity=[0,0,-1],Remaining=4,Damage=1}),"fill projectile pool");
-            world.State.Inventory.Add("arrow",1,catalog);Check(Attack()&&world.State.Inventory.Count("arrow")==1&&projectiles!.Active==24,"capacity failure consumed arrow");
+            world.State.Inventory.Add("arrow",1,catalog);Check(Attack()&&world.State.Inventory.Count("arrow")==1&&projectiles!.Active==24&&world.State.Inventory.Slots[0]!.Durability==382,"capacity failure consumed arrow or wore bow");
             SetScreen("pause");double remaining=world.State.Projectiles[0].Remaining;await Frames(8);Check(world.State.Projectiles[0].Remaining==remaining,"pause advanced projectile");
             var pending=world.State.Copy();var save=saveQueue.Enqueue(world.State);await Until(()=>save.IsCompleted,"projectile save");save.GetAwaiter().GetResult();StartWorld(saves.Load(world.State.WorldId).Snapshot);
             Check(world!.State.Projectiles.Count==24&&projectiles!.Active==24&&world.State.Projectiles[0].Remaining==pending.Projectiles[0].Remaining,"reload reset flying arrows");
@@ -59,12 +59,18 @@ public partial class Game
             world.State.Health=100;world.State.Inventory.Slots[0]=new("shield",1);selected=0;PlayerAt(0,0);player!.Camera.LookAt(new Vector3(0,38,-4));
             Input.ActionPress("use");
             Check(projectiles!.Fire(new(){Position=[0,38,-4],Velocity=[0,0,10],Damage=18,Remaining=1,Hostile=true}),"shield bolt fixture");
-            await Until(()=>projectiles.Active==0,"shield impact");Check(world.State.Health>92&&world.State.Health<96,"facing shield did not reduce bolt damage");
+            await Until(()=>projectiles.Active==0,"shield impact");Check(world.State.Health>92&&world.State.Health<96&&world.State.Inventory.Slots[0]!.Durability==331,"facing shield did not reduce bolt damage or wear");
             Input.ActionRelease("use");
+            ClearEnemies();PlayerAt(0,0);enemy=Add("husk",new(0,37.02f,-1.8f));enemy.SetPhysicsProcess(false);player!.Camera.LookAt(enemy.GlobalPosition+Vector3.Up);world.State.Inventory.Slots[0]=new("wood_sword",1);
+            Check(Attack()&&enemy.State.Health==34&&world.State.Inventory.Slots[0]!.Durability==59,"wood sword damage or wear");world.State.Inventory.Slots[0]=new("wood_axe",1);
+            Check(Attack()&&enemy.State.Health==28&&world.State.Inventory.Slots[0]!.Durability==58,"wood axe damage or double melee wear");
+            ClearEnemies();PlayerAt(0,0);enemy=Add("husk",new(0,37.02f,-8));enemy.State.Health=5;await Frames(30);
+            Check(enemy.GlobalPosition.Z> -7,"low-health hostile fled instead of pursuing");PlayerAt(4,0);await Until(()=>enemy.IsPreparingAttack,"moving player reacquisition");Check(enemy.GlobalPosition.X>2,"hostile failed to follow moved player");
+            ClearEnemies();PlayerAt(0,0);sentinel=Add("sentinel",new(-3,37.02f,0));sentinel.State.AttackCooldown=10;await Frames(60);Check(sentinel.GlobalPosition.DistanceTo(player!.GlobalPosition)>4,"sentinel failed to retreat at close range");
             ClearEnemies();PlayerAt(0,0);enemy=Add("husk",new(0,37.02f,-1.2f));await Until(()=>enemy.IsPreparingAttack,"death during windup");
             int ghostHits=0;enemy.AttackPlayer=_=>ghostHits++;enemy.Damage(1000);enemy._PhysicsProcess(1);Check(ghostHits==0,"dead enemy completed pending attack");
             SetScreen("saving");await Frames(3);for(int i=0;i<3;i++)await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);
-            string root=ProjectSettings.GlobalizePath("res://test-results/combat");Directory.CreateDirectory(root);File.WriteAllText(Path.Combine(root,"validation.json"),JsonSerializer.Serialize(new{passed=true,headless=DisplayServer.GetName()=="headless",seconds=timer.Elapsed.TotalSeconds,bowDelayedHit=true,bowMiss=true,ammoTransactions=true,projectileLimit=24,projectilePauseReload=true,boltDodge=true,midflightWall=true,chargeDodge=true,chargeWall=true,slamMarker=true,slamDodge=true,windupPauseReload=true,slamHit=true,shieldBolt=true,deadAttackSuppressed=true},Catalog.JsonOptions));
+            string root=ProjectSettings.GlobalizePath("res://test-results/combat");Directory.CreateDirectory(root);File.WriteAllText(Path.Combine(root,"validation.json"),JsonSerializer.Serialize(new{passed=true,headless=DisplayServer.GetName()=="headless",seconds=timer.Elapsed.TotalSeconds,bowDelayedHit=true,bowMiss=true,ammoTransactions=true,projectileLimit=24,projectilePauseReload=true,boltDodge=true,midflightWall=true,chargeDodge=true,chargeWall=true,slamMarker=true,slamDodge=true,windupPauseReload=true,slamHit=true,shieldBolt=true,lowHealthPursuit=true,movingTargetReacquired=true,sentinelRetreat=true,deadAttackSuppressed=true},Catalog.JsonOptions));
             GD.Print("COMBAT_PASS: actual bow/bolt flight, ammo/cap, pause/reload, sidestep/wall, charge, marked slam, persisted windup and directional shield");QuitCleanly();
         }catch(Exception e){GD.PushError("COMBAT_FAILED: "+e);GetTree().Quit(10);}
     }

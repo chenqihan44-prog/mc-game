@@ -1,0 +1,20 @@
+Use case: infographic-diagram.
+Generate a polished portrait Chinese voxel survival game mob expansion design catalog, approximately 2048 by 2560 pixels, warm parchment background, wood pixel-art border and lantern corners, restrained grass/river silhouette decoration. Main title exact "常见生物扩充预览". Subtitle "16 种新增候选 · 栖息地与用途". Clear badge "设计稿 · 尚未实装". 4-column by 4-row grid, sixteen equal large cards. Large distinct Minecraft-inspired voxel animal or enemy icon in each card, each recognizable and with plausible anatomy. Chinese type must be very legible. Card has exact name, habitat and purpose; every item appears once. Row-major ordered cards:
+1. "牛" — "温带草地" — "皮革、肉与挤奶"
+2. "猪" — "草原与林缘" — "繁殖养殖，提供肉食"
+3. "羊" — "草地与缓坡" — "剪取羊毛，可染色"
+4. "鸡" — "林缘与草地" — "产蛋、羽毛与鸡肉"
+5. "狼" — "森林与针叶林" — "骨头驯服，跟随协战"
+6. "猫" — "营地周边" — "鱼类驯服，陪伴基地"
+7. "马" — "开阔草原" — "驯服骑乘，远征代步"
+8. "狐狸" — "林地" — "灵敏避人，丰富野生生态"
+9. "犰狳" — "干燥草原" — "收集鳞甲，制作狼铠"
+10. "鳕鱼" — "河流与湖泊" — "水中成群，钓鱼食材"
+11. "鱿鱼" — "较深水域" — "水下游动，提供墨囊"
+12. "海龟" — "沙滩与岸边" — "繁殖成长，获取海龟鳞甲"
+13. "僵尸" — "夜晚与暗处" — "近战追击，基础夜间威胁"
+14. "骷髅" — "夜晚与洞穴" — "远程射箭，掉落骨头"
+15. "苦力怕" — "夜晚荒野" — "接近蓄爆，可提前打断"
+16. "蜘蛛" — "暗处与洞穴" — "攀爬追击，掉落蛛丝"
+Distinguish each creature: cow brown/white, pink pig, white wool sheep, white chicken yellow beak, gray wolf, calico cat, brown horse, orange fox white tail tip, brown plated armadillo, light brown cod with fins, dark blue tentacled squid, green sea turtle broad shell and four flippers, green humanoid zombie teal shirt, skeleton with bow, green creeper four feet and grim square face, dark low spider eight legs and red eyes. Non-hostile creatures appear calm, no combat gore.
+Footer exact "刷新原则：按环境分布 · 小群出现 · 保持合理间距". Second footer "保留已有生物；增加种类，控制总密度". Small final footer "行为与掉落按本游戏适配，具体数值待定". All text faithfully rendered; no extra species or duplicate creatures; no brand logos.

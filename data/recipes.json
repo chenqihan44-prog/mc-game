@@ -675,10 +675,10 @@
   {
     "Name": "灯塔符印",
     "Id": "beacon_sigil",
-    "Station": "workbench",
+    "Station": "calibration_bench",
     "Inputs": {
-      "iron_ingot": 4,
-      "crystal": 3
+      "iron_ingot": 2,
+      "crystal": 2
     },
     "Output": "beacon_sigil",
     "Seconds": 0,
@@ -696,8 +696,888 @@
     "Seconds": 0,
     "Count": 3
   },
-  {"Id":"iron_helmet","Name":"铁头盔","Inputs":{"iron_ingot":5},"Output":"iron_helmet","Station":"workbench"},
-  {"Id":"iron_chestplate","Name":"铁胸甲","Inputs":{"iron_ingot":8},"Output":"iron_chestplate","Station":"workbench"},
-  {"Id":"iron_leggings","Name":"铁护腿","Inputs":{"iron_ingot":7},"Output":"iron_leggings","Station":"workbench"},
-  {"Id":"iron_boots","Name":"铁靴子","Inputs":{"iron_ingot":4},"Output":"iron_boots","Station":"workbench"}
+  {
+    "Id": "iron_helmet",
+    "Name": "铁头盔",
+    "Inputs": {
+      "iron_ingot": 5
+    },
+    "Output": "iron_helmet",
+    "Station": "workbench"
+  },
+  {
+    "Id": "iron_chestplate",
+    "Name": "铁胸甲",
+    "Inputs": {
+      "iron_ingot": 8
+    },
+    "Output": "iron_chestplate",
+    "Station": "workbench"
+  },
+  {
+    "Id": "iron_leggings",
+    "Name": "铁护腿",
+    "Inputs": {
+      "iron_ingot": 7
+    },
+    "Output": "iron_leggings",
+    "Station": "workbench"
+  },
+  {
+    "Id": "iron_boots",
+    "Name": "铁靴子",
+    "Inputs": {
+      "iron_ingot": 4
+    },
+    "Output": "iron_boots",
+    "Station": "workbench"
+  },
+  {
+    "Id": "wood_pick",
+    "Name": "木镐",
+    "Inputs": {
+      "plank": 3,
+      "stick": 2
+    },
+    "Output": "wood_pick"
+  },
+  {
+    "Id": "wood_axe",
+    "Name": "木斧",
+    "Inputs": {
+      "plank": 3,
+      "stick": 2
+    },
+    "Output": "wood_axe"
+  },
+  {
+    "Id": "wood_shovel",
+    "Name": "木铲",
+    "Inputs": {
+      "plank": 1,
+      "stick": 2
+    },
+    "Output": "wood_shovel"
+  },
+  {
+    "Id": "wood_sword",
+    "Name": "木剑",
+    "Inputs": {
+      "plank": 2,
+      "stick": 1
+    },
+    "Output": "wood_sword"
+  },
+  {
+    "Id": "torch",
+    "Name": "火把",
+    "Inputs": {
+      "coal": 1,
+      "stick": 1
+    },
+    "Output": "torch",
+    "Count": 4
+  },
+  {
+    "Name": "灯塔符印（旧世界）",
+    "Id": "beacon_sigil_legacy",
+    "Station": "workbench",
+    "Inputs": {
+      "iron_ingot": 4,
+      "crystal": 3
+    },
+    "Output": "beacon_sigil",
+    "Seconds": 0,
+    "Count": 1
+  },
+  {
+    "Count": 1,
+    "Inputs": {
+      "iron_ingot": 1,
+      "copper_ingot": 2
+    },
+    "Output": "copper_coil",
+    "Station": "workbench",
+    "Id": "copper_coil",
+    "Name": "铜线圈",
+    "Seconds": 0
+  },
+  {
+    "Count": 1,
+    "Inputs": {
+      "glass": 2,
+      "copper_coil": 1
+    },
+    "Output": "survey_lens",
+    "Station": "workbench",
+    "Id": "survey_lens",
+    "Name": "勘测镜",
+    "Seconds": 0
+  },
+  {
+    "Count": 1,
+    "Inputs": {
+      "leather": 2,
+      "cloth": 2,
+      "iron_ingot": 1
+    },
+    "Output": "heat_lining",
+    "Station": "workbench",
+    "Id": "heat_lining",
+    "Name": "耐热衬片",
+    "Seconds": 0
+  },
+  {
+    "Count": 1,
+    "Inputs": {
+      "copper_coil": 2,
+      "plank": 4,
+      "iron_ingot": 4
+    },
+    "Output": "calibration_bench",
+    "Station": "workbench",
+    "Id": "calibration_bench",
+    "Name": "校准台",
+    "Seconds": 0
+  },
+  {
+    "Count": 1,
+    "Inputs": {
+      "crystal": 1,
+      "coal": 1,
+      "iron_ingot": 2
+    },
+    "Output": "ember_alloy",
+    "Station": "calibration_bench",
+    "Id": "ember_alloy",
+    "Name": "余烬合金",
+    "Seconds": 0
+  },
+  {
+    "Count": 1,
+    "Inputs": {
+      "stick": 2,
+      "ember_alloy": 3
+    },
+    "Output": "ember_sword",
+    "Station": "calibration_bench",
+    "Id": "ember_sword",
+    "Name": "余烬剑",
+    "Seconds": 0
+  },
+  {
+    "Count": 1,
+    "Inputs": {
+      "rope": 2,
+      "stick": 3,
+      "ember_alloy": 2
+    },
+    "Output": "ember_bow",
+    "Station": "calibration_bench",
+    "Id": "ember_bow",
+    "Name": "余烬弓",
+    "Seconds": 0
+  },
+  {
+    "Count": 1,
+    "Inputs": {
+      "iron_ingot": 2,
+      "cloth": 1
+    },
+    "Output": "repair_kit",
+    "Station": "workbench",
+    "Id": "repair_kit",
+    "Name": "修理包",
+    "Seconds": 0
+  },
+  {
+    "Count": 1,
+    "Inputs": {
+      "glass": 2,
+      "coal": 1,
+      "iron_ingot": 2
+    },
+    "Output": "dawn_heart",
+    "Station": "calibration_bench",
+    "Id": "dawn_heart",
+    "Name": "黎明之心纪念灯",
+    "Seconds": 0
+  },
+  {
+    "Id": "leather_helmet",
+    "Name": "皮革头盔",
+    "Inputs": {
+      "leather": 5
+    },
+    "Output": "leather_helmet",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "leather_chestplate",
+    "Name": "皮革胸甲",
+    "Inputs": {
+      "leather": 8
+    },
+    "Output": "leather_chestplate",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "leather_leggings",
+    "Name": "皮革护腿",
+    "Inputs": {
+      "leather": 7
+    },
+    "Output": "leather_leggings",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "leather_boots",
+    "Name": "皮革靴子",
+    "Inputs": {
+      "leather": 4
+    },
+    "Output": "leather_boots",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "copper_helmet",
+    "Name": "铜头盔",
+    "Inputs": {
+      "copper_ingot": 5
+    },
+    "Output": "copper_helmet",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "copper_chestplate",
+    "Name": "铜胸甲",
+    "Inputs": {
+      "copper_ingot": 8
+    },
+    "Output": "copper_chestplate",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "copper_leggings",
+    "Name": "铜护腿",
+    "Inputs": {
+      "copper_ingot": 7
+    },
+    "Output": "copper_leggings",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "copper_boots",
+    "Name": "铜靴子",
+    "Inputs": {
+      "copper_ingot": 4
+    },
+    "Output": "copper_boots",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "gold_helmet",
+    "Name": "金头盔",
+    "Inputs": {
+      "gold_ingot": 5
+    },
+    "Output": "gold_helmet",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "gold_chestplate",
+    "Name": "金胸甲",
+    "Inputs": {
+      "gold_ingot": 8
+    },
+    "Output": "gold_chestplate",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "gold_leggings",
+    "Name": "金护腿",
+    "Inputs": {
+      "gold_ingot": 7
+    },
+    "Output": "gold_leggings",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "gold_boots",
+    "Name": "金靴子",
+    "Inputs": {
+      "gold_ingot": 4
+    },
+    "Output": "gold_boots",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "crystal_helmet",
+    "Name": "晶矿头盔",
+    "Inputs": {
+      "crystal": 5
+    },
+    "Output": "crystal_helmet",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "crystal_chestplate",
+    "Name": "晶矿胸甲",
+    "Inputs": {
+      "crystal": 8
+    },
+    "Output": "crystal_chestplate",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "crystal_leggings",
+    "Name": "晶矿护腿",
+    "Inputs": {
+      "crystal": 7
+    },
+    "Output": "crystal_leggings",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "crystal_boots",
+    "Name": "晶矿靴子",
+    "Inputs": {
+      "crystal": 4
+    },
+    "Output": "crystal_boots",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "ember_helmet",
+    "Name": "余烬合金头盔",
+    "Inputs": {
+      "ember_alloy": 3,
+      "crystal_helmet": 1
+    },
+    "Output": "ember_helmet",
+    "Station": "calibration_bench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "ember_chestplate",
+    "Name": "余烬合金胸甲",
+    "Inputs": {
+      "ember_alloy": 3,
+      "crystal_chestplate": 1
+    },
+    "Output": "ember_chestplate",
+    "Station": "calibration_bench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "ember_leggings",
+    "Name": "余烬合金护腿",
+    "Inputs": {
+      "ember_alloy": 3,
+      "crystal_leggings": 1
+    },
+    "Output": "ember_leggings",
+    "Station": "calibration_bench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "ember_boots",
+    "Name": "余烬合金靴子",
+    "Inputs": {
+      "ember_alloy": 3,
+      "crystal_boots": 1
+    },
+    "Output": "ember_boots",
+    "Station": "calibration_bench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "leather_horse_armor",
+    "Name": "皮革马铠",
+    "Inputs": {
+      "cloth": 1,
+      "leather": 7
+    },
+    "Output": "leather_horse_armor",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "copper_horse_armor",
+    "Name": "铜马铠",
+    "Inputs": {
+      "cloth": 1,
+      "copper_ingot": 7
+    },
+    "Output": "copper_horse_armor",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "iron_horse_armor",
+    "Name": "铁马铠",
+    "Inputs": {
+      "cloth": 1,
+      "iron_ingot": 7
+    },
+    "Output": "iron_horse_armor",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "gold_horse_armor",
+    "Name": "金马铠",
+    "Inputs": {
+      "gold_ingot": 7,
+      "cloth": 1
+    },
+    "Output": "gold_horse_armor",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "crystal_horse_armor",
+    "Name": "晶矿马铠",
+    "Inputs": {
+      "crystal": 7,
+      "cloth": 1
+    },
+    "Output": "crystal_horse_armor",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "ember_horse_armor",
+    "Name": "余烬合金马铠",
+    "Inputs": {
+      "ember_alloy": 4,
+      "crystal_horse_armor": 1
+    },
+    "Output": "ember_horse_armor",
+    "Station": "calibration_bench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "shears",
+    "Name": "剪刀",
+    "Inputs": {
+      "iron_ingot": 2
+    },
+    "Output": "shears",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "iron_hoe",
+    "Name": "铁锄",
+    "Inputs": {
+      "stick": 2,
+      "iron_ingot": 2
+    },
+    "Output": "iron_hoe",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "fishing_rod",
+    "Name": "钓鱼竿",
+    "Inputs": {
+      "stick": 3,
+      "rope": 2
+    },
+    "Output": "fishing_rod",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "bucket",
+    "Name": "铁桶",
+    "Inputs": {
+      "iron_ingot": 3
+    },
+    "Output": "bucket",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "bone_meal",
+    "Name": "骨粉",
+    "Inputs": {
+      "bone": 1
+    },
+    "Output": "bone_meal",
+    "Station": "hand",
+    "Count": 3,
+    "Seconds": 0
+  },
+  {
+    "Id": "paper",
+    "Name": "纸",
+    "Inputs": {
+      "sugar_cane": 3
+    },
+    "Output": "paper",
+    "Station": "hand",
+    "Count": 3,
+    "Seconds": 0
+  },
+  {
+    "Id": "pumpkin_seed",
+    "Name": "南瓜种子",
+    "Inputs": {
+      "pumpkin": 1
+    },
+    "Output": "pumpkin_seed",
+    "Station": "hand",
+    "Count": 4,
+    "Seconds": 0
+  },
+  {
+    "Id": "melon_seed",
+    "Name": "西瓜种子",
+    "Inputs": {
+      "melon": 1
+    },
+    "Output": "melon_seed",
+    "Station": "hand",
+    "Count": 4,
+    "Seconds": 0
+  },
+  {
+    "Id": "bowl",
+    "Name": "碗",
+    "Inputs": {
+      "plank": 3
+    },
+    "Output": "bowl",
+    "Station": "hand",
+    "Count": 4,
+    "Seconds": 0
+  },
+  {
+    "Id": "mushroom_stew",
+    "Name": "蘑菇煲",
+    "Inputs": {
+      "brown_mushroom": 1,
+      "bowl": 1,
+      "red_mushroom": 1
+    },
+    "Output": "mushroom_stew",
+    "Station": "hand",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "golden_apple",
+    "Name": "金苹果",
+    "Inputs": {
+      "apple": 1,
+      "gold_ingot": 8
+    },
+    "Output": "golden_apple",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "gold_ingot",
+    "Name": "金锭",
+    "Inputs": {
+      "gold_ore": 1,
+      "coal": 1
+    },
+    "Output": "gold_ingot",
+    "Station": "furnace",
+    "Count": 1,
+    "Seconds": 14
+  },
+  {
+    "Id": "glass_bottle",
+    "Name": "玻璃瓶",
+    "Inputs": {
+      "glass": 3
+    },
+    "Output": "glass_bottle",
+    "Station": "hand",
+    "Count": 3,
+    "Seconds": 0
+  },
+  {
+    "Id": "brewing_stand",
+    "Name": "酿造台",
+    "Inputs": {
+      "iron_ingot": 2,
+      "copper_ingot": 2,
+      "cobble": 3
+    },
+    "Output": "brewing_stand",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "cooked_cod",
+    "Name": "熟鳕鱼",
+    "Inputs": {
+      "raw_cod": 1
+    },
+    "Output": "cooked_cod",
+    "Station": "campfire",
+    "Count": 1,
+    "Seconds": 6
+  },
+  {
+    "Id": "healing_potion",
+    "Name": "治疗药水",
+    "Inputs": {
+      "coal": 1,
+      "water_bottle": 1,
+      "red_flower": 1,
+      "red_mushroom": 1
+    },
+    "Output": "healing_potion",
+    "Station": "brewing_stand",
+    "Count": 1,
+    "Seconds": 12
+  },
+  {
+    "Id": "fire_resistance_potion",
+    "Name": "抗火药水",
+    "Inputs": {
+      "crystal": 1,
+      "water_bottle": 1,
+      "cactus": 1,
+      "coal": 1
+    },
+    "Output": "fire_resistance_potion",
+    "Station": "brewing_stand",
+    "Count": 1,
+    "Seconds": 15
+  },
+  {
+    "Id": "saddle",
+    "Name": "鞍",
+    "Inputs": {
+      "iron_ingot": 2,
+      "leather": 5
+    },
+    "Output": "saddle",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "turtle_shell",
+    "Name": "海龟壳",
+    "Inputs": {
+      "turtle_scute": 5
+    },
+    "Output": "turtle_shell",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "wolf_armor",
+    "Name": "狼铠",
+    "Inputs": {
+      "armadillo_scute": 6
+    },
+    "Output": "wolf_armor",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "elytra",
+    "Name": "鞘翅",
+    "Inputs": {
+      "crystal": 4,
+      "feather": 12,
+      "cloth": 8
+    },
+    "Output": "elytra",
+    "Station": "calibration_bench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "enchanting_table",
+    "Name": "附魔台",
+    "Inputs": {
+      "crystal": 4,
+      "paper": 6,
+      "stone": 4
+    },
+    "Output": "enchanting_table",
+    "Station": "workbench",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "red_dye",
+    "Name": "红染料",
+    "Inputs": {
+      "red_flower": 1
+    },
+    "Output": "red_dye",
+    "Station": "hand",
+    "Count": 2,
+    "Seconds": 0
+  },
+  {
+    "Id": "blue_dye",
+    "Name": "蓝染料",
+    "Inputs": {
+      "ink_sac": 1,
+      "blue_flower": 1
+    },
+    "Output": "blue_dye",
+    "Station": "hand",
+    "Count": 3,
+    "Seconds": 0
+  },
+  {
+    "Id": "firework",
+    "Name": "烟花火箭",
+    "Inputs": {
+      "paper": 1,
+      "gunpowder": 1
+    },
+    "Output": "firework",
+    "Station": "hand",
+    "Count": 3,
+    "Seconds": 0
+  },
+  {
+    "Id": "pumpkin_pie",
+    "Name": "南瓜派",
+    "Inputs": {
+      "pumpkin": 1,
+      "grain": 2,
+      "egg": 1
+    },
+    "Output": "pumpkin_pie",
+    "Station": "campfire",
+    "Count": 1,
+    "Seconds": 8
+  },
+  {
+    "Id": "string_rope",
+    "Name": "绳索",
+    "Inputs": {
+      "string": 3
+    },
+    "Output": "rope",
+    "Station": "hand",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "feather_arrow",
+    "Name": "箭",
+    "Inputs": {
+      "stone": 1,
+      "stick": 1,
+      "feather": 1
+    },
+    "Output": "arrow",
+    "Station": "hand",
+    "Count": 4,
+    "Seconds": 0
+  },
+  {
+    "Id": "wool_cloth",
+    "Name": "布料",
+    "Inputs": {
+      "wool": 1
+    },
+    "Output": "cloth",
+    "Station": "hand",
+    "Count": 2,
+    "Seconds": 0
+  },
+  {
+    "Id": "paper_map",
+    "Name": "地图",
+    "Inputs": {
+      "ink_sac": 1,
+      "paper": 4,
+      "copper_ingot": 1
+    },
+    "Output": "map",
+    "Station": "hand",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "red_wool",
+    "Name": "红色羊毛",
+    "Inputs": {
+      "wool": 1,
+      "red_dye": 1
+    },
+    "Output": "red_wool",
+    "Station": "hand",
+    "Count": 1,
+    "Seconds": 0
+  },
+  {
+    "Id": "blue_wool",
+    "Name": "蓝色羊毛",
+    "Inputs": {
+      "wool": 1,
+      "blue_dye": 1
+    },
+    "Output": "blue_wool",
+    "Station": "hand",
+    "Count": 1,
+    "Seconds": 0
+  }
 ]

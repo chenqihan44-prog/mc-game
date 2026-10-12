@@ -1,4 +1,4 @@
-param([switch]$Visual,[switch]$SaveUi,[switch]$SaveUiHeadless,[switch]$Building,[switch]$BuildingHeadless,[switch]$Audio,[switch]$Interaction,[switch]$Creature,[switch]$Combat,[switch]$Route,[switch]$Boundary,[switch]$CreaturePath,[switch]$Feedback,[switch]$FeedbackReload,[switch]$Equipment,[switch]$EquipmentReload,[switch]$Estate,[switch]$EstateReload,[switch]$StorageStartup,[switch]$StorageStartupReload,[switch]$StorageStartupExit,[switch]$Presentation,[switch]$Interactive,[int]$SoakSeconds=0,[switch]$Wait,[switch]$WeatherStress,[switch]$Uncapped,[switch]$GroundSoak,[switch]$GcStress,[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$OutputName='EmberLighthouse')
+param([switch]$Visual,[switch]$SaveUi,[switch]$SaveUiHeadless,[switch]$Building,[switch]$BuildingHeadless,[switch]$Audio,[switch]$Interaction,[switch]$Creature,[switch]$Combat,[switch]$Route,[switch]$Boundary,[switch]$CreaturePath,[switch]$Feedback,[switch]$FeedbackReload,[switch]$Equipment,[switch]$EquipmentReload,[switch]$Estate,[switch]$EstateReload,[switch]$StorageStartup,[switch]$StorageStartupReload,[switch]$StorageStartupExit,[switch]$Presentation,[switch]$Mainline,[switch]$Exploration,[switch]$Surface,[switch]$Expansion,[switch]$Lighting,[switch]$JumpPlacement,[switch]$Interactive,[int]$SoakSeconds=0,[switch]$Wait,[switch]$WeatherStress,[switch]$Uncapped,[switch]$GroundSoak,[switch]$GcStress,[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$OutputName='EmberLighthouse')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 Set-Location -LiteralPath $root
@@ -31,6 +31,12 @@ if($StorageStartup){$arguments=@('--headless','--','--storage-startup-check');$n
 if($StorageStartupReload){$arguments=@('--headless','--','--storage-startup-check','--storage-startup-reload');$name='storage-startup-reload'}
 if($StorageStartupExit){$arguments=@('--headless','--','--storage-startup-check','--storage-startup-exit');$name='storage-startup-exit'}
 if($Presentation){$arguments=@('--headless','--','--presentation-check');$name='presentation'}
+if($JumpPlacement){$arguments=@('--headless','--','--jump-placement-check');$name='jump-placement'}
+if($Lighting){$arguments=@('--headless','--','--lighting-check');$name='lighting'}
+if($Expansion){$arguments=@('--headless','--','--expansion-check');$name='expansion'}
+if($Surface){$arguments=@('--headless','--','--surface-check');$name='surface'}
+if($Exploration){$arguments=@('--headless','--','--exploration-check');$name='exploration'}
+if($Mainline){$arguments=@('--headless','--','--mainline-check');$name='mainline'}
 if($SoakSeconds -gt 0){$arguments=@('--position','-10000,-10000','--resolution','1920x1080','--','--soak',"--duration=$SoakSeconds");$name='soak'}
 if($WeatherStress){$arguments+='--weather-stress'}
 if($Uncapped){$arguments+='--uncapped'}
@@ -43,6 +49,12 @@ $initialHashes=@(Get-FileHash -LiteralPath $artifacts -Algorithm SHA256 | Select
 $signal=if($SoakSeconds -gt 0){'SOAK_PASS'}elseif($EstateReload){'ESTATE_RELOAD_PASS'}elseif($Estate){'ESTATE_PASS'}elseif($EquipmentReload){'EQUIPMENT_RELOAD_PASS'}elseif($Equipment){'EQUIPMENT_PASS'}elseif($FeedbackReload){'FEEDBACK_RELOAD_PASS'}elseif($Feedback){'FEEDBACK_PASS'}elseif($CreaturePath){'CREATURE_PATH_PASS'}elseif($Boundary){'BOUNDARY_PASS'}elseif($Route){'ROUTE_PASS'}elseif($Combat){'COMBAT_PASS'}elseif($Creature){'CREATURE_PASS'}elseif($Interaction){'INTERACTION_PASS'}elseif($Audio){'AUDIO_PASS'}elseif($Building -or $BuildingHeadless){'BUILDING_PASS'}elseif($SaveUi -or $SaveUiHeadless){'SAVE_UI_PASS'}else{'SMOKE_PASS'}
 if($StorageStartupExit){$signal='STORAGE_STARTUP_EXIT_PASS'}elseif($StorageStartupReload){$signal='STORAGE_STARTUP_RELOAD_PASS'}elseif($StorageStartup){$signal='STORAGE_STARTUP_PASS'}
 if($Presentation){$signal='PRESENTATION_PASS'}
+if($Mainline){$signal='MAINLINE_PASS'}
+if($JumpPlacement){$signal='JUMP_PLACEMENT_PASS'}
+if($Lighting){$signal='LIGHTING_PASS'}
+if($Expansion){$signal='EXPANSION_PASS'}
+if($Surface){$signal='SURFACE_PASS'}
+if($Exploration){$signal='EXPLORATION_PASS'}
 function Write-Verification([string]$status,[string]$reason){
     [ordered]@{status=$status;reason=$reason;startedUtc=$startedUtc;recordedUtc=[DateTime]::UtcNow;pid=$p.Id;arguments=$arguments;artifacts=$initialHashes;referenceHardware=$false} | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $root "test-results/$name.verification.json") -Encoding utf8
 }
@@ -83,7 +95,8 @@ if($SoakSeconds -gt 0){$p.Id | Set-Content -LiteralPath (Join-Path $root "test-r
     if($Wait){$p.WaitForExit();Finish-Validation}
     return
 }
-$timeout=if($Route -or $Boundary){600000}elseif($CreaturePath -or $Equipment -or $Estate){180000}else{60000}
+$timeout=if($Route -or $Boundary){600000}elseif($CreaturePath -or $Equipment -or $Estate -or $Mainline){180000}else{60000}
 if(!$p.WaitForExit($timeout)){Write-Verification 'running-timeout' 'Observation timed out; process has not been confirmed stopped';throw 'Release validation timed out'}
 Finish-Validation
+
 

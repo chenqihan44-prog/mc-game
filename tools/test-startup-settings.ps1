@@ -1,5 +1,5 @@
 param(
-    [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$OutputName='EmberLighthouse-presentation',
+    [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$OutputName='EmberLighthouse-content',
     [switch]$BlockedUserData,
     [switch]$SafeLogOverride
 )

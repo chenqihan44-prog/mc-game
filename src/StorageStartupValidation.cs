@@ -50,7 +50,7 @@ public partial class Game
         static Dictionary<string,string> Hashes(string root)=>Directory.GetFiles(root,"*",SearchOption.AllDirectories).ToDictionary(p=>Path.GetRelativePath(root,p),p=>Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(p))));
         static void SameHashes(Dictionary<string,string> expected,string root){var actual=Hashes(root);Check(actual.Count==expected.Count&&expected.All(p=>actual.GetValueOrDefault(p.Key)==p.Value),"existing world files modified during failed startup/retry");}
         void StateMatches(WorldSnapshot actual,WorldSnapshot expected){
-            Check(actual.WorldId==expected.WorldId&&actual.FormatVersion==4,"existing world identity/format changed");
+            Check(actual.WorldId==expected.WorldId&&actual.FormatVersion==WorldSnapshot.CurrentFormat,"existing world identity/format changed");
             Check(actual.Changes.Count==expected.Changes.Count&&expected.Changes.All(p=>actual.Changes.GetValueOrDefault(p.Key)==p.Value),"existing terrain changed");
             Check(JsonSerializer.Serialize(actual.Inventory,Catalog.JsonOptions)==JsonSerializer.Serialize(expected.Inventory,Catalog.JsonOptions)&&JsonSerializer.Serialize(actual.Equipment,Catalog.JsonOptions)==JsonSerializer.Serialize(expected.Equipment,Catalog.JsonOptions),"inventory or equipment wear changed");
             Check(JsonSerializer.Serialize(actual.Entities,Catalog.JsonOptions)==JsonSerializer.Serialize(expected.Entities,Catalog.JsonOptions),"stored chest or contents changed");

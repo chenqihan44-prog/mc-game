@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
@@ -11,7 +12,7 @@ public partial class Game
 {
     private readonly Stopwatch buildingWatch=new();
     private bool buildingStarted;
-    private void StartBuildingCheck(){StartWorld(new(){Name="建造碰撞验证",Seed=42,Casual=true});buildingWatch.Start();}
+    private void StartBuildingCheck(){StartWorld(new(){Name="建造碰撞验证",Seed=42,GeneratorVersion=4,Casual=true});buildingWatch.Start();}
     private void BuildingFailure(string reason){GD.PushError("BUILDING_FAILED: "+reason);GetTree().Quit(8);}
     private void RunBuildingCheck()
     {
@@ -37,7 +38,7 @@ public partial class Game
             Check(Blocks(new(3.1f,37.04f,4.5f),new(1.8f,0,0)),"open lower panel lost collision");
             Check(Blocks(new(3.1f,38.1f,4.5f),new(1.8f,0,0)),"open upper panel lost collision");
             Open(false);await PhysicsSettled();Check(Blocks(new(4.5f,37.04f,3.1f),new(0,0,1.8f)),"reclosed door still passable");
-            Check(world.Break(wood,0,out error)&&world.Place(wood,"wood",false,out error)&&world.Solid(wood),"placed starter-position wood lost solidity: "+error);renderer.RefreshEdit(wood);
+            world.State.Inventory.Add("wood",1,catalog);Check(world.Break(wood,0,out error)&&world.Place(wood,"wood",false,out error)&&world.Solid(wood),"placed starter-position wood lost solidity: "+error);renderer.RefreshEdit(wood);
             world.Set(farm,0);world.Set(crop,0);world.State.Inventory.Add("farmland",1,catalog);world.State.Inventory.Add("wheat_seed",1,catalog);
             Check(world.Place(farm,"farmland",false,out error)&&world.Plant(farm,"wheat_seed",out error),error);world.Advance(270);renderer.RefreshEdit(farm);renderer.RefreshEdit(crop);
             Check(world.State.Entities[crop.ToString()].Stage==3,"crop did not mature");
@@ -45,14 +46,14 @@ public partial class Game
             await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);
             string results=ProjectSettings.GlobalizePath("res://test-results");bool headless=DisplayServer.GetName()=="headless";
             if(!headless){using var image=GetViewport().GetTexture().GetImage();image.SavePng(Path.Combine(results,"building.png"));}
-            Check(world.Break(upper,0,out error)&&world.Get(door)==0&&world.Get(upper)==0&&world.State.Inventory.Count("door")==1,"breaking upper door lost or duplicated item");renderer.RefreshEdit(door);renderer.RefreshEdit(upper);
-            Harvest(crop,world.State.Entities[crop.ToString()]);Check(world.Get(crop)==0&&world.State.Inventory.Count("grain")==3&&world.State.Inventory.Count("wheat_seed")==2,"crop harvest lost items");
+            Check(world.Break(upper,0,out error)&&world.Get(door)==0&&world.Get(upper)==0&&world.State.Graves.Sum(g=>g.Items.Count("door"))==1,"breaking upper door lost or duplicated item");renderer.RefreshEdit(door);renderer.RefreshEdit(upper);
+            Harvest(crop,world.State.Entities[crop.ToString()]);Check(world.Get(crop)==0&&world.State.Graves.Sum(g=>g.Items.Count("grain"))==3&&world.State.Graves.Sum(g=>g.Items.Count("wheat_seed"))==2,"crop harvest lost items");
             string id=world.State.WorldId;
             RequestSave(success=>{
                 if(!success){BuildingFailure("save failed");return;}
                 RunWorldIo("检查建造存档",()=>saves.Load(id),loaded=>{
                     var restored=new WorldState(catalog,loaded.Snapshot);
-                    if(restored.Get(door)!=0||restored.Get(upper)!=0||!restored.Solid(wood)||restored.Get(farm)!=catalog.Number("farmland")||restored.Get(crop)!=0||restored.State.Inventory.Count("door")!=1||restored.State.Inventory.Count("grain")!=3||restored.State.Inventory.Count("wheat_seed")!=2){BuildingFailure("reload mismatch");return;}
+                    if(restored.Get(door)!=0||restored.Get(upper)!=0||!restored.Solid(wood)||restored.Get(farm)!=catalog.Number("farmland")||restored.Get(crop)!=0||restored.State.Graves.Sum(g=>g.Items.Count("door"))!=1||restored.State.Graves.Sum(g=>g.Items.Count("grain"))!=3||restored.State.Graves.Sum(g=>g.Items.Count("wheat_seed"))!=2){BuildingFailure("reload mismatch");return;}
                     File.WriteAllText(Path.Combine(results,"building.json"),JsonSerializer.Serialize(new{passed=true,seconds=buildingWatch.Elapsed.TotalSeconds,closedBlocks=true,openDoorwayPasses=true,openPanelBlocks=true,upperPanelBlocks=true,recloseBlocks=true,doorCount=1,grainCount=3,seedCount=2,placedStarterWoodSolid=true,reload=true,headless,renderedImage=!headless},EmberLighthouse.Items.Catalog.JsonOptions));
                     GD.Print("BUILDING_PASS: real door collision, open panel, planted crop, item conservation and reload");QuitCleanly();
                 },()=>BuildingFailure("reload failed"));
@@ -60,3 +61,4 @@ public partial class Game
         }catch(Exception e){BuildingFailure(e.Message);}
     }
 }
+

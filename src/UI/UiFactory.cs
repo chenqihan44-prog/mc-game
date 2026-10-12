@@ -13,6 +13,8 @@ public static class UiFactory
         theme.SetStylebox("panel","PanelContainer",Style("182625",16));
         theme.SetStylebox("normal","Button",Style("31403a",10));theme.SetStylebox("hover","Button",Style("4b6251",10));theme.SetStylebox("pressed","Button",Style("627c5b",10));
         theme.SetStylebox("normal","LineEdit",Style("27332f",10));theme.SetStylebox("normal","TextEdit",Style("27332f",10));
+        var tooltip=Style("161021",12);tooltip.BorderColor=new("9b7ec7");tooltip.BorderWidthLeft=2;tooltip.BorderWidthRight=2;tooltip.BorderWidthTop=2;tooltip.BorderWidthBottom=2;theme.SetStylebox("panel","TooltipPanel",tooltip);
+        theme.SetColor("font_color","TooltipLabel",Colors.White);theme.SetColor("font_shadow_color","TooltipLabel",Colors.Black);theme.SetConstant("shadow_offset_x","TooltipLabel",1);theme.SetConstant("shadow_offset_y","TooltipLabel",1);theme.SetFontSize("font_size","TooltipLabel",19);
         return theme;
     }
     public static StyleBoxFlat Style(string color,int padding)

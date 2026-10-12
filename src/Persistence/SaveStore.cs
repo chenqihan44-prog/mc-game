@@ -14,6 +14,8 @@ public sealed record ChunkReference(string Hash,string Encoding,int ModifiedCoun
 public sealed record SaveManifest(int Version,string Generation,string Hash,DateTime SavedUtc,Dictionary<string,ChunkReference>? Chunks=null);
 public sealed record LoadedWorld(WorldSnapshot Snapshot,bool Recovered,string Generation,bool Migrated=false);
 public sealed record BackupEntry(string Key,string Name,DateTime SavedUtc,bool Damaged);
+public sealed record WorldEntry(string Id,string Name,bool Damaged,int Seed,bool Creative,bool Casual,double Time,double[] Position,DateTime? SavedUtc,int GeneratorVersion=0);
+public sealed record DeletedWorldEntry(string Key,string Id,string Name,DateTime DeletedUtc);
 
 public sealed class SaveStore(string root,Catalog catalog)
 {
@@ -31,11 +33,12 @@ public sealed class SaveStore(string root,Catalog catalog)
         lock(saveGate){
             string path=DirectoryFor(snapshot.WorldId);Directory.CreateDirectory(path);
             using var transaction=new FileStream(Path.Combine(path,".saving.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None);
+            if(File.Exists(Path.Combine(path,"DELETED.info")))throw new IOException("世界正在删除，不能写入存档");
             ReadPointer(path);var previous=ValidGenerations(path,true).FirstOrDefault();
             if(previous==null&&Directory.GetFiles(path,"*.commit").Length>0)throw new InvalidDataException("原世界没有完整保存，拒绝覆盖；请先从备份恢复");
             if(previous!=null&&(previous.Version==1||ReadMetadata(path,previous).FormatVersion<WorldSnapshot.CurrentFormat))CopyBackup(path,previous,snapshot.WorldId);
             string generation=DateTime.UtcNow.ToString("yyyyMMddHHmmssfffffff")+"-"+Guid.NewGuid().ToString("N")[..8];
-            var chunks=new Dictionary<string,ChunkReference>();var terrain=new Terrain(snapshot.Seed,catalog);Directory.CreateDirectory(Path.Combine(path,"chunks"));
+            var chunks=new Dictionary<string,ChunkReference>();var terrain=new Terrain(snapshot.Seed,catalog,snapshot.GeneratorVersion);Directory.CreateDirectory(Path.Combine(path,"chunks"));
             foreach(var group in snapshot.Changes.Select(p=>(Cell:Cell.Parse(p.Key),Id:p.Value)).GroupBy(p=>Coordinates.Chunk(p.Cell)).OrderBy(p=>p.Key.ToString(),StringComparer.Ordinal)){
                 var encoded=ChunkCodec.Encode(group.Key,group.ToDictionary(p=>p.Cell,p=>p.Id),terrain,catalog);if(encoded.ModifiedCount==0)continue;
                 string hash=Convert.ToHexString(SHA256.HashData(encoded.Bytes));string file=ChunkFile(path,hash);
@@ -65,19 +68,104 @@ public sealed class SaveStore(string root,Catalog catalog)
     {
         var state=ReadMetadata(path,manifest);bool migrated=SaveMigrations.ToCurrent(state);
         if(manifest.Version==2){
-            if(state.Changes.Count!=0)throw new InvalidDataException("玩家快照混入区块修改");var terrain=new Terrain(state.Seed,catalog);
+            if(state.Changes.Count!=0)throw new InvalidDataException("玩家快照混入区块修改");var terrain=new Terrain(state.Seed,catalog,state.GeneratorVersion);
             foreach(var pair in manifest.Chunks!){var reference=pair.Value;var changes=ChunkCodec.Decode(File.ReadAllBytes(ChunkFile(path,reference.Hash)),Cell.Parse(pair.Key),terrain,catalog,reference.Encoding,reference.ModifiedCount);foreach(var edit in changes)state.Changes.Add(edit.Key.ToString(),edit.Value);}
         }
         _ = new WorldState(catalog,state);return(state,migrated);
     }
     public IEnumerable<(string Id,string Name,bool Damaged)> List()
     {
+        foreach(var entry in ListDetails())yield return(entry.Id,entry.Name,entry.Damaged);
+    }
+    public IEnumerable<WorldEntry> ListDetails()
+    {
         if(!Directory.Exists(Root))yield break;
-        foreach(string path in Directory.GetDirectories(Root)){string id=Path.GetFileName(path);WorldSnapshot? snapshot=null;try{snapshot=Load(id).Snapshot;}catch(Exception e)when(IsDamaged(e)||e is UnsupportedSaveException){}yield return(id,snapshot?.Name??id,snapshot==null);}
+        foreach(string path in Directory.GetDirectories(Root)){
+            string id=Path.GetFileName(path);WorldSnapshot? snapshot=null;DateTime? date=null;
+            try{var loaded=Load(id);snapshot=loaded.Snapshot;date=ValidGenerations(path).First(m=>m.Generation==loaded.Generation).SavedUtc;}catch(Exception e)when(IsDamaged(e)||e is UnsupportedSaveException){}
+            yield return new(id,snapshot?.Name??id,snapshot==null,snapshot?.Seed??0,snapshot?.Creative??false,snapshot?.Casual??false,snapshot?.SkyTime??0,snapshot?.Position??[0,0,0],date,snapshot?.GeneratorVersion??0);
+        }
     }
     public string Backup(string id)
     {
-        lock(saveGate){string path=DirectoryFor(id);using var transaction=new FileStream(Path.Combine(path,".saving.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None);var loaded=Load(id);var manifest=ValidGenerations(path).First(m=>m.Generation==loaded.Generation);return CopyBackup(path,manifest,id);}
+        lock(saveGate){string path=DirectoryFor(id);using var transaction=new FileStream(Path.Combine(path,".saving.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None);
+            if(File.Exists(Path.Combine(path,"DELETED.info")))throw new IOException("世界正在删除，不能写入存档");var loaded=Load(id);var manifest=ValidGenerations(path).First(m=>m.Generation==loaded.Generation);return CopyBackup(path,manifest,id);}
+    }
+    private string TrashRoot=>Path.GetFullPath(Path.Combine(Root,"..","deleted-worlds"));
+    public string DeleteWorld(string id,string name)
+    {
+        lock(saveGate){
+            string source=Path.GetFullPath(DirectoryFor(id)),liveRoot=Path.GetFullPath(Root);
+            if(!source.StartsWith(liveRoot+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase))throw new ArgumentException("世界路径越界");
+            if(!Directory.Exists(source))throw new DirectoryNotFoundException("世界不存在");
+            if((File.GetAttributes(source)&FileAttributes.ReparsePoint)!=0)throw new InvalidDataException("不能删除链接目录");
+            Directory.CreateDirectory(TrashRoot);if((File.GetAttributes(TrashRoot)&FileAttributes.ReparsePoint)!=0)throw new InvalidDataException("已删除世界目录不能为链接");
+            string key=id+"-"+DateTime.UtcNow.ToString("yyyyMMddHHmmssfffffff")+"-"+Guid.NewGuid().ToString("N")[..8];
+            var entry=new DeletedWorldEntry(key,id,string.IsNullOrWhiteSpace(name)?id:name,DateTime.UtcNow);
+            // Windows cannot rename a directory with a child file handle open.
+            // Mark it while holding the save lock; Save refuses this marker.
+            using(var transaction=new FileStream(Path.Combine(source,".saving.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None))
+                WriteFlushed(Path.Combine(source,"DELETED.info"),JsonSerializer.SerializeToUtf8Bytes(entry,Catalog.JsonOptions));
+            try{Directory.Move(source,Path.Combine(TrashRoot,key));}catch{File.Delete(Path.Combine(source,"DELETED.info"));throw;}return key;
+        }
+    }
+    private string DeletedDirectory(string key)
+    {
+        if(string.IsNullOrWhiteSpace(key)||key!=Path.GetFileName(key)||key.Contains("..")||key.IndexOfAny(Path.GetInvalidFileNameChars())>=0)throw new ArgumentException("无效的已删除世界名称");
+        string path=Path.GetFullPath(Path.Combine(TrashRoot,key));if(!path.StartsWith(TrashRoot+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase))throw new ArgumentException("已删除世界路径越界");
+        if(!Directory.Exists(path))throw new DirectoryNotFoundException("已删除世界不存在");if((File.GetAttributes(path)&FileAttributes.ReparsePoint)!=0)throw new InvalidDataException("不支持链接目录");return path;
+    }
+    public DeletedWorldEntry[] ListDeletedWorlds()
+    {
+        if(!Directory.Exists(TrashRoot))return [];
+        var entries=new List<DeletedWorldEntry>();foreach(string path in Directory.GetDirectories(TrashRoot)){
+            try{var entry=JsonSerializer.Deserialize<DeletedWorldEntry>(File.ReadAllBytes(Path.Combine(path,"DELETED.info")),Catalog.JsonOptions);if(entry==null||entry.Key!=Path.GetFileName(path))continue;DirectoryFor(entry.Id);entries.Add(entry);}catch(Exception e)when(IsDamaged(e)){}
+        }return entries.OrderByDescending(e=>e.DeletedUtc).ToArray();
+    }
+    public string RestoreDeletedWorld(string key)
+    {
+        lock(saveGate){var source=DeletedDirectory(key);var entry=JsonSerializer.Deserialize<DeletedWorldEntry>(File.ReadAllBytes(Path.Combine(source,"DELETED.info")),Catalog.JsonOptions)??throw new InvalidDataException("删除记录缺失");if(entry.Key!=key)throw new InvalidDataException("删除记录不匹配");string destination=DirectoryFor(entry.Id);if(Directory.Exists(destination))throw new InvalidOperationException("同编号世界已存在，不能覆盖");Directory.CreateDirectory(Root);Directory.Move(source,destination);File.Delete(Path.Combine(destination,"DELETED.info"));return entry.Id;}
+    }
+    public int PermanentlyDeleteWorld(string id,bool deleteBackups=true)
+    {
+        lock(saveGate){
+            DirectoryFor(id);string source=SafeChildDirectory(Root,id);
+            var targets=new List<(string Root,string Path)>{(Root,source)};
+            targets.AddRange(OwnedDirectories(TrashRoot,id));if(deleteBackups)targets.AddRange(OwnedDirectories(BackupRoot,id));
+            foreach(var target in targets)ValidateDeletionTree(target.Root,target.Path);
+            using(var transaction=new FileStream(Path.Combine(source,".saving.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None))
+                WriteFlushed(Path.Combine(source,"DELETED.info"),JsonSerializer.SerializeToUtf8Bytes(new DeletedWorldEntry("",id,id,DateTime.UtcNow),Catalog.JsonOptions));
+            try{foreach(var target in targets)Directory.Delete(target.Path,true);}catch{if(Directory.Exists(source))File.Delete(Path.Combine(source,"DELETED.info"));throw;}return targets.Count;
+        }
+    }
+    public int PermanentlyDeleteDeletedWorld(string key,bool deleteBackups=true)
+    {
+        lock(saveGate){string source=DeletedDirectory(key);var entry=JsonSerializer.Deserialize<DeletedWorldEntry>(File.ReadAllBytes(Path.Combine(source,"DELETED.info")),Catalog.JsonOptions)??throw new InvalidDataException("删除记录缺失");if(entry.Key!=key)throw new InvalidDataException("删除记录不匹配");DirectoryFor(entry.Id);
+            var targets=new List<(string Root,string Path)>{(TrashRoot,source)};if(deleteBackups)targets.AddRange(OwnedDirectories(BackupRoot,entry.Id));foreach(var target in targets)ValidateDeletionTree(target.Root,target.Path);foreach(var target in targets)Directory.Delete(target.Path,true);return targets.Count;}
+    }
+    public void DeleteBackup(string key)
+    {
+        lock(saveGate){string path=SafeChildDirectory(BackupRoot,key);ValidateDeletionTree(BackupRoot,path);Directory.Delete(path,true);}
+    }
+    private static IEnumerable<(string Root,string Path)> OwnedDirectories(string root,string id)
+    {
+        if(!Directory.Exists(root))yield break;foreach(string path in Directory.GetDirectories(root))if(Path.GetFileName(path).StartsWith(id+"-",StringComparison.OrdinalIgnoreCase))yield return(root,SafeChildDirectory(root,Path.GetFileName(path)));
+    }
+    private static string SafeChildDirectory(string root,string key)
+    {
+        if(string.IsNullOrWhiteSpace(key)||key!=Path.GetFileName(key)||key.Contains("..")||key.IndexOfAny(Path.GetInvalidFileNameChars())>=0)throw new ArgumentException("目录名称无效");
+        string parent=Path.TrimEndingDirectorySeparator(Path.GetFullPath(root)),path=Path.GetFullPath(Path.Combine(parent,key));
+        if(!string.Equals(Path.GetDirectoryName(path),parent,StringComparison.OrdinalIgnoreCase))throw new ArgumentException("删除路径越界");
+        if(!Directory.Exists(path))throw new DirectoryNotFoundException("目录不存在");if((File.GetAttributes(parent)&FileAttributes.ReparsePoint)!=0||(File.GetAttributes(path)&FileAttributes.ReparsePoint)!=0)throw new InvalidDataException("不支持删除链接目录");return path;
+    }
+    private static void ValidateDeletionTree(string root,string path)
+    {
+        path=SafeChildDirectory(root,Path.GetFileName(path));var pending=new System.Collections.Generic.Stack<string>();pending.Push(path);
+        while(pending.Count>0)foreach(string child in Directory.EnumerateFileSystemEntries(pending.Pop())){
+            var attributes=File.GetAttributes(child);if((attributes&FileAttributes.ReparsePoint)!=0)throw new InvalidDataException("目录中包含链接，删除已停止");
+            if((attributes&FileAttributes.Directory)!=0)pending.Push(child);
+            else{using var available=new FileStream(child,FileMode.Open,FileAccess.Read,FileShare.None);if((attributes&FileAttributes.ReadOnly)!=0)throw new IOException("文件为只读，无法完全删除");}
+        }
     }
     private string CopyBackup(string path,SaveManifest manifest,string id)
     {
@@ -125,7 +213,13 @@ public sealed class SaveStore(string root,Catalog catalog)
             yield return manifest;
         }
     }
-    private static WorldSnapshot ReadMetadata(string path,SaveManifest manifest)=>JsonSerializer.Deserialize<WorldSnapshot>(File.ReadAllBytes(Path.Combine(path,manifest.Generation+".json")),Catalog.JsonOptions)??throw new InvalidDataException("玩家快照为空");
+    private static WorldSnapshot ReadMetadata(string path,SaveManifest manifest)
+    {
+        using var json=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(path,manifest.Generation+".json")));
+        var state=json.RootElement.Deserialize<WorldSnapshot>(Catalog.JsonOptions)??throw new InvalidDataException("玩家快照为空");
+        if(!json.RootElement.EnumerateObject().Any(p=>p.Name.Equals("GeneratorVersion",StringComparison.OrdinalIgnoreCase)))state.GeneratorVersion=1;
+        return state;
+    }
     private void Prune(string path)
     {
         var valid=ValidGenerations(path,true).ToArray();foreach(var old in valid.Skip(3)){File.Delete(Path.Combine(path,old.Generation+".commit"));File.Delete(Path.Combine(path,old.Generation+".json"));}

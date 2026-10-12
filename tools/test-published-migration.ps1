@@ -1,7 +1,8 @@
 param(
-    [string]$NewAssembly='builds/EmberLighthouse-presentation/data_EmberLighthouse_windows_x86_64/EmberLighthouse.dll',
+    [string]$NewAssembly='tests/fixtures/published-format4/EmberLighthouse.dll',
     [string]$SourceRoot='tests/fixtures/published-format3/worlds',
-    [ValidatePattern('^[a-fA-F0-9]{32}$')][string]$WorldId='860b32146dd04be2b2e1aba37057c630'
+    [ValidatePattern('^[a-fA-F0-9]{32}$')][string]$WorldId='860b32146dd04be2b2e1aba37057c630',
+    [string]$DataRoot='tests/fixtures/published-format4/data'
 )
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
@@ -18,7 +19,7 @@ if($oldState.FormatVersion -ne 3 -or $oldState.PSObject.Properties.Name -contain
 $assemblyPath=[IO.Path]::GetFullPath((Join-Path $root $NewAssembly))
 $assembly=[Reflection.Assembly]::LoadFrom($assemblyPath)
 $catalogType=$assembly.GetType('EmberLighthouse.Items.Catalog')
-$catalog=$catalogType.GetMethod('Load').Invoke($null,[object[]]@([string](Join-Path $root 'data')))
+$catalog=$catalogType.GetMethod('Load').Invoke($null,[object[]]@([string](Join-Path $root $DataRoot)))
 $storeType=$assembly.GetType('EmberLighthouse.Persistence.SaveStore')
 $store=$storeType.GetConstructor([Type[]]@([string],$catalogType)).Invoke([object[]]@([string]$trialRoot,$catalog.PSObject.BaseObject))
 $rawHash=(Get-FileHash -LiteralPath $rawMetadata).Hash

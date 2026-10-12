@@ -1,0 +1,40 @@
+Use case: infographic-diagram / stylized-concept.
+Create a beautiful, highly readable high-resolution portrait Chinese pixel-art item catalog poster, inspired by the user's Minecraft encyclopedia reference sheets. NEW standalone proposal image, not an edit of those sheets.
+Main title EXACT: “方野 · 拟新增物品清单”
+Subtitle EXACT: “参考原版 MC · 24 项内容预览”
+Under subtitle a clearly readable small gold badge EXACT: “拟定功能 · 待审核加入”
+Style: warm parchment paper, restrained carved dark wood border, small lanterns in upper corners, subtle voxel forest and river landscape ONLY in header/footer. Original crisp Minecraft-inspired pixel icons, clear dark-brown Chinese type, soft grounded shadows. Editorial catalog readability is the priority. The center must be clean light parchment with high contrast. Do not copy whole reference posters. No extra characters, logos or watermark.
+Layout: one portrait sheet, 4 labeled horizontal sections, each section exactly 6 equal cards in ONE row; total 24 cards. Generous card sizes and spacing for both name and short function. Each card has ONE large distinct pixel icon at top, EXACT Chinese name beneath it, then its EXACT one-line Chinese purpose in smaller legible print. Section labels left aligned. The page may be tall; keep all 24 entries and their function text readable. Typography must remain clean simplified Chinese, no faux-runes, no omitted characters. No numerical effect claims.
+
+Section 1 heading “采集与农耕” — six cards left to right:
+1. 名称“剪刀”；作用“采集树叶，提高纤维产量”
+2. 名称“铁锄”；作用“翻土开垦，建立农田”
+3. 名称“钓鱼竿”；作用“在自然水域获取鲜鱼”
+4. 名称“水桶”；作用“取水浇灌，放置静态水”
+5. 名称“骨头”；作用“狩猎素材，可磨成骨粉”
+6. 名称“骨粉”；作用“消耗一次，加快作物生长”
+Section 2 heading “作物与纸材” — six cards left to right:
+1. 名称“甘蔗”；作用“岸边栽种，可加工成纸”
+2. 名称“纸”；作用“制作地图与探索记录”
+3. 名称“南瓜”；作用“农田收获，建造与加工”
+4. 名称“南瓜种子”；作用“种植南瓜，扩展农田”
+5. 名称“西瓜”；作用“种植收获，食用补饥饿”
+6. 名称“西瓜种子”；作用“种植西瓜，稳定供粮”
+Section 3 heading “食物与烹饪” — six cards left to right:
+1. 名称“苹果”；作用“采集食物，制作金苹果”
+2. 名称“生鳕鱼”；作用“钓鱼获得，适合烹饪”
+3. 名称“熟鳕鱼”；作用“营火烹饪，远征口粮”
+4. 名称“碗”；作用“制作汤食，食用后返还”
+5. 名称“蘑菇煲”；作用“两种蘑菇制成的饱腹汤”
+6. 名称“金苹果”；作用“少量回血，短时额外防护”
+Section 4 heading “炼金与材料” — six cards left to right:
+1. 名称“金矿石”；作用“地下新矿，可冶炼黄金”
+2. 名称“金锭”；作用“制作金苹果与炼金材料”
+3. 名称“玻璃瓶”；作用“盛水，作为药水容器”
+4. 名称“酿造台”；作用“用现有素材调配药水”
+5. 名称“治疗药水”；作用“饮用回复生命，战斗补给”
+6. 名称“抗火药水”；作用“短时降低火焰灼烧伤害”
+
+Icon art directions: shears silver with warm red grip; iron hoe visibly different from a pickaxe; fishing rod with hook and red-white float; bucket silver with BLUE water; bone ivory; bone meal white powder; sugar cane green stalks; paper small ivory sheets; pumpkin orange voxel block; pumpkin seeds pale oval pile; melon green striped voxel fruit with red cut face; melon seeds brown seeds; apple red with green leaf; raw cod pale silver fish; cooked cod browned roasted fish; bowl EMPTY wooden bowl; mushroom stew FILLED wooden bowl with mushrooms; golden apple glossy gold fruit; gold ore is a gray stone block with yellow ore flecks; gold ingot is a gold metal bar; glass bottle is transparent bottle with blue WATER; brewing stand recognizable bronze 3-arm bottle stand; healing potion contains RED liquid; fire resistance potion contains ORANGE liquid. Four section groups separated with elegant horizontal rules and a little green/gold accent, not huge ornamental labels.
+Footer EXACT: “用途按本游戏适配，具体配方与数值待定”
+Ensure every item appears exactly ONCE. Do not list existing swords, bows or armor as new additions. No mobs, no previews of items not in this list. All purpose lines must accompany the correct icon and title.

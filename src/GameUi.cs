@@ -19,10 +19,10 @@ public partial class Game
     private void ShowBackups()=>RunWorldIo("读取备份列表",()=>saves.ListBackups().ToArray(),DrawBackups,ShowWorlds);
     private void DrawBackups(BackupEntry[] backups)
     {
-        SetScreen("backups");var col=Screen(overlay,"恢复世界备份");col.AddChild(Label("恢复会创建一个世界副本，保留原世界与备份。",16));var entries=Column(Scroll(col,340));
+        SetScreen("backups");var col=Screen(overlay,"备份管理");col.AddChild(Label("恢复会创建一个世界副本；备份也可以永久删除。",16));var scroll=Scroll(col,340);scroll.HorizontalScrollMode=ScrollContainer.ScrollMode.Disabled;var entries=Column(scroll);entries.SizeFlagsHorizontal=Control.SizeFlags.ExpandFill;
         foreach(var backup in backups){
-            var row=Row(entries);row.AddChild(Label(backup.Name+" · "+backup.SavedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")+(backup.Damaged?" · 校验失败":""),14));
-            var restore=Button("恢复为新世界",()=>RunWorldIo("恢复备份",()=>saves.RestoreBackup(backup.Key),_=>{Toast("备份已恢复为新世界；原世界保留");ShowWorlds();},ShowBackups));restore.Disabled=backup.Damaged;row.AddChild(restore);
+            var card=Column(entries);var name=Label(backup.Name+" · "+backup.SavedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")+(backup.Damaged?" · 校验失败":""),14);name.AutowrapMode=TextServer.AutowrapMode.WordSmart;card.AddChild(name);var row=Row(card);
+            var restore=Button("恢复为新世界",()=>RunWorldIo("恢复备份",()=>saves.RestoreBackup(backup.Key),_=>{Toast("备份已恢复为新世界；原世界保留");ShowWorlds();},ShowBackups));restore.Disabled=backup.Damaged;row.AddChild(restore);row.AddChild(Button("永久删除备份",()=>ShowDeleteBackup(backup)));
         }
         if(backups.Length==0)entries.AddChild(Label("尚无备份。可在暂停菜单或世界管理中创建。"));col.AddChild(Button("返回",ShowWorlds));
     }
@@ -31,12 +31,14 @@ public partial class Game
         SetScreen("pause");var col=Screen(overlay,"营地休息");col.AddChild(Label("单人世界已暂停；作物、制作与敌人停止计时。",16));
         col.AddChild(Button("继续探索",()=>SetScreen("play")));Button? saveButton=null;saveButton=Button("保存世界",()=>{saveButton!.Disabled=true;RequestSave(success=>{if(GodotObject.IsInstanceValid(saveButton))saveButton.Disabled=false;if(success)Toast("保存完成");});});col.AddChild(saveButton);
         col.AddChild(Button("备份世界",BackupCurrentWorld));
+        col.AddChild(Button("主线日志（J）",ShowMainlineJournal));
+        col.AddChild(Button("物品与生物图鉴",ShowContentGuide));
         col.AddChild(Button("世界规则",ShowWorldRules));col.AddChild(Button("设置",()=>ShowSettings("pause")));col.AddChild(Button("帮助与引导",()=>ShowHelp("pause")));col.AddChild(Button("保存并返回主菜单",ReturnMenu));
     }
     private void ShowWorldRules()
     {
         SetScreen("rules");var col=Screen(overlay,"世界规则");col.AddChild(Label("创造模式可飞行并获取无限材料；切换不删除建筑或物品。",16));
-        var creative=new CheckButton{Text="创造模式",ButtonPressed=world!.State.Creative};var casual=new CheckButton{Text="休闲难度 / 死亡保留物品",ButtonPressed=world.State.Casual};col.AddChild(creative);col.AddChild(casual);
+        var creative=new CheckButton{Text="创造模式",ButtonPressed=world!.State.Creative};var casual=new CheckButton{Text="休闲难度 / 死亡保留物品",ButtonPressed=!world.State.Creative&&world.State.Casual};ExclusiveModes(creative,casual);col.AddChild(creative);col.AddChild(casual);
         col.AddChild(Button("应用并保存",()=>{world.State.Creative=creative.ButtonPressed;world.State.Casual=casual.ButtonPressed;if(!creative.ButtonPressed)player!.Flying=false;RequestSave();ShowPause();}));col.AddChild(Button("返回",ShowPause));
     }
     private Inventory? ContainerInventory()=>currentContainer.HasValue&&world!.State.Entities.TryGetValue(currentContainer.Value.ToString(),out var e)?e.Storage:null;
@@ -51,7 +53,7 @@ public partial class Game
         else{
             float scale=Math.Min(3*settings.UiScale,Math.Max(1.5f,(overlay.GetViewportRect().Size.Y-180)/176));
             var layout=new Control{CustomMinimumSize=new(176*scale,176*scale),MouseFilter=Control.MouseFilterEnum.Ignore};col.AddChild(layout);
-            var preview=new AvatarPreview{Equipment=world!.State.Equipment,Position=new(26*scale,8*scale),Size=new(52*scale,70*scale)};layout.AddChild(preview);
+            var preview=new AvatarPreview{Equipment=world!.State.Equipment,Catalog=catalog,Position=new(26*scale,8*scale),Size=new(52*scale,70*scale)};layout.AddChild(preview);
             DrawSlotsAt(layout,world.State.Equipment,3,0,4,1,new(8,8),scale);DrawSlotsAt(layout,world.State.Equipment,3,4,1,1,new(77,62),scale);
             DrawSlotsAt(layout,world.State.Crafting,2,0,4,2,new(98,16),scale);
             var craftTitle=Label("合成",(int)(6*scale));craftTitle.Position=new(98*scale,6*scale);craftTitle.AddThemeColorOverride("font_color",new("373737"));layout.AddChild(craftTitle);
@@ -64,7 +66,7 @@ public partial class Game
         if(ContainerInventory()!=null){var inventoryLabel=Label("物品栏",17);inventoryLabel.AddThemeColorOverride("font_color",new("373737"));col.AddChild(inventoryLabel);DrawSlots(col,world!.State.Inventory,0,9,27);DrawSlots(col,world.State.Inventory,0,0,9);}
         var rowButtons=Row(col);rowButtons.AddChild(Button("整理",()=>{world.State.Inventory.Sort(catalog);ShowInventory();}));rowButtons.AddChild(Button("配方",()=>{currentStation="hand";ShowRecipes();}));if(world.State.Creative)rowButtons.AddChild(Button("创造目录",ShowCreative));rowButtons.AddChild(Button("关闭",()=>{currentContainer=null;SetScreen("play");}));
         var hint=Label("左键取放 · 右键取半 / 放一个 · Shift 快捷移动",13);hint.AddThemeColorOverride("font_color",new("454545"));col.AddChild(hint);
-        cursorGlyph=null;if(world.State.Cursor!=null){cursorGlyph=new(){Catalog=catalog,Item=world.State.Cursor,Size=new(54,54),PixelScale=2.7f,Position=GetViewport().GetMousePosition()-Vector2.One*24,ZIndex=20};overlay.AddChild(cursorGlyph);}
+        DrawCursorItem();
     }
     private static StyleBoxFlat MinecraftPanel()=>new(){BgColor=new("c6c6c6"),BorderColor=new("373737"),BorderWidthLeft=3,BorderWidthRight=3,BorderWidthTop=3,BorderWidthBottom=3,ContentMarginLeft=18,ContentMarginRight=18,ContentMarginTop=12,ContentMarginBottom=12};
     private static void StyleSlot(Button button)
@@ -78,7 +80,7 @@ public partial class Game
     {
         var grid=new GridContainer{Columns=columns};grid.AddThemeConstantOverride("h_separation",0);grid.AddThemeConstantOverride("v_separation",0);parent.AddChild(grid);
         for(int i=start;i<start+count;i++){
-            int index=i;var stack=inventory.Slots[i];var b=new SlotButton{SlotIndex=i,SurfaceIndex=surface,Transfer=TransferSlots,CustomMinimumSize=new(54,54),TooltipText=stack==null?"":catalog.Items[stack.Id].Name};StyleSlot(b);grid.AddChild(b);
+            int index=i;var stack=inventory.Slots[i];var b=new SlotButton{SlotIndex=i,SurfaceIndex=surface,Transfer=TransferSlots,Catalog=catalog,Item=stack,DragAllowed=()=>world?.State.Cursor==null,CustomMinimumSize=new(54,54),TooltipText=stack==null?"":catalog.Items[stack.Id].Name+(catalog.Items[stack.Id].Durability>0?$" · 耐久 {stack.Durability??catalog.Items[stack.Id].Durability}/{catalog.Items[stack.Id].Durability}":"")};StyleSlot(b);grid.AddChild(b);
             if(stack!=null)b.AddChild(new ItemGlyph{Catalog=catalog,Item=stack,Size=new(54,54),PixelScale=2.7f});
             b.Pressed+=()=>SlotClick(surface,index,false);b.GuiInput+=e=>{if(e is InputEventMouseButton m&&m.ButtonIndex==MouseButton.Right&&m.Pressed){SlotClick(surface,index,true);b.AcceptEvent();}};
         }
@@ -88,7 +90,7 @@ public partial class Game
         string[] emptyArmor={"iron_helmet","iron_chestplate","iron_leggings","iron_boots","shield"};
         for(int n=0;n<count;n++){
             int index=start+n;var item=inventory.Slots[index];var def=item==null?null:catalog.Items[item.Id];
-            var b=new SlotButton{SlotIndex=index,SurfaceIndex=surface,Transfer=TransferSlots,Position=(origin+new Vector2(n%columns*18,n/columns*18))*scale,Size=new(18*scale,18*scale),TooltipText=def?.Name??(surface==3?index==4?"副手":"护甲":"")};StyleSlot(b);parent.AddChild(b);
+            var b=new SlotButton{SlotIndex=index,SurfaceIndex=surface,Transfer=TransferSlots,Catalog=catalog,Item=item,DragAllowed=()=>world?.State.Cursor==null,Position=(origin+new Vector2(n%columns*18,n/columns*18))*scale,Size=new(18*scale,18*scale),TooltipText=def?.Name??(surface==3?index==4?"副手":"护甲":"")};StyleSlot(b);parent.AddChild(b);
             if(def?.Durability>0)b.TooltipText+=$" · 耐久 {item!.Durability??def.Durability}/{def.Durability}";
             if(item!=null)b.AddChild(new ItemGlyph{Catalog=catalog,Item=item,Size=b.Size,PixelScale=.9f*scale});
             else if(surface==3)b.AddChild(new ItemGlyph{Catalog=catalog,Item=new(emptyArmor[index],1),Size=b.Size,PixelScale=.9f*scale,Modulate=new(1,1,1,.25f)});
@@ -106,9 +108,9 @@ public partial class Game
     {
         ReturnWorkbenchItems();
         cursorGlyph=null;if(world==null)return;var remaining=new Inventory(5);
-        if(world.State.Cursor is { } cursor){int count=world.State.Inventory.Add(cursor,catalog);if(count>0)remaining.Slots[4]=new(cursor.Id,count,cursor.Durability);world.State.Cursor=null;}
-        for(int i=0;i<4;i++)if(world.State.Crafting.Slots[i] is { } slot){int count=world.State.Inventory.Add(slot,catalog);if(count>0)remaining.Slots[i]=new(slot.Id,count,slot.Durability);}
-        world.State.Crafting=new(4);if(remaining.Slots.Any(s=>s!=null))world.State.Graves.Add(new(){Position=(double[])world.State.Position.Clone(),Items=remaining});
+        if(world.State.Cursor is { } cursor){int count=world.State.Inventory.Add(cursor,catalog);if(count>0)remaining.Slots[4]=new(cursor.Id,count,cursor.Durability){HeatLining=cursor.HeatLining};world.State.Cursor=null;}
+        for(int i=0;i<4;i++)if(world.State.Crafting.Slots[i] is { } slot){int count=world.State.Inventory.Add(slot,catalog);if(count>0)remaining.Slots[i]=new(slot.Id,count,slot.Durability){HeatLining=slot.HeatLining};}
+        world.State.Crafting=new(4);if(remaining.Slots.Any(s=>s!=null))world.Drop(remaining,world.State.Position);
     }
     private void SlotClick(int surface,int index,bool half)
     {
@@ -133,7 +135,8 @@ public partial class Game
     }
     private void TransferSlots(int sourceSurface,int sourceIndex,int targetSurface,int targetIndex)
     {
-        var a=Surface(sourceSurface);var b=Surface(targetSurface);if(a!=null&&b!=null)Inventory.Move(a,sourceIndex,b,targetIndex,64,catalog,SlotRule(sourceSurface),SlotRule(targetSurface));CallDeferred(nameof(RefreshInventory));
+        var a=Surface(sourceSurface);var b=Surface(targetSurface);if(a==null||b==null)return;
+        if(Inventory.Move(a,sourceIndex,b,targetIndex,64,catalog,SlotRule(sourceSurface),SlotRule(targetSurface))){AnimateSlotArrival(targetSurface,targetIndex);CallDeferred(nameof(RefreshInventory));}
     }
     private void RefreshInventory(){if(screen=="workbench")ShowWorkbench();else ShowInventory();}
     private string BoundKey(string action)=>OS.GetKeycodeString((Key)settings.Keys.GetValueOrDefault(action,(long)defaultKeys[action].Key));
@@ -149,9 +152,9 @@ public partial class Game
     {
         if(currentStation=="workbench"){ShowWorkbench();return;}
         SetScreen("recipes");var col=Screen(overlay,currentStation=="hand"?"随身制作":"制作设施："+catalog.Items[currentStation].Name);
-        var search=new LineEdit{Text=recipeQuery,PlaceholderText="输入名称或材料，回车检索"};col.AddChild(search);search.TextSubmitted+=text=>{recipeQuery=text;ShowRecipes();};
+        var search=new LineEdit{Text=recipeQuery,PlaceholderText="输入名称或材料，回车检索"};col.AddChild(search);search.TextChanged+=text=>recipeQuery=text;search.TextSubmitted+=text=>{recipeQuery=text;ShowRecipes();};
         var scroll=Scroll(col,380);var list=Column(scroll);
-        foreach(var r in catalog.Recipes.Values.Where(r=>(r.Station=="hand"||r.Station==currentStation)&&(recipeQuery==""||r.Name.Contains(recipeQuery)||r.Inputs.Keys.Any(id=>catalog.Items[id].Name.Contains(recipeQuery)))).OrderByDescending(r=>world!.State.FavoriteRecipes.Contains(r.Id)).ThenBy(r=>r.Name)){
+        foreach(var r in catalog.Recipes.Values.Where(r=>Mainline.RecipeKnown(world!.State,r)&&(r.Station=="hand"||r.Station==currentStation)&&(recipeQuery==""||r.Name.Contains(recipeQuery)||r.Inputs.Keys.Any(id=>catalog.Items[id].Name.Contains(recipeQuery)))).OrderByDescending(r=>world!.State.FavoriteRecipes.Contains(r.Id)).ThenBy(r=>r.Name)){
             var card=new PanelContainer();list.AddChild(card);var content=Column(card);content.AddChild(Label(r.Name+" ×"+r.Count+(r.Seconds>0?$" · {r.Seconds:0}秒":""),16));var row=Row(content);
             foreach(var ingredient in r.Inputs){var stack=Column(row);var glyph=new ItemGlyph{Catalog=catalog,Item=new(ingredient.Key,ingredient.Value),CustomMinimumSize=new(48,48),TooltipText=catalog.Items[ingredient.Key].Name};stack.AddChild(glyph);var count=Label(world!.State.Inventory.Count(ingredient.Key)+" / "+ingredient.Value,13);count.AddThemeColorOverride("font_color",world.State.Inventory.Count(ingredient.Key)>=ingredient.Value?new("c8dab0"):new("e9a294"));stack.AddChild(count);}
             row.AddChild(Label("→",24));row.AddChild(new ItemGlyph{Catalog=catalog,Item=new(r.Output,r.Count),CustomMinimumSize=new(58,58),TooltipText=catalog.Items[r.Output].Name});
@@ -160,6 +163,7 @@ public partial class Game
         }
         if(currentStation is "furnace" or "campfire"&&currentContainer.HasValue){var e=world!.State.Entities[currentContainer.Value.ToString()];col.AddChild(Label(e.RecipeId==null?"设施空闲；完成的产物放入设施容器。":"正在制作 "+catalog.Recipes[e.RecipeId].Name+"，剩余 "+Math.Max(0,e.FinishTime-world.State.Time).ToString("0")+" 秒（世界暂停时停止）",14));col.AddChild(Button("取出设施物品",ShowInventory));}
         var buttons=Row(col);buttons.AddChild(Button("背包",ShowInventory));buttons.AddChild(Button("返回游戏",()=>{currentContainer=null;SetScreen("play");}));
+        if(currentStation=="calibration_bench")buttons.AddChild(Button("装备维护",()=>ShowWorkshopMaintenance(ShowRecipes)));
     }
     private void Craft(Recipe r)
     {
@@ -167,19 +171,24 @@ public partial class Game
         if(!world!.Craft(r,currentContainer,[feet.X,feet.Y,feet.Z],out string error)){Toast(error);return;}
         ShowRecipes();audio.Play("craft");Toast(r.Seconds>0?"制作已开始；返回游戏后计时":"已制作 "+r.Name);
     }
+    private bool HandleMapInput(InputEvent e)
+    {
+        if(world==null||!e.IsActionPressed("map")||screen is not ("play" or "map"))return false;
+        if(screen=="map")SetScreen("play");else ShowMap();GetViewport().SetInputAsHandled();return true;
+    }
     private void ShowMap()
     {
-        SetScreen("map");var col=Screen(overlay,"荒野地图");col.AddChild(Label($"当前位置：{player!.GlobalPosition.X:0}, {player.GlobalPosition.Z:0}   世界边界：±2048",16));
-        col.AddChild(new WorldMap{World=world!,PlayerPosition=player.GlobalPosition});
-        var scroll=Scroll(col,130);var list=Column(scroll);
-        for(int i=0;i<Terrain.Towers.Length;i++){var t=Terrain.Towers[i];list.AddChild(Label($"灯塔 {i+1} · {t.X}, {t.Z} · {(world!.State.Beacons.Contains(i)?"已激活":"未激活")}"));}
-        foreach(var g in world!.State.Graves)list.AddChild(Label($"可拾取背包 · {g.Position[0]:0}, {g.Position[2]:0}"));
-        int n=1;foreach(var marker in world.State.Markers)list.AddChild(Label($"标记 {n++} · {marker[0]:0}, {marker[1]:0}"));
-        col.AddChild(Button("标记当前位置",()=>{world.State.Markers.Add([player.GlobalPosition.X,player.GlobalPosition.Z]);ShowMap();}));col.AddChild(Label(world.State.GuardianDefeated?"守护者已击败；灯塔网络目标："+world.State.Beacons.Count+"/3":"守护者在第三座灯塔附近。准备晶矿装备和补给。",15));col.AddChild(Button("返回游戏",()=>SetScreen("play")));
+        SetScreen("map");var col=Screen(overlay,"荒野地图");col.AddChild(Label("左键或中键拖动 · 滚轮缩放 · 地图打开时生存计时暂停",16));
+        var details=Label("",14);var viewport=overlay.GetViewportRect().Size;var explorer=player!;var position=explorer.GlobalPosition;
+        var map=new WorldMap{ Name="InteractiveWorldMap",World=world!,PlayerPosition=position,PositionSource=()=>GodotObject.IsInstanceValid(explorer)?explorer.GlobalPosition:position,FacingSource=()=>GodotObject.IsInstanceValid(explorer)?explorer.GlobalRotation.Y:0,CustomMinimumSize=new(Math.Clamp(viewport.X-80,600,1400),Math.Clamp(viewport.Y-300*settings.UiScale,220,720)),StatusChanged=text=>details.Text=text };
+        var buttons=Row(col);buttons.AddChild(Button("＋",()=>map.ZoomAt(map.Size/2,1.25f)));buttons.AddChild(Button("－",()=>map.ZoomAt(map.Size/2,.8f)));buttons.AddChild(Button("定位玩家",map.FocusPlayer));buttons.AddChild(Button("全图",map.FitWorld));buttons.AddChild(Button("标记当前位置",()=>{world!.State.Markers.Add([explorer.GlobalPosition.X,explorer.GlobalPosition.Z]);map.QueueRedraw();}));buttons.AddChild(Button("返回游戏（M）",()=>SetScreen("play")));
+        col.AddChild(map);col.AddChild(details);col.AddChild(Label("灰暗：未探索 · 白箭头：玩家 · 金色/青色：灯塔 · 橙色：背包 · 蓝色：标记（悬浮查看详情）",14));
+        col.AddChild(Button("主线日志与路线提示（J）",ShowMainlineJournal));
     }
     private void ShowBeacon(Cell cell)
     {
-        int index=Array.FindIndex(Terrain.Towers,t=>Math.Abs(t.X-cell.X)<5&&Math.Abs(t.Z-cell.Z)<5);if(index<0)return;
+        if(Mainline.Enabled(world!.State)){ShowMainlineBeacon(cell);return;}
+        int index=Array.FindIndex(world.Terrain.TowerLocations,t=>Math.Abs(t.X-cell.X)<5&&Math.Abs(t.Z-cell.Z)<5);if(index<0)return;
         SetScreen("beacon");var col=Screen(overlay,$"古代灯塔 {index+1}");
         if(!world!.State.Beacons.Contains(index)){
             col.AddChild(Label("修复需要：灯塔符印 ×1、铁锭 ×2。",17));
@@ -188,7 +197,7 @@ public partial class Game
             col.AddChild(Label("区域线索：附近可找到遗迹和矿物；前往已激活灯塔消耗煤 ×1。",16));
             foreach(int destination in world.State.Beacons.Order())if(destination!=index){int target=destination;col.AddChild(Button("旅行至灯塔 "+(target+1),()=>{
                 if(creatures.Any(c=>c.IsThreat&&c.GlobalPosition.DistanceTo(player!.GlobalPosition)<12)){Toast("附近仍有敌人，无法旅行");return;}
-                if(!world.State.Creative&&!world.State.Inventory.Remove("coal",1)){Toast("缺少旅行燃料：煤 ×1");return;}var t=Terrain.Towers[target];player!.GlobalPosition=new(t.X+.5f,world.Terrain.Surface(t.X,t.Z)+1.1f,t.Z+2.5f);player.Velocity=Vector3.Zero;world.State.Position=[player.GlobalPosition.X,player.GlobalPosition.Y,player.GlobalPosition.Z];SetScreen("play");RequestSave();}));}
+                if(!world.State.Creative&&!world.State.Inventory.Remove("coal",1)){Toast("缺少旅行燃料：煤 ×1");return;}var t=world.Terrain.TowerLocations[target];player!.GlobalPosition=new(t.X+.5f,world.Terrain.Surface(t.X,t.Z)+1.1f,t.Z+2.5f);player.Velocity=Vector3.Zero;world.State.Position=[player.GlobalPosition.X,player.GlobalPosition.Y,player.GlobalPosition.Z];SetScreen("play");RequestSave();}));}
         }
         if(world.State.Beacons.Count==3&&world.State.GuardianDefeated)col.AddChild(Label("灯塔网络已恢复。你仍可自由探索与建造。",21));col.AddChild(Button("返回游戏",()=>SetScreen("play")));
     }
@@ -227,7 +236,7 @@ public partial class Game
     private void ShowHelp(string back)
     {
         SetScreen("help");var col=Screen(overlay,"生存手册");var scroll=Scroll(col,400);var list=Column(scroll);
-        foreach(string text in new[]{"WASD 移动，Space 跳跃；Shift 蹲伏防坠；Ctrl 疾跑。","鼠标左键挖掘或攻击；右键放置、进食或播种。1–9 / 滚轮选快捷栏。","E 打开背包；C 随身制作；Q 使用设施或回收附近背包；R 旋转建筑。","收集地面原木和碎石，制作石镐。原木可徒手获取，硬矿石需要工具。","木板用于工作台、木箱与营地；营火消耗木材烹饪，也提供 7 格安全区。","熔炉用煤冶炼铁。制作计时在返回游戏后推进，完成物品在设施容器中。","制作床设置复活点；夜间 Q 使用床可过夜。门占两格高度，Q 开关。","耕地可播种：胡萝卜 180 秒、小麦 270 秒、土豆 360 秒成熟；Q 收获并取得种子。","M 查看灯塔、背包和标记。灯塔用符印与铁修复；脱离敌人后可消耗煤旅行。","第三座灯塔附近有守护者；攻击前摇时撤开。晶矿装备与盾牌提高生存能力。",$"创造模式使用 E 的物品目录；{BoundKey("fly")} 开关飞行；Space 上升，Shift 下降。",$"{BoundKey("swap_hands")} 交换主副手；Shift 点击铁盔甲穿入空槽。按住右键面向敌人使用盾牌。","Esc 暂停。60 秒自动保存；手动保存、正常退出和重要进度也会保存。","水体为静态水，不支持水桶搬运或流动；世界有明确边界。","物品不足、空间被占用和工具等级不足会显示具体原因。保存失败不会显示成功。"})list.AddChild(Label(text,15));
+        foreach(string text in new[]{"WASD 移动，Space 跳跃；Shift 蹲伏防坠；Ctrl 疾跑。","鼠标左键挖掘或攻击；右键放置、进食或播种。1–9 / 滚轮选快捷栏。","E 打开背包；C 随身制作；Q 使用设施；掉落物靠近自动拾取；R 旋转建筑。","火把需放在地面或墙上才照明；深矿洞请携带足够火把。","收集地面原木和碎石，制作石镐。原木可徒手获取，硬矿石需要工具。","木板用于工作台、木箱与营地；营火消耗木材烹饪，也提供普通敌人的 7 格安全区；遗址精英和 Boss 会继续攻击。","熔炉用煤冶炼铁。制作计时在返回游戏后推进，完成物品在设施容器中。","制作床设置复活点；夜间 Q 使用床可过夜。门占两格高度，Q 开关。","耕地可播种：胡萝卜 180 秒、小麦 270 秒、土豆 360 秒成熟；Q 收获，接近掉落物取得作物与种子。","M 查看已探索地图；J 查看三塔归火日志、遗址线索和准备建议。","新世界依次修复寻路、校准、镇封三塔；旱地和雪岭远征顺序自选。击败晶穴守护者后进入地心遗址。",$"创造模式使用 E 的物品目录；{BoundKey("fly")} 开关飞行；Space 上升，Shift 下降。",$"{BoundKey("swap_hands")} 交换主副手；Shift 点击铁盔甲穿入空槽。按住右键面向敌人使用盾牌。","地心遗址有电桥、反射器和供能室三个节点。熔心巨像开战后，先关闭四个锚点，高处可射箭。重击后核心最脆弱。","校准台制作余烬合金与武器；工作台/校准台的装备维护可安装耐热衬片，或用修理包修复耐久。","Esc 暂停。60 秒自动保存；手动保存、正常退出和重要进度也会保存。","水桶可搬运静态水源，水体暂不流动；世界有明确边界。","物品不足、空间被占用和工具等级不足会显示具体原因。保存失败不会显示成功。"})list.AddChild(Label(text,15));
         if(world!=null){col.AddChild(Button("跳过新手引导",()=>{world.State.TutorialHidden=true;SetScreen("play");}));col.AddChild(Button("重新显示新手引导",()=>{tutorial=0;world.State.TutorialStep=0;world.State.TutorialHidden=false;SetScreen("play");}));}col.AddChild(Button("返回",()=>{if(back=="pause")ShowPause();else ShowMenu();}));
     }
     private void ShowCredits(string back)
@@ -273,3 +282,5 @@ public partial class Game
         }
     }
 }
+
+

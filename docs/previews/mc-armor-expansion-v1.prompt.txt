@@ -1,0 +1,24 @@
+Use case: infographic-diagram.
+Create a high-resolution portrait Chinese game design preview poster, approximately 2048 by 3072 pixels. Warm parchment, dark wooden pixel borders, two small hanging lanterns, crisp Minecraft-inspired voxel/pixel equipment icons, restrained decoration. The exact legible Simplified Chinese labels below are essential. This is a PROPOSED game expansion, not a screenshot of implemented features. Title "盔甲系统扩充预览". Subtitle "七种材质四件套 · 特殊装备 · 同伴护甲". Small clearly visible badge "设计稿 · 尚未实装".
+Main panel: table with seven rows and four equipment columns. Column headings "头盔" "胸甲" "护腿" "靴子"; row heading shows material name and short role. Each cell has its distinct large pixel icon and exact item name. Readable typography, never overlap.
+Rows:
+"皮革" / "入门防护 · 可染色": "皮革头盔", "皮革胸甲", "皮革护腿", "皮革靴子". Brown leather.
+"铜" / "前期矿物护甲": "铜头盔", "铜胸甲", "铜护腿", "铜靴子". Fresh orange copper, NOT oxidized.
+"锁链" / "探索战利品": "锁链头盔", "锁链胸甲", "锁链护腿", "锁链靴子". Gray mesh.
+"铁" / "已有四件 · 保留升级": "铁头盔", "铁胸甲", "铁护腿", "铁靴子". Silver.
+"金" / "低耐久 · 易附魔": "金头盔", "金胸甲", "金护腿", "金靴子". Gold.
+"钻石" / "高防护 · 护甲韧性": "钻石头盔", "钻石胸甲", "钻石护腿", "钻石靴子". Cyan diamond.
+"下界合金" / "终阶防护 · 抗击退": "下界合金头盔", "下界合金胸甲", "下界合金护腿", "下界合金靴子". Dark violet-gray metal.
+
+Next panel heading "特殊装备与同伴护甲". Nine compact cards in a 3-by-3 grid, each icon, name and short effect. Exact cards:
+"海龟壳" / "头部装备 · 延长潜水"
+"鞘翅" / "胸部装备 · 高处滑翔"
+"狼铠" / "保护驯服的狼"
+"皮革马铠" / "坐骑入门防护"
+"铜马铠" / "坐骑前期防护"
+"铁马铠" / "坐骑中期防护"
+"金马铠" / "坐骑金质护甲"
+"钻石马铠" / "坐骑高阶防护"
+"下界合金马铠" / "坐骑终阶防护"
+Wolf armor icon is fitted reddish scute covering for a voxel wolf, NOT a humanoid chestplate. Horse armor icons show side-profile fitted coverings or small horse wearing the material. Turtle shell is green helmet icon. Elytra is two violet-gray gliding wings. No duplicate/missing pieces.
+Footer text "系统功能：独立装备槽 · 混搭 · 耐久与修理 · 韧性与抗击退". Next small footer "外观与用途预览，配方和数值按本游戏适配". Overall beautiful readable catalog with sufficient room for ALL exact names. Exclude brand logos, numerical combat stats, promotional claims.

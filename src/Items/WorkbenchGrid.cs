@@ -15,6 +15,10 @@ public static class WorkbenchGrid
         else if(recipe.Id.EndsWith("_axe")){Fill(material,0,1,3);Fill("stick",4,7);}
         else if(recipe.Id.EndsWith("_sword")){Fill(material,1,4);Fill("stick",7);}
         else if(recipe.Id.EndsWith("_shovel")){Fill(material,1);Fill("stick",4,7);}
+        else if(recipe.Id.EndsWith("_helmet")){Fill(material,0,1,2,3,5);}
+        else if(recipe.Id.EndsWith("_chestplate")){Fill(material,0,2,3,4,5,6,7,8);}
+        else if(recipe.Id.EndsWith("_leggings")){Fill(material,0,1,2,3,5,6,8);}
+        else if(recipe.Id.EndsWith("_boots")){Fill(material,3,5,6,8);}
         else switch(recipe.Id){
             case "workbench":Fill("plank",0,1,3,4);break;
             case "furnace":Fill("stone",0,1,2,3,5,6,7,8);break;

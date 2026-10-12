@@ -24,6 +24,38 @@ if(args.Length>0&&args[0]=="fault-child"){
 var results=new List<object>();int failed=0;
 void Check(bool ok,string message){if(!ok)throw new Exception(message);}
 void Test(string name,Action run){var timer=Stopwatch.StartNew();try{run();Console.WriteLine($"PASS {name} ({timer.ElapsedMilliseconds}ms)");results.Add(new{name,pass=true,ms=timer.ElapsedMilliseconds});}catch(Exception e){failed++;Console.WriteLine($"FAIL {name}: {e}");results.Add(new{name,pass=false,error=e.Message});}}
+Test("map surface reflects high roofs, removed blocks, immutable snapshots and world bounds",()=>{
+    var w=new WorldState(catalog,new(){Seed=42});var p=new Cell(-17,150,-33);
+    byte[] Sample(IReadOnlyDictionary<Cell,ushort> edits,int x=-17,int z=-33)=>MapRaster.Render(w.Terrain,catalog,edits,x,z,1,1);
+    var original=Sample(w.CaptureRegion(p.X,p.Z,0));long version=w.EditVersion;
+    w.Set(p,catalog.Number("plank"));var snapshot=w.CaptureRegion(p.X,p.Z,0);var roof=Sample(snapshot);
+    Check(w.EditVersion>version&&!roof.SequenceEqual(original),"high roof or edit invalidation missing");
+    w.Set(p,0);Check(Sample(snapshot).SequenceEqual(roof)&&Sample(w.CaptureRegion(p.X,p.Z,0)).SequenceEqual(original),"worker snapshot changed or removed roof stays visible");
+    for(int y=191;y>=0;y--)if(w.Get(new(p.X,y,p.Z))!=0){w.Set(new(p.X,y,p.Z),catalog.Number("ruin_brick"));break;}
+    var modified=Sample(w.CaptureRegion(p.X,p.Z,0));Check(!modified.SequenceEqual(original),"edited ground ignored");
+    Check(Sample(new Dictionary<Cell,ushort>(),2048,2048).SequenceEqual(new byte[]{24,32,37,255}),"world exterior rendered as playable bedrock");
+    using var cancelled=new CancellationTokenSource();cancelled.Cancel();bool stopped=false;try{MapRaster.Render(w.Terrain,catalog,snapshot,0,0,1,128,cancelled.Token);}catch(OperationCanceledException){stopped=true;}Check(stopped,"closed map worker cannot cancel");
+});
+Test("map reveals travelled circles, hides unknown terrain and preserves immutable exploration",()=>{
+    var w=new WorldState(catalog,new());Check(!w.MapKnown(0,0),"new snapshot already explored");w.RevealMap(0,0);Check(w.MapKnown(0,0)&&w.MapKnown(-20,10)&&!w.MapKnown(39,39)&&!w.MapKnown(100,0),"square or worldwide reveal");
+    long version=w.ExplorationVersion;var copy=w.State.Copy();var mask=new HashSet<int>(copy.ExploredMap);w.RevealMap(80,0);Check(w.MapKnown(80,0)&&w.MapKnown(0,0)&&w.ExplorationVersion>version&&!MapExploration.Known(copy.ExploredMap,80,0),"movement loses visited area or mutates save copy");
+    var bytes=MapRaster.Render(w.Terrain,catalog,new Dictionary<Cell,ushort>(),80,0,1,1,explored:mask);Check(bytes.SequenceEqual(new byte[]{30,36,40,255}),"unknown terrain leaks through fog");
+    var restored=JsonSerializer.Deserialize<WorldSnapshot>(JsonSerializer.Serialize(w.State,Catalog.JsonOptions),Catalog.JsonOptions)!;var reloaded=new WorldState(catalog,restored);Check(reloaded.MapKnown(0,0)&&reloaded.MapKnown(80,0),"reload forgot exploration");
+    w.RevealMap(-2047,-2047);w.RevealMap(2047,2047);Check(w.State.ExploredMap.All(i=>i>=0&&i<MapExploration.Count)&&!w.MapKnown(2048,0),"boundary exploration escaped world");
+    restored.ExploredMap.Add(-1);bool invalid=false;try{new WorldState(catalog,restored);}catch(InvalidOperationException){invalid=true;}Check(invalid,"invalid exploration accepted");
+});
+Test("natural starter biome removes square seams and both generator versions retain safe objectives",()=>{
+    int oldSeams=0,newSeams=0;
+    for(int seed=0;seed<50;seed++){
+        var old=new Terrain(seed,catalog,1);var natural=new Terrain(seed,catalog,2);
+        for(int i=-47;i<=47;i++)foreach(var pair in new[]{(new Cell(47,0,i),new Cell(48,0,i)),(new Cell(-47,0,i),new Cell(-48,0,i)),(new Cell(i,0,47),new Cell(i,0,48)),(new Cell(i,0,-47),new Cell(i,0,-48))}){
+            if(old.Biome(pair.Item1.X,pair.Item1.Z)!=old.Biome(pair.Item2.X,pair.Item2.Z))oldSeams++;
+            if(natural.Biome(pair.Item1.X,pair.Item1.Z)!=natural.Biome(pair.Item2.X,pair.Item2.Z))newSeams++;
+        }
+        foreach(var terrain in new[]{old,natural}){Check(terrain.Surface(0,0)==36&&catalog.Id(terrain.Get(new(34,38,26)))=="chest","starter floor/cache changed");foreach(var t in Terrain.Towers)Check(catalog.Id(terrain.Get(new(t.X,terrain.Surface(t.X,t.Z)+1,t.Z)))=="beacon","missing tower");}
+    }
+    Check(oldSeams>1000&&newSeams<oldSeams*.35,$"square edge remains: old {oldSeams} / new {newSeams}");
+});
 Test("shaped workbench consumes each occupied cell and accepts mirrors and translations",()=>{
     foreach(var recipe in catalog.Recipes.Values.Where(r=>r.Station is "hand" or "workbench"&&r.Seconds==0)){
         var grid=new Inventory(9);var input=new Inventory();foreach(var p in recipe.Inputs)input.Add(p.Key,p.Value*2,catalog);
@@ -66,7 +98,7 @@ Test("busy facilities cannot be dismantled before output is safely removed",()=>
 Test("negative coordinates and chunk edges",()=>{
     for(int x=-65;x<=65;x++)for(int y=0;y<192;y+=7)for(int z=-33;z<33;z+=3){var p=new Cell(x,y,z);var c=Coordinates.Chunk(p);var o=Coordinates.Origin(c);int index=Coordinates.Index(p);Check(o.X+index%16==x&&o.Z+index/16%16==z&&o.Y+index/256==y,"coordinate roundtrip");}
 });
-Test("content identities and recipes",()=>{Check(catalog.Items.Count==94,"90 original items + 4 armor pieces");Check(catalog.BlockIds.Length==49,"48 blocks + air");Check(catalog.Recipes.Count==64,"60 original recipes + 4 armor recipes");foreach(var id in catalog.BlockIds)Check(catalog.Id(catalog.Number(id))==id,"stable ID");});
+Test("content identities and recipes",()=>{Check(catalog.Items.Count==206,"206 items including approved expansion");Check(catalog.BlockIds.Length==79,"78 blocks + air");Check(catalog.Recipes.Count==137,"137 recipes");foreach(var id in catalog.BlockIds)Check(catalog.Id(catalog.Number(id))==id,"stable ID");});
 Test("combat shape checks follow doors, stairs, slabs and fences",()=>{
     var world=new WorldState(catalog,new(){Creative=true});var p=new Cell(300,80,300);
     Check(world.Place(p,"door",false,out _),"door setup");
@@ -117,9 +149,9 @@ Test("guardian spawn clearance, defeat and empty reload persist",()=>{
     var old=JsonSerializer.Deserialize<WorldSnapshot>("{\"GuardianDefeated\":true}",Catalog.JsonOptions)!;var legacy=new WorldState(catalog,old);CreaturePopulation.Initialize(legacy,creatureDefs);Check(old.Creatures.All(c=>c.Kind!="guardian"),"legacy defeat lost");
 });
 Test("regional population obeys time, readiness, safe camps and cap",()=>{
-    var state=new WorldSnapshot();var world=new WorldState(catalog,state);CreaturePopulation.Initialize(world,creatureDefs);
+    var state=new WorldSnapshot{GeneratorVersion=3};var world=new WorldState(catalog,state);CreaturePopulation.Initialize(world,creatureDefs);
     Check(CreaturePopulation.KindAt(world,new(0,37,0),0)=="deer","day starter wildlife");state.Time=900;Check(CreaturePopulation.KindAt(world,new(0,37,0),0)=="husk","night population");
-    Check(CreaturePopulation.KindAt(world,new(0,10,0),0)=="skitter","cave population");var tower=Terrain.Towers[0];Check(CreaturePopulation.KindAt(world,new(tower.X+2,world.Terrain.Surface(tower.X,tower.Z)+1,tower.Z),1)=="sentinel","ruin population");
+    Check(CreaturePopulation.KindAt(world,new(0,10,0),0)=="skitter","cave population");var tower=world.Terrain.TowerLocations[0];Check(CreaturePopulation.KindAt(world,new(tower.X+2,world.Terrain.Surface(tower.X,tower.Z)+1,tower.Z),1)=="sentinel","ruin population");
     int before=state.Creatures.Count;state.Population.NextSpawnTime=state.Time+12;Check(CreaturePopulation.Tick(world,creatureDefs,new(0,37,0),_=>true).Added.Count==0&&state.Creatures.Count==before,"spawn advanced without world time");
     world.Advance(12);Check(CreaturePopulation.Tick(world,creatureDefs,new(0,37,0),_=>false).Added.Count==0&&state.Creatures.Count==before,"unloaded terrain populated");
     var p=new Cell(600,80,600);world.Set(p,0);world.Set(p+new Cell(0,1,0),0);world.Set(p+new Cell(0,-1,0),catalog.Number("stone"));Check(CreaturePopulation.CanStand(world,p),"clear standing space");world.Set(p,catalog.Number("water"));Check(!CreaturePopulation.CanStand(world,p),"spawn in water");world.Set(p,0);state.Entities[p.ToString()]=new(){Kind="campfire"};Check(CreaturePopulation.SafeCamp(world,p)&&!CreaturePopulation.SafeCamp(world,p+new Cell(8,0,0)),"camp safety range");
@@ -127,18 +159,51 @@ Test("regional population obeys time, readiness, safe camps and cap",()=>{
     var clone=state.Copy();var loaded=new WorldState(catalog,clone);world.Advance(12);loaded.Advance(12);CreaturePopulation.Tick(world,creatureDefs,new(0,37,0),_=>true);CreaturePopulation.Tick(loaded,creatureDefs,new(0,37,0),_=>true);Check(JsonSerializer.Serialize(state.Creatures)==JsonSerializer.Serialize(clone.Creatures)&&state.Population.Sequence==clone.Population.Sequence,"reload changed next population decision");
     var boss=state.Creatures.Single(c=>c.Kind=="guardian");world.Advance(12);var retired=CreaturePopulation.Tick(world,creatureDefs,new(900,37,900),_=>false);Check(retired.Removed.Count>0&&state.Creatures.Contains(boss)&&state.Creatures.Count==1,"distant wildlife or guardian retirement");
 });
+Test("daylight is dark at night and continuous through dawn and dusk",()=>{
+    Check(DayCycle.Daylight(300)==1&&DayCycle.Daylight(900)==0,"no midday/midnight contrast");
+    foreach(double boundary in new[]{0d,600d,1200d})Check(Math.Abs(DayCycle.Daylight(boundary-.01)-DayCycle.Daylight(boundary+.01))<.001,"day boundary flashes");
+    double previous=DayCycle.Daylight(540);for(double time=541;time<=650;time++){double next=DayCycle.Daylight(time);Check(next<=previous&&Math.Abs(next-previous)<.03,"abrupt sunset");previous=next;}
+    Check(DayCycle.Twilight(600)>DayCycle.Twilight(300),"sunset color absent");
+});
+Test("day lasts ten minutes, night five and time partitions preserve sunrise",()=>{
+    Check(DayCycle.Advance(0,600)==600&&DayCycle.Advance(600,299.9)<1200&&DayCycle.Advance(600,300)==1200,"day/night durations");
+    Check(!DayCycle.Night(DayCycle.Advance(600,300))&&DayCycle.Advance(0,900)==1200&&DayCycle.Advance(0,2700)==3600,"cycle failed to return to day");
+    foreach(double start in new[]{0d,599.9,900,1199.9,1000000}){double split=start;for(int i=0;i<9000;i++)split=DayCycle.Advance(split,.1);Check(Math.Abs(split-DayCycle.Advance(start,900))<.0001,"frame partition changed dawn");}
+    var legacy=new WorldSnapshot{Time=1057.81};var w=new WorldState(catalog,legacy);w.Advance(70);Check(legacy.Time==1127.81&&DayCycle.Night(legacy.SkyTime),"legacy phase reset or real simulation doubled");
+    w.Advance(2);Check(!DayCycle.Night(legacy.SkyTime),"legacy night never ended");
+    var store=new SaveStore(Path.Combine(root,"test-results","solar-save"),catalog);store.Save(legacy);var loaded=store.Load(legacy.WorldId).Snapshot;Check(loaded.DayTime==legacy.DayTime&&loaded.Time==legacy.Time,"save reset solar phase");
+    var restored=new WorldState(catalog,loaded);w.Advance(901);restored.Advance(901);Check(loaded.SkyTime==legacy.SkyTime,"reload changed cycle");
+});
+Test("wooden tools establish mining progression and tools wear without repairing on transfer",()=>{
+    var stone=catalog.Items["stone"];var wood=catalog.Items["wood_pick"];var pick=catalog.Items["stone_pick"];var iron=catalog.Items["iron_pick"];
+    Check(MiningRules.Seconds(stone,null)==8&&Math.Abs(MiningRules.Seconds(stone,wood)-1.2)<.001&&Math.Abs(MiningRules.Seconds(stone,pick)-.6)<.001,"stone mining speed");
+    Check(!MiningRules.CanHarvest(stone,null)&&MiningRules.CanHarvest(stone,wood)&&!MiningRules.CanHarvest(catalog.Items["iron_ore"],wood)&&MiningRules.CanHarvest(catalog.Items["iron_ore"],pick)&&!MiningRules.CanHarvest(catalog.Items["crystal_ore"],pick)&&MiningRules.CanHarvest(catalog.Items["crystal_ore"],iron),"pick tiers");
+    Check(!MiningRules.CanHarvest(stone,catalog.Items["iron_axe"])&&MiningRules.Seconds(catalog.Items["wood"],catalog.Items["wood_axe"])<MiningRules.Seconds(catalog.Items["wood"],wood),"wrong tool bypassed requirement");
+    var inv=new Inventory();inv.Add("plank",3,catalog);inv.Add("stick",2,catalog);Check(inv.Craft(catalog.Recipes["wood_pick"],catalog,out _)&&inv.Count("wood_pick")==1&&inv.Count("plank")==0&&inv.Count("stick")==0,"wood recipe inaccessible");
+    int slot=Array.FindIndex(inv.Slots,s=>s?.Id=="wood_pick");ToolUse.Wear(inv,slot,catalog,false);Check(inv.Slots[slot]!.Durability==59,"legacy null durability did not initialize on first use");
+    var destination=new Inventory();Inventory.Move(inv,slot,destination,0,1,catalog);destination.Sort(catalog);Check(destination.Slots[0]!.Durability==59,"transfer repaired tool");
+    ToolUse.Wear(destination,0,catalog,true,1000);Check(destination.Slots[0]!.Durability==59,"creative wore tool");Check(ToolUse.Wear(destination,0,catalog,false,59)&&destination.Slots[0]==null,"exhausted tool survived");
+    var state=new WorldSnapshot();state.Inventory.Slots[0]=new("iron_pick",1,17);state.Equipment.Slots[4]=new("shield",1,29);var store=new SaveStore(Path.Combine(root,"test-results","tool-wear-save"),catalog);store.Save(state);var loaded=store.Load(state.WorldId).Snapshot;
+    Check(loaded.Inventory.Slots[0]!.Durability==17&&loaded.Equipment.Slots[4]!.Durability==29,"reload repaired tools");
+});
+Test("duplicate world names retain separate metadata and valid save dates",()=>{
+    var store=new SaveStore(Path.Combine(root,"test-results","world-cards-"+Guid.NewGuid().ToString("N")),catalog);
+    var first=new WorldSnapshot{Name="我的营地",Seed=42,Time=900,Position=[12,40,-4]};var second=new WorldSnapshot{Name="我的营地",Seed=73,Creative=true};store.Save(first);store.Save(second);
+    var list=store.ListDetails().ToArray();Check(list.Length==2&&list.Select(e=>e.Id).Distinct().Count()==2,"same-name worlds collapsed");
+    var entry=list.Single(e=>e.Id==first.WorldId);Check(entry.Seed==42&&entry.Time==900&&entry.Position[0]==12&&entry.SavedUtc.HasValue&&!entry.Damaged,"wrong save card metadata");Check(list.Single(e=>e.Id==second.WorldId).Creative,"world mode lost");
+});
 Test("night and cave spawning occur, camps block candidates and saved sequence continues",()=>{
-    var state=new WorldSnapshot{Time=900,GuardianDefeated=true,Population=new(){Initialized=true}};var world=new WorldState(catalog,state);
+    var state=new WorldSnapshot{GeneratorVersion=3,Time=900,GuardianDefeated=true,Population=new(){Initialized=true}};var world=new WorldState(catalog,state);
     int added=0;for(int i=0;i<8;i++){world.Advance(12);added+=CreaturePopulation.Tick(world,creatureDefs,new(0,37,0),_=>true).Added.Count;}
-    Check(added>0&&state.Creatures.Any(c=>c.Kind=="husk"),"night population never appeared");
+    Check(added>0&&state.Creatures.Any(c=>c.Kind=="husk"),"night population never appeared");Check(state.Population.NextSpawnTime==state.Time+6,"night cadence unchanged");
     string storeRoot=Path.Combine(root,"test-results","population-save");var store=new SaveStore(storeRoot,catalog);store.Save(state);var restored=store.Load(state.WorldId).Snapshot;
     Check(restored.Population.Initialized&&restored.Population.Sequence==state.Population.Sequence&&restored.Population.NextSpawnTime==state.Population.NextSpawnTime,"save store lost population progress");
     var loaded=new WorldState(catalog,restored);world.Advance(12);loaded.Advance(12);CreaturePopulation.Tick(world,creatureDefs,new(0,37,0),_=>true);CreaturePopulation.Tick(loaded,creatureDefs,new(0,37,0),_=>true);Check(JsonSerializer.Serialize(state.Creatures)==JsonSerializer.Serialize(restored.Creatures),"disk reload changed next spawns");
-    var caveState=new WorldSnapshot{GuardianDefeated=true,Population=new(){Initialized=true}};var cave=new WorldState(catalog,caveState);
+    var caveState=new WorldSnapshot{GeneratorVersion=3,GuardianDefeated=true,Population=new(){Initialized=true}};var cave=new WorldState(catalog,caveState);
     for(int x=-44;x<=44;x++)for(int z=-44;z<=44;z++){cave.Set(new(x,19,z),catalog.Number("stone"));cave.Set(new(x,20,z),0);cave.Set(new(x,21,z),0);}
     added=0;for(int i=0;i<8;i++){cave.Advance(12);var change=CreaturePopulation.Tick(cave,creatureDefs,new(0,20,0),_=>true);Check(change.Added.All(c=>c.Kind=="skitter"),"wrong cave creature");added+=change.Added.Count;}
     Check(added>0,"cave population never appeared");
-    var baseline=new WorldSnapshot{Creative=true,GuardianDefeated=true,Population=new(){Initialized=true}};var open=new WorldState(catalog,baseline);var before=baseline.Copy();var candidates=CreaturePopulation.Tick(open,creatureDefs,new(0,37,0),_=>true);Check(candidates.Added.Count>0,"baseline candidate absent");
+    var baseline=new WorldSnapshot{GeneratorVersion=3,Creative=true,GuardianDefeated=true,Population=new(){Initialized=true}};var open=new WorldState(catalog,baseline);var before=baseline.Copy();var candidates=CreaturePopulation.Tick(open,creatureDefs,new(0,37,0),_=>true);Check(candidates.Added.Count>0,"baseline candidate absent");
     var first=candidates.Added[0];var p=new Cell((int)Math.Floor(first.Position[0]),(int)Math.Floor(first.Position[1]),(int)Math.Floor(first.Position[2]));var camp=new WorldState(catalog,before);
     Check(camp.Place(p,"campfire",false,out _),"campfire fixture placement");var blocked=CreaturePopulation.Tick(camp,creatureDefs,new(0,37,0),_=>true);
     Check(blocked.Added.All(c=>!CreaturePopulation.SafeCamp(camp,new((int)Math.Floor(c.Position[0]),(int)Math.Floor(c.Position[1]),(int)Math.Floor(c.Position[2])))),"camp did not block actual candidates");
@@ -193,11 +258,11 @@ Test("crop cycles, old saves, reload and atomic harvest",()=>{
     var restored=JsonSerializer.Deserialize<WorldSnapshot>(JsonSerializer.Serialize(clone,Catalog.JsonOptions),Catalog.JsonOptions)!;var loaded=new WorldState(catalog,restored);
     w.Advance(90);loaded.Advance(90);Check(restored.Entities[positions[1].ToString()].Stage==3&&restored.Entities[positions[2].ToString()].Stage==2,"reload lost elapsed growth");
     Check(JsonSerializer.Serialize(state.Entities)==JsonSerializer.Serialize(restored.Entities),"reload changed crop stages");
-    restored.Inventory=new(1);restored.Inventory.Add("stone",64,catalog);string before=JsonSerializer.Serialize(restored);
-    Check(!loaded.Harvest(positions[0],out _)&&JsonSerializer.Serialize(restored)==before,"full harvest changed state");
-    restored.Inventory=new(1);restored.Inventory.Add("carrot",61,catalog);before=JsonSerializer.Serialize(restored);
-    Check(!loaded.Harvest(positions[0],out _)&&JsonSerializer.Serialize(restored)==before,"seed overflow committed produce");
-    restored.Inventory=new();Check(loaded.Harvest(positions[0],out _)&&restored.Inventory.Count("carrot")==3&&restored.Inventory.Count("carrot_seed")==2&&loaded.Get(positions[0])==0,"harvest counts");
+    restored.Inventory=new();for(int i=0;i<36;i++)restored.Inventory.Slots[i]=new("stone",64);string before=JsonSerializer.Serialize(restored);
+    Check(loaded.Harvest(positions[0],out _)&&restored.Inventory.Count("stone")==36*64&&restored.Graves.Sum(g=>g.Items.Count("carrot"))==3&&loaded.Get(positions[0])==0,"full harvest lost ground drops");
+    loaded.Advance(.5);var at=positions[0];Check(loaded.PickTouchingItems([at.X+.5,at.Y,at.Z+.5])==0,"full backpack collected items");
+    restored.Inventory=new(1);restored.Inventory.Add("carrot",61,catalog);Check(loaded.PickTouchingItems([at.X+.5,at.Y,at.Z+.5])==3&&restored.Graves.Sum(g=>g.Items.Count("carrot_seed"))==2,"seed overflow lost items");
+    var partial=restored.Inventory.Slots[0]!.Copy();restored.Inventory=new();restored.Inventory.Slots[0]=partial;Check(loaded.PickTouchingItems([at.X+.5,at.Y,at.Z+.5])==2&&restored.Inventory.Count("carrot")==64&&restored.Inventory.Count("carrot_seed")==2,"ground harvest conservation");
     Check(!loaded.Harvest(positions[0],out _),"harvest duplicated items");loaded.Advance(90);Check(restored.Entities[positions[2].ToString()].Stage==3,"potato never ripe");
     foreach(double invalid in new[]{double.NaN,double.PositiveInfinity,-1}){before=JsonSerializer.Serialize(restored);bool rejected=false;try{loaded.Advance(invalid);}catch(ArgumentOutOfRangeException){rejected=true;}Check(rejected&&JsonSerializer.Serialize(restored)==before,"invalid time mutated world");}
     var legacy=JsonSerializer.Deserialize<BlockEntity>("{\"Kind\":\"crop\",\"CropId\":\"carrot_seed\",\"LastTime\":0}",Catalog.JsonOptions)!;
@@ -228,8 +293,9 @@ Test("weather timeline, climate and save continuation",()=>{
 });
 Test("recipe and station progression has no circular resource lock",()=>{
     var obtainable=new HashSet<string>{"wood","stone","berry","leaves","dirt","sand","snow","clay","gravel","ice","cactus","moss","meat","leather","grain","carrot","potato","copper_ore"};
+    obtainable.UnionWith(["brown_mushroom","red_mushroom","red_flower","blue_flower","reed","sugar_cane","pumpkin_seed","melon_seed","apple","bone","feather","string","gunpowder","ink_sac","raw_cod","egg","turtle_scute","armadillo_scute","wool"]);
     var unlocked=new HashSet<string>();bool changed=true;
-    while(changed){changed=false;if(obtainable.Contains("stone_pick")){changed|=obtainable.Add("raw_iron");changed|=obtainable.Add("coal");changed|=obtainable.Add("basalt");}if(obtainable.Contains("iron_pick"))changed|=obtainable.Add("crystal");
+    while(changed){changed=false;if(obtainable.Contains("stone_pick")){changed|=obtainable.Add("raw_iron");changed|=obtainable.Add("coal");changed|=obtainable.Add("basalt");}if(obtainable.Contains("iron_pick")){changed|=obtainable.Add("crystal");changed|=obtainable.Add("gold_ore");}if(obtainable.Contains("glass_bottle"))changed|=obtainable.Add("water_bottle");if(obtainable.Contains("pumpkin_seed"))changed|=obtainable.Add("pumpkin");if(obtainable.Contains("melon_seed"))changed|=obtainable.Add("melon");
         foreach(var recipe in catalog.Recipes.Values)if(!unlocked.Contains(recipe.Id)&&(recipe.Station=="hand"||obtainable.Contains(recipe.Station))&&recipe.Inputs.Keys.All(obtainable.Contains)){unlocked.Add(recipe.Id);obtainable.Add(recipe.Output);changed=true;}
     }
     Check(unlocked.Count==catalog.Recipes.Count,"unreachable recipes: "+string.Join(",",catalog.Recipes.Keys.Except(unlocked)));
@@ -239,11 +305,21 @@ Test("100 seeds deterministic terrain and guaranteed objectives",()=>{
     for(int seed=0;seed<100;seed++){
         var a=new Terrain(seed,catalog);var b=new Terrain(seed,catalog);
         Check(a.Surface(0,0)==36&&a.Get(new(0,36,0))!=0,"spawn floor");
-        for(int x=2;x<=7;x++)Check(catalog.Id(a.Get(new(x,37,4)))=="loose_stone","guaranteed starter stone");
-        for(int x=-7;x<=-2;x++)Check(catalog.Id(a.Get(new(x,37,4)))=="wood","guaranteed starter wood");
-        Check(catalog.Id(a.Get(new(34,38,26)))=="chest","guaranteed starter ruin chest");
+        Check(a.StarterResources.Values.Count(id=>id=="loose_stone")==6,"guaranteed scattered stone");
+        Check(a.StarterResources.Values.Count(id=>id=="wood")==6&&a.StarterResources.All(e=>catalog.Id(a.Get(new(e.Key.X,a.Surface(e.Key.X,e.Key.Z)+1,e.Key.Z)))==e.Value),"guaranteed scattered supplies");
+        Check(catalog.Id(a.Get(new(34,38,26)))!="chest","unrequested starter chest");
         for(int i=0;i<300;i++){var p=new Cell(i*13%100-50,i%70,i*7%100-50);Check(a.Get(p)==b.Get(p),"determinism");}
-        foreach(var t in Terrain.Towers){int y=a.Surface(t.X,t.Z);Check(catalog.Id(a.Get(new(t.X,y+1,t.Z)))=="beacon","guaranteed beacon");Check(a.Get(new(t.X,y+1,t.Z+4))==0,"accessible tower doorway");}
+        foreach(var t in a.TowerLocations){int y=a.Surface(t.X,t.Z);Check(catalog.Id(a.Get(new(t.X,y+1,t.Z)))=="beacon","guaranteed beacon");Check(a.Get(new(t.X,y+1,t.Z+4))==0,"accessible tower doorway");}
+    }
+});
+Test("random seeds vary terrain and reload reproduces each generated world",()=>{
+    var signatures=new HashSet<string>();int? previous=null;
+    for(int i=0;i<12;i++){
+        int seed=WorldSeeds.Random(previous);Check(seed!=previous,"random seed immediately repeated");previous=seed;var terrain=new Terrain(seed,catalog);var samples=new List<int>();
+        for(int x=-192;x<=192;x+=24)for(int z=-192;z<=192;z+=24){samples.Add(terrain.Surface(x,z));samples.Add(terrain.Biome(x,z));}
+        Check(signatures.Add(string.Join(",",samples)),"different random seeds produced identical sampled terrain");
+        var state=new WorldSnapshot{Seed=seed};var restored=JsonSerializer.Deserialize<WorldSnapshot>(JsonSerializer.Serialize(state,Catalog.JsonOptions),Catalog.JsonOptions)!;var copy=new WorldState(catalog,restored);
+        Check(copy.State.Seed==seed&&copy.Terrain.Generate(new(3,0,3)).SequenceEqual(terrain.Generate(new(3,0,3))),"stored seed changed generated blocks");
     }
 });
 Test("greedy faces, neighbor halo and partial collision",()=>{
@@ -257,14 +333,14 @@ Test("timed furnace completion is atomic under full storage",()=>{
     var state=new WorldSnapshot();var e=new BlockEntity{Kind="furnace",Storage=new Inventory(1),RecipeId="iron_ingot",FinishTime=250};e.Storage.Add("iron_ingot",63,catalog);state.Entities["1,80,1"]=e;var w=new WorldState(catalog,state);w.Advance(20);Check(e.Storage.Count("iron_ingot")==63&&e.RecipeId!=null,"partial output duplicated");e.Storage.Remove("iron_ingot",1);w.Advance(1);Check(e.Storage.Count("iron_ingot")==64&&e.RecipeId==null,"completion failed");
 });
 Test("loose wood lies on terrain and does not turn placed timber into logs",()=>{
-    var w=new WorldState(catalog,new());var p=new Cell(-3,37,4);Check(w.Terrain.IsLooseWood(p)&&catalog.Id(w.Get(p))=="wood"&&!w.Solid(p),"starter log classification");
+    var w=new WorldState(catalog,new(){GeneratorVersion=4});var p=new Cell(-3,37,4);Check(w.Terrain.IsLooseWood(p)&&catalog.Id(w.Get(p))=="wood"&&!w.Solid(p),"starter log classification");
     var mesh=VoxelMesher.Build(c=>c==new Cell(0,0,0)?catalog.Number("wood"):(ushort)0,new(0,0,0),catalog,groundLog:c=>c==new Cell(0,0,0));Check(mesh.Vertices.Max(v=>v.Y)<=.31f&&mesh.Collision.Count==0,"ground wood still full cube");
     w.Set(new(0,50,0),catalog.Number("wood"));Check(w.Solid(new(0,50,0))&&!w.Terrain.IsLooseWood(new(0,50,0)),"placed wood changed shape");Check(!w.Terrain.IsLooseWood(new(-3,38,4)),"suspended log classification");
-    Check(w.Break(p,0,out _)&&w.Place(p,"wood",false,out _)&&w.Solid(p)&&w.State.Entities[p.ToString()].Kind=="wood","wood placed at starter position became decorative log");Check(new WorldState(catalog,w.State.Copy()).Solid(p),"placed starter-position wood changed shape after reload");
+    w.State.Inventory.Add("wood",1,catalog);Check(w.Break(p,0,out _)&&w.Place(p,"wood",false,out _)&&w.Solid(p)&&w.State.Entities[p.ToString()].Kind=="wood","wood placed at starter position became decorative log");Check(new WorldState(catalog,w.State.Copy()).Solid(p),"placed starter-position wood changed shape after reload");
 });
 Test("crop appearance revisions and breaking returns seeds",()=>{
     var state=new WorldSnapshot();var w=new WorldState(catalog,state);var p=new Cell(4,70,4);w.Set(p,catalog.Number("berry_bush"));state.Entities[p.ToString()]=new(){Kind="crop",CropId="carrot_seed",LastTime=state.Time};int revision=w.Revision(Coordinates.Chunk(p));w.Advance(100);
-    Check(state.Entities[p.ToString()].Stage==1&&w.Revision(Coordinates.Chunk(p))>revision,"growth did not invalidate mesh");Check(w.Break(p,0,out _)&&state.Inventory.Count("carrot_seed")==1&&state.Inventory.Count("berry")==0,"breaking crop produced berries");
+    Check(state.Entities[p.ToString()].Stage==1&&w.Revision(Coordinates.Chunk(p))>revision,"growth did not invalidate mesh");Check(w.Break(p,0,out _)&&state.Graves.Sum(g=>g.Items.Count("carrot_seed"))==1&&state.Inventory.Count("carrot_seed")==0&&state.Inventory.Count("berry")==0,"breaking crop produced berries");
     var bush=VoxelMesher.Build(c=>c==new Cell(0,0,0)?catalog.Number("berry_bush"):(ushort)0,new(0,0,0),catalog);Check(bush.Vertices.Count==0&&bush.PlantVertices.Count==8&&bush.PlantIndices.Count==12&&bush.Collision.Count==0,"bush is still a box");
 });
 Test("inventory transactions and randomized conservation",()=>{
@@ -288,7 +364,7 @@ Test("Minecraft left/right clicks conserve items and split correctly",()=>{
 Test("cross-boundary revisions and block transaction",()=>{
     var s=new WorldSnapshot();s.Inventory.Add("plank",2,catalog);var w=new WorldState(catalog,s);var p=new Cell(-1,80,15);
     Check(w.Place(p,"plank",false,out _),"place failed");Check(w.Revision(new(-1,2,0))>0&&w.Revision(new(0,2,0))>0&&w.Revision(new(-1,2,1))>0,"neighbor revision");
-    Check(!w.Place(p,"plank",false,out _)&&s.Inventory.Count("plank")==1,"duplicate placement");Check(w.Break(p,1,out _)&&s.Inventory.Count("plank")==2,"break conservation");
+    Check(!w.Place(p,"plank",false,out _)&&s.Inventory.Count("plank")==1,"duplicate placement");Check(w.Break(p,1,out _)&&s.Inventory.Count("plank")==1&&s.Graves.Sum(g=>g.Items.Count("plank"))==1,"break conservation");
 });
 Test("chunk-scoped edit snapshots keep halo, isolate changes and remove reverted cells",()=>{
     var w=new WorldState(catalog,new());Cell[] near=[new(-1,64,-1),new(0,65,0),new(16,65,16),new(-16,63,0)];foreach(var p in near)w.Set(p,catalog.Number("plank"));var far=new Cell(1000,100,-900);w.Set(far,catalog.Number("brick"));
@@ -308,16 +384,25 @@ Test("two-cell doors and crops reject invalid placement without item loss",()=>{
     Check(w.Place(p,"door",false,out _,2)&&state.Inventory.Count("door")==2&&w.DoorPartner(p)==upper&&w.DoorPartner(upper)==p&&state.Entities[upper.ToString()].Rotation==2,"cross-boundary door incomplete");
     var loaded=new WorldState(catalog,state.Copy());Check(loaded.DoorPartner(upper)==p,"door pair lost in snapshot");
     state.Inventory=new();for(int i=0;i<state.Inventory.Slots.Length;i++)state.Inventory.Slots[i]=new("stone",catalog.Items["stone"].Stack);
-    Check(!w.Break(upper,0,out _)&&w.Get(p)==catalog.Number("door")&&w.Get(upper)==catalog.Number("door")&&state.Entities.ContainsKey(p.ToString()),"full inventory destroyed door");
-    state.Inventory=new();Check(w.Break(upper,0,out _)&&state.Inventory.Count("door")==1&&w.Get(p)==0&&w.Get(upper)==0&&!state.Entities.ContainsKey(p.ToString())&&!state.Entities.ContainsKey(upper.ToString()),"door break duplicated item or left half");
+    Check(w.Break(upper,0,out _)&&w.Get(p)==0&&w.Get(upper)==0&&state.Graves.Sum(g=>g.Items.Count("door"))==1&&state.Inventory.Count("stone")==36*64,"full backpack lost door drop");
+    state.Inventory=new();w.Advance(.5);Check(w.PickTouchingItems([upper.X+.5,upper.Y,upper.Z+.5])==1&&state.Inventory.Count("door")==1&&!state.Entities.ContainsKey(p.ToString())&&!state.Entities.ContainsKey(upper.ToString()),"door drop duplicated item or left half");
     state.Inventory.Add("wheat_seed",2,catalog);w.Set(top,catalog.Number("farmland"));Check(!w.Plant(top,"wheat_seed",out _)&&state.Inventory.Count("wheat_seed")==2,"top crop consumed seed");
     var ground=new Cell(15,31,15);var crop=ground+new Cell(0,1,0);w.Set(ground,catalog.Number("farmland"));w.Set(crop,catalog.Number("stone"));Check(!w.Plant(ground,"wheat_seed",out _)&&state.Inventory.Count("wheat_seed")==2,"blocked crop consumed seed");
-    w.Set(crop,0);Check(w.Plant(ground,"wheat_seed",out _)&&state.Inventory.Count("wheat_seed")==1&&state.Entities[crop.ToString()].CropId=="wheat_seed","valid planting failed");Check(w.Break(crop,0,out _)&&state.Inventory.Count("wheat_seed")==2,"crop break lost seed");
+    w.Set(crop,0);Check(w.Plant(ground,"wheat_seed",out _)&&state.Inventory.Count("wheat_seed")==1&&state.Entities[crop.ToString()].CropId=="wheat_seed","valid planting failed");Check(w.Break(crop,0,out _)&&state.Inventory.Count("wheat_seed")==1&&state.Graves.Sum(g=>g.Items.Count("wheat_seed"))==1,"crop break lost seed");
 });
 Test("multiple death backpacks persist",()=>{
     var s=new WorldSnapshot();var w=new WorldState(catalog,s);s.Inventory.Add("stone",12,catalog);w.Die();s.Inventory.Add("wood",5,catalog);w.Die();Check(s.Graves.Count==2&&s.Graves[0].Items.Count("stone")==12&&s.Graves[1].Items.Count("wood")==5,"previous grave deleted");
 });
 string testRoot=Path.Combine(root,"test-results","saves-"+Guid.NewGuid().ToString("N"));
+Test("published generator1 world retains terrain, edited chunks and exploration through save and backup",()=>{
+    string fixture=Path.Combine(root,"tests/fixtures/published-format3/worlds"),target=Path.Combine(testRoot,"published-generator1/worlds");
+    foreach(string file in Directory.GetFiles(fixture,"*",SearchOption.AllDirectories)){string output=Path.Combine(target,Path.GetRelativePath(fixture,file));Directory.CreateDirectory(Path.GetDirectoryName(output)!);File.Copy(file,output);}
+    var store=new SaveStore(target,catalog);string id=Directory.GetDirectories(target).Select(Path.GetFileName).Single()!;var loaded=store.Load(id);Check(loaded.Snapshot.GeneratorVersion==1&&loaded.Snapshot.ExploredMap.Count==0,"published save changed generation or fabricated exploration");
+    var world=new WorldState(catalog,loaded.Snapshot);var edits=world.State.Changes.ToDictionary(p=>p.Key,p=>world.Get(Cell.Parse(p.Key)));int[] surface=Enumerable.Range(-60,120).Select(x=>world.Terrain.Surface(x,44)).ToArray();world.RevealMap(world.State.Position[0],world.State.Position[2]);store.Save(world.State);
+    var reloaded=new WorldState(catalog,store.Load(id).Snapshot);Check(reloaded.Terrain.GeneratorVersion==1&&surface.SequenceEqual(Enumerable.Range(-60,120).Select(x=>reloaded.Terrain.Surface(x,44)))&&edits.All(p=>reloaded.Get(Cell.Parse(p.Key))==p.Value)&&reloaded.State.ExploredMap.SetEquals(world.State.ExploredMap),"legacy terrain/edits/exploration changed");
+    string backup=store.Backup(id);var entry=store.ListBackups().Single(b=>b.Key==Path.GetFileName(backup));var restored=new WorldState(catalog,store.Load(store.RestoreBackup(entry.Key)).Snapshot);Check(restored.State.ExploredMap.SetEquals(world.State.ExploredMap)&&restored.Terrain.GeneratorVersion==1,"backup loses exploration/generator");
+    var oldTerrain=new Terrain(42,catalog,1);var chunk=new Cell(0,1,0);var changes=new Dictionary<Cell,string>{{new(1,50,1),"glass"}};var encoded=ChunkCodec.Encode(chunk,changes,oldTerrain,catalog);bool refused=false;try{ChunkCodec.Decode(encoded.Bytes,chunk,new Terrain(42,catalog,2),catalog,encoded.Encoding,encoded.ModifiedCount);}catch(InvalidDataException){refused=true;}Check(refused,"legacy chunks decoded against new terrain");
+});
 Test("save generations, checksum recovery, backup, future version",()=>{
     var store=new SaveStore(testRoot,catalog);var s=new WorldSnapshot();s.Inventory.Add("stone",10,catalog);store.Save(s);s.Changes["1,80,1"]="glass";string newest=store.Save(s);
     Check(store.Load(s.WorldId).Snapshot.Changes["1,80,1"]=="glass","roundtrip");Check(Directory.Exists(store.Backup(s.WorldId)),"backup");
@@ -407,7 +492,7 @@ Test("equipment transfers reject invalid slots and conserve worn stacks",()=>{
     var worn=new Inventory(4);worn.Add(new("iron_helmet",1,50),catalog);worn.Add(new("iron_helmet",1,100),catalog);worn.Sort(catalog);Check(worn.Slots.Where(s=>s!=null).Select(s=>s!.Durability).SequenceEqual(new int?[]{50,100}),"sorting repaired or merged worn armor");
 });
 Test("armor mitigates attacks, wears once, breaks and excludes creative damage",()=>{
-    var state=new WorldSnapshot();foreach(var def in catalog.Items.Values.Where(d=>d.Use=="armor"))state.Equipment.Slots[def.ArmorSlot]=new(def.Id,1);
+    var state=new WorldSnapshot();foreach(var def in catalog.Items.Values.Where(d=>d.Use=="armor"&&d.Id.StartsWith("iron_")))state.Equipment.Slots[def.ArmorSlot]=new(def.Id,1);
     Check(Equipment.ArmorPoints(state,catalog)==15&&Math.Abs(Equipment.Absorb(state,catalog,20)-8)<.00001,"iron armor protection");
     foreach(var item in state.Equipment.Slots.Take(4))Check(item!.Durability==catalog.Items[item.Id].Durability-5,"wear not committed once");
     state.Equipment.Slots[0]!.Durability=1;Equipment.Absorb(state,catalog,4);Check(state.Equipment.Slots[0]==null&&Equipment.ArmorPoints(state,catalog)==13,"broken helmet still protects");
@@ -431,9 +516,14 @@ Test("equipment death, immutable snapshots, save and backup preserve durability"
 Test("format3 migrates to equipment format4 with raw backup and empty new slots",()=>{
     string migrationRoot=Path.Combine(testRoot,"format3","worlds");var store=new SaveStore(migrationRoot,catalog);var state=new WorldSnapshot{FormatVersion=3,Name="format3 equipment migration"};state.Inventory.Add("iron_ingot",7,catalog);state.Changes["17,70,-18"]="glass";
     WriteFixture(migrationRoot,state,generation:"20000103000000-format3");string rawFile=Path.Combine(migrationRoot,state.WorldId,"20000103000000-format3.json");byte[] raw=File.ReadAllBytes(rawFile);
-    var loaded=store.Load(state.WorldId);Check(loaded.Migrated&&loaded.Snapshot.FormatVersion==4&&loaded.Snapshot.Equipment.Slots.Length==5&&loaded.Snapshot.Equipment.Slots.All(s=>s==null)&&loaded.Snapshot.Inventory.Count("iron_ingot")==7,"format3 changed gameplay");
+    var loaded=store.Load(state.WorldId);Check(loaded.Migrated&&loaded.Snapshot.FormatVersion==WorldSnapshot.CurrentFormat&&loaded.Snapshot.Equipment.Slots.Length==5&&loaded.Snapshot.Equipment.Slots.All(s=>s==null)&&loaded.Snapshot.Inventory.Count("iron_ingot")==7,"format3 changed gameplay");
     store.Save(loaded.Snapshot);var backup=store.ListBackups().Single();Check(File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(migrationRoot)!,"backups",backup.Key,"20000103000000-format3.json")).SequenceEqual(raw),"raw format3 backup changed");store.Save(store.Load(state.WorldId).Snapshot);Check(store.ListBackups().Count()==1,"format3 backup repeated");
 });
+NaturalSurfaceTests.Run(catalog,(name,action)=>Test(name,action),testRoot);
+LightingDropTests.Run(catalog,(name,action)=>Test(name,action),testRoot);
+ExpansionTests.Run(catalog,creatureDefs,(name,action)=>Test(name,action),testRoot);
+ExplorationTests.Run(catalog,(name,action)=>Test(name,action),testRoot);
+MainlineTests.Run(catalog,creatureDefs,(name,action)=>Test(name,action),testRoot);
 Directory.CreateDirectory(Path.Combine(root,"test-results"));File.WriteAllText(Path.Combine(root,"test-results","core.json"),JsonSerializer.Serialize(new{date=DateTime.UtcNow,failed,results},Catalog.JsonOptions));
 Environment.ExitCode=failed==0?0:1;
 

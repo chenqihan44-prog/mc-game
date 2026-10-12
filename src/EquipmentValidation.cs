@@ -31,7 +31,7 @@ public partial class Game
         try{
             if(reload){
                 var expected=JsonSerializer.Deserialize<WorldSnapshot>(File.ReadAllText(Path.Combine(directory,"reload-world.json")),Catalog.JsonOptions)!;
-                var loaded=saves.Load(expected.WorldId).Snapshot;Check(loaded.FormatVersion==4,"equipment save not format4");
+                var loaded=saves.Load(expected.WorldId).Snapshot;Check(loaded.FormatVersion==WorldSnapshot.CurrentFormat,"equipment save not format4");
                 for(int i=0;i<5;i++){var a=loaded.Equipment.Slots[i];var b=expected.Equipment.Slots[i];Check(a?.Id==b?.Id&&a?.Count==b?.Count&&a?.Durability==b?.Durability,"cold reload changed equipment "+i);}
                 Check(JsonSerializer.Serialize(loaded.Graves,Catalog.JsonOptions)==JsonSerializer.Serialize(expected.Graves,Catalog.JsonOptions),"cold reload changed overflow armor wear");
                 StartWorld(loaded);player!.SetPhysicsProcess(false);await Until(()=>renderer!.IsTerrainReady(player.GlobalPosition));ShowInventory();await Frames();Check(Descendants(overlay).OfType<SlotButton>().Count(s=>s.SurfaceIndex==3)==5,"cold reload equipment UI missing");
@@ -62,7 +62,7 @@ public partial class Game
             world.State.Equipment.Slots[4]=new("berry",3);double hunger=world.State.Hunger;Use();Check(world.State.Equipment.Slots[4]?.Count==2&&world.State.Hunger>hunger,"offhand food did not consume its own stack");
             world.State.Inventory.Slots[9]=new("plank",5);world.State.Equipment.Slots[4]=new("plank",3);player.Camera.LookAt(new Vector3(2.5f,39.5f,.5f));await Frames();var target=player.Target();Check(target.HasValue,"offhand building target missing");Use();Check(world.Get(target!.Value.Before)==catalog.Number("plank")&&world.State.Equipment.Slots[4]?.Count==2&&world.State.Inventory.Slots[9]?.Count==5,"offhand placement charged wrong inventory");
             world.State.Equipment.Slots[4]=new("shield",1);stage="real death bag and recovery";var carried=world.State.Equipment.Copy();SetScreen("play");Hurt(1000);Check(screen=="death"&&world.State.Equipment.Slots.All(s=>s==null),"death retained equipment");var grave=world.State.Graves.Last();Check(grave.Items.Slots.Length==41&&grave.Items.Slots[36]?.Durability==carried.Slots[0]!.Durability&&grave.Items.Count("shield")==1,"death bag omitted equipment/wear");
-            Descendants(overlay).OfType<Button>().Single(b=>b.Text=="从营地复活").EmitSignal(Button.SignalName.Pressed);player.GlobalPosition=new((float)grave.Position[0],(float)grave.Position[1],(float)grave.Position[2]);Interact();Check(!world.State.Graves.Contains(grave),"recovery left equipment behind");
+            Descendants(overlay).OfType<Button>().Single(b=>b.Text=="从营地复活").EmitSignal(Button.SignalName.Pressed);player.GlobalPosition=new((float)grave.Position[0],(float)grave.Position[1],(float)grave.Position[2]);world.Advance(.6);world.PickTouchingItems([player.GlobalPosition.X,player.GlobalPosition.Y,player.GlobalPosition.Z]);Check(!world.State.Graves.Contains(grave),"recovery left equipment behind");
             ShowInventory();foreach(var item in carried.Slots.Take(4)){Click(0,Find(item!.Id));Click(3,catalog.Items[item.Id].ArmorSlot);}Click(0,Find("shield"));Click(3,4);Check(world.State.Equipment.Slots[0]?.Durability==carried.Slots[0]!.Durability,"bag recovery repaired armor");
             stage="full inventory close preserves cursor and crafting armor wear";SetScreen("play");var inventoryBeforeOverflow=world.State.Inventory.Copy();int gravesBefore=world.State.Graves.Count;
             world.State.Inventory=new();world.State.Inventory.Slots[0]=new("iron_helmet",1,37);world.State.Inventory.Slots[1]=new("iron_boots",1,29);world.State.Inventory.Slots[2]=new("iron_chestplate",1,41);
@@ -71,7 +71,7 @@ public partial class Game
             Check(world.State.Graves.Count==gravesBefore+1,"full inventory close lost overflow");var overflow=world.State.Graves.Last();
             Check(overflow.Items.Slots[4]?.Durability==37&&overflow.Items.Slots[0]?.Durability==29&&overflow.Items.Slots[3]?.Durability==41,"overflow repaired worn cursor or crafting armor");
             Check(world.State.Cursor==null&&world.State.Crafting.Slots.All(s=>s==null)&&world.State.Inventory.Count("stone")==36*64,"overflow duplicated inventory or retained cursor/crafting");
-            var overflowBeforeRecovery=overflow.Items.Copy();world.State.Inventory=new();player.GlobalPosition=new((float)overflow.Position[0],(float)overflow.Position[1],(float)overflow.Position[2]);Interact();Check(!world.State.Graves.Contains(overflow)&&world.State.Inventory.Slots.Single(s=>s?.Id=="iron_helmet")?.Durability==37,"overflow recovery repaired armor");world.State.Inventory=inventoryBeforeOverflow;
+            var overflowBeforeRecovery=overflow.Items.Copy();world.State.Inventory=new();player.GlobalPosition=new((float)overflow.Position[0],(float)overflow.Position[1],(float)overflow.Position[2]);world.Advance(.6);world.PickTouchingItems([player.GlobalPosition.X,player.GlobalPosition.Y,player.GlobalPosition.Z]);Check(!world.State.Graves.Contains(overflow)&&world.State.Inventory.Slots.Single(s=>s?.Id=="iron_helmet")?.Durability==37,"overflow recovery repaired armor");world.State.Inventory=inventoryBeforeOverflow;
             world.State.Graves.Add(new(){Position=(double[])overflow.Position.Clone(),Items=overflowBeforeRecovery});samples.Add(new{stage,cursorDurability=37,craftingDurabilities=new[]{29,41},savedOverflow=true});
             stage="equipment save and cold reload fixture";SetScreen("play");var expectedWorld=world.State.Copy();RequestSave();await Until(()=>saveCallbacks.Count==0);var loadedWorld=saves.Load(world.State.WorldId).Snapshot;for(int i=0;i<5;i++)Check(loadedWorld.Equipment.Slots[i]?.Durability==expectedWorld.Equipment.Slots[i]?.Durability&&loadedWorld.Equipment.Slots[i]?.Id==expectedWorld.Equipment.Slots[i]?.Id,"disk equipment changed");
             Check(JsonSerializer.Serialize(loadedWorld.Graves,Catalog.JsonOptions)==JsonSerializer.Serialize(expectedWorld.Graves,Catalog.JsonOptions),"disk overflow changed wear");
@@ -79,3 +79,4 @@ public partial class Game
         }catch(Exception error){Input.ActionRelease("use");Input.ActionRelease("inventory_transfer");Record(false,error.Message);GD.PushError("EQUIPMENT_FAILED: "+error);QuitCleanly(9);}
     }
 }
+

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using EmberLighthouse.Items;
+using EmberLighthouse.World;
 using EmberLighthouse.UI;
 using Godot;
 using static EmberLighthouse.UI.UiFactory;
@@ -17,7 +18,7 @@ public partial class Game
     {
         var theme=UiFactory.Theme();theme.SetColor("font_color","Label",new("373737"));theme.SetColor("font_shadow_color","Label",Colors.Transparent);theme.SetConstant("shadow_offset_x","Label",0);theme.SetConstant("shadow_offset_y","Label",0);panel.Theme=theme;
     }
-    private Recipe? WorkbenchRecipe()=>catalog.Recipes.Values.Where(r=>r.Station is "hand" or "workbench"&&WorkbenchGrid.Matches(workbenchCrafting,r)).OrderByDescending(r=>r.Inputs.Values.Sum()).FirstOrDefault();
+    private Recipe? WorkbenchRecipe()=>catalog.Recipes.Values.Where(r=>Mainline.RecipeKnown(world!.State,r)&&r.Station is "hand" or "workbench"&&WorkbenchGrid.Matches(workbenchCrafting,r)).OrderByDescending(r=>r.Inputs.Values.Sum()).FirstOrDefault();
     private bool WorkbenchAvailable()=>world!=null&&player!=null&&currentContainer is { } p&&catalog.Id(world.Get(p))=="workbench"&&world.State.Entities.TryGetValue(p.ToString(),out var entity)&&entity.Kind=="workbench"&&player.GlobalPosition.DistanceSquaredTo(new(p.X+.5f,p.Y+.5f,p.Z+.5f))<=36;
     private void ShowWorkbench()
     {
@@ -28,10 +29,10 @@ public partial class Game
         void Text(string value,Vector2 position,int font=6){var label=Label(value,(int)(font*scale));label.Position=position*scale;layout.AddChild(label);}
         void ActionButton(string label,Vector2 position,Vector2 size,Action action){var b=Button(label,action);b.Position=position*scale;b.Size=size*scale;b.CustomMinimumSize=Vector2.Zero;b.AddThemeFontSizeOverride("font_size",(int)(6*scale));b.AddThemeStyleboxOverride("normal",Style("686868",2));b.AddThemeStyleboxOverride("hover",Style("818181",2));b.AddThemeStyleboxOverride("pressed",Style("565656",2));layout.AddChild(b);}
         Text("配方册",new(3,0),7);
-        var search=new LineEdit{Text=recipeQuery,PlaceholderText="搜索物品 / 材料",Position=new(2*scale,12*scale),Size=new(142*scale,14*scale)};search.AddThemeFontSizeOverride("font_size",(int)(6*scale));layout.AddChild(search);search.TextSubmitted+=text=>{recipeQuery=text;recipePage=0;ShowWorkbench();};
+        var search=new LineEdit{Text=recipeQuery,PlaceholderText="搜索物品 / 材料",Position=new(2*scale,12*scale),Size=new(142*scale,14*scale)};search.AddThemeFontSizeOverride("font_size",(int)(6*scale));layout.AddChild(search);search.TextChanged+=text=>{recipeQuery=text;recipePage=0;};search.TextSubmitted+=text=>{recipeQuery=text;recipePage=0;ShowWorkbench();};
         ActionButton(craftableOnly?"显示全部":"仅可合成",new(2,29),new(68,13),()=>{craftableOnly=!craftableOnly;recipePage=0;ShowWorkbench();});
         bool CanMake(Recipe r)=>r.Inputs.All(p=>world.State.Inventory.Count(p.Key)+workbenchCrafting.Count(p.Key)>=p.Value);
-        var recipes=catalog.Recipes.Values.Where(r=>r.Station is "hand" or "workbench"&&r.Seconds==0&&(recipeQuery==""||r.Name.Contains(recipeQuery)||r.Inputs.Keys.Any(id=>catalog.Items[id].Name.Contains(recipeQuery)))&&(!craftableOnly||CanMake(r))).OrderByDescending(r=>world.State.FavoriteRecipes.Contains(r.Id)).ThenBy(r=>r.Name).ToArray();
+        var recipes=catalog.Recipes.Values.Where(r=>Mainline.RecipeKnown(world.State,r)&&r.Station is "hand" or "workbench"&&r.Seconds==0&&(recipeQuery==""||r.Name.Contains(recipeQuery)||r.Inputs.Keys.Any(id=>catalog.Items[id].Name.Contains(recipeQuery)))&&(!craftableOnly||CanMake(r))).OrderByDescending(r=>world.State.FavoriteRecipes.Contains(r.Id)).ThenBy(r=>r.Name).ToArray();
         const int perPage=25;int pages=Math.Max(1,(recipes.Length+perPage-1)/perPage);recipePage=Math.Clamp(recipePage,0,pages-1);
         foreach(var pair in recipes.Skip(recipePage*perPage).Take(perPage).Select((r,i)=>(Recipe:r,Index:i))){
             var r=pair.Recipe;bool available=CanMake(r);var b=new Button{Name="Recipe_"+r.Id,Position=new((2+pair.Index%5*28)*scale,(46+pair.Index/5*23)*scale),Size=new(26*scale,21*scale),TooltipText=r.Name+" ×"+r.Count+"\n"+string.Join("\n",r.Inputs.Select(p=>catalog.Items[p.Key].Name+" "+(world.State.Inventory.Count(p.Key)+workbenchCrafting.Count(p.Key))+" / "+p.Value))};StyleSlot(b);layout.AddChild(b);
@@ -53,16 +54,17 @@ public partial class Game
         Text("物品栏",new(start+8,83));DrawSlotsAt(layout,world.State.Inventory,0,9,27,9,new(start+8,94),scale);DrawSlotsAt(layout,world.State.Inventory,0,0,9,9,new(start+8,152),scale);
         var buttons=Row(col);buttons.AddChild(Button("收回合成材料",()=>{ReturnWorkbenchItems();ShowWorkbench();}));buttons.AddChild(Button("返回游戏",()=>{SetScreen("play");currentContainer=null;}));
         col.AddChild(Label("点击配方填入材料 · 左右键取放 · 拖动移动 · Shift 点击结果批量合成",13));
-        cursorGlyph=null;if(world.State.Cursor!=null){cursorGlyph=new(){Catalog=catalog,Item=world.State.Cursor,Size=new(54,54),PixelScale=2.7f,Position=GetViewport().GetMousePosition()-Vector2.One*24,ZIndex=20};overlay.AddChild(cursorGlyph);}
+        if(Mainline.Enabled(world.State))buttons.AddChild(Button("装备维护",()=>ShowWorkshopMaintenance(ShowWorkbench)));
+        DrawCursorItem();
     }
     private void SelectWorkbenchRecipe(Recipe recipe)
     {
-        selectedWorkbenchRecipe=recipe.Id;if(!WorkbenchAvailable()){Toast("工作台已不可用或距离过远");return;}
+        selectedWorkbenchRecipe=recipe.Id;if(!WorkbenchAvailable()||!Mainline.RecipeKnown(world!.State,recipe)){Toast("工作台已不可用、距离过远或配方尚未解锁");return;}
         if(!WorkbenchGrid.Arrange(world!.State.Inventory,workbenchCrafting,recipe,catalog,out string error))Toast(error);ShowWorkbench();
     }
     private void CraftWorkbenchOutput(Recipe recipe,bool? batch=null)
     {
-        if(!WorkbenchAvailable()||!ReferenceEquals(catalog.Recipes.GetValueOrDefault(recipe.Id),recipe)||!WorkbenchGrid.Matches(workbenchCrafting,recipe)){Toast("工作台或合成材料已变化");return;}
+        if(!WorkbenchAvailable()||!Mainline.RecipeKnown(world!.State,recipe)||!ReferenceEquals(catalog.Recipes.GetValueOrDefault(recipe.Id),recipe)||!WorkbenchGrid.Matches(workbenchCrafting,recipe)){Toast("工作台或合成材料已变化，或配方尚未解锁");return;}
         bool shortcut=batch??Input.IsActionPressed("inventory_transfer");var target=shortcut?world!.State.Inventory:new Inventory(1){Slots=[world!.State.Cursor?.Copy()]};
         if(!WorkbenchGrid.CraftTo(workbenchCrafting,target,recipe,catalog,out string error)){Toast(error);return;}
         if(shortcut)for(int i=0;i<255&&WorkbenchGrid.Matches(workbenchCrafting,recipe);i++)if(!WorkbenchGrid.CraftTo(workbenchCrafting,target,recipe,catalog,out _))break;
@@ -71,7 +73,8 @@ public partial class Game
     private void ReturnWorkbenchItems()
     {
         if(world==null){workbenchCrafting=new(9);return;}var remaining=new Inventory(9);
-        for(int i=0;i<9;i++)if(workbenchCrafting.Slots[i] is { } item){int count=world.State.Inventory.Add(item,catalog);if(count>0)remaining.Slots[i]=new(item.Id,count,item.Durability);}
-        workbenchCrafting=new(9);if(remaining.Slots.Any(s=>s!=null))world.State.Graves.Add(new(){Position=(double[])world.State.Position.Clone(),Items=remaining});
+        for(int i=0;i<9;i++)if(workbenchCrafting.Slots[i] is { } item){int count=world.State.Inventory.Add(item,catalog);if(count>0)remaining.Slots[i]=new(item.Id,count,item.Durability){HeatLining=item.HeatLining};}
+        workbenchCrafting=new(9);if(remaining.Slots.Any(s=>s!=null))world.Drop(remaining,world.State.Position);
     }
 }
+

@@ -133,7 +133,7 @@
     "Hardness": 2.5,
     "Solid": true,
     "Use": "",
-    "Tier": 1,
+    "Tier": 2,
     "Stack": 64,
     "Color": "#a88770",
     "Name": "铁矿",
@@ -146,7 +146,7 @@
     "Hardness": 3,
     "Solid": true,
     "Use": "",
-    "Tier": 2,
+    "Tier": 3,
     "Stack": 64,
     "Color": "#67c7cf",
     "Name": "晶矿",
@@ -179,7 +179,7 @@
     "Id": "loose_stone",
     "Power": 0,
     "Block": true,
-    "Shape": "slab"
+    "Shape": "rocks"
   },
   {
     "Hardness": 0.3,
@@ -634,7 +634,8 @@
     "Id": "stone_pick",
     "Power": 4,
     "Block": false,
-    "Shape": "cube"
+    "Shape": "cube",
+    "Durability": 132
   },
   {
     "Hardness": 1,
@@ -647,7 +648,8 @@
     "Id": "stone_axe",
     "Power": 4,
     "Block": false,
-    "Shape": "cube"
+    "Shape": "cube",
+    "Durability": 132
   },
   {
     "Hardness": 1,
@@ -660,7 +662,8 @@
     "Id": "stone_sword",
     "Power": 4,
     "Block": false,
-    "Shape": "cube"
+    "Shape": "cube",
+    "Durability": 132
   },
   {
     "Hardness": 1,
@@ -673,7 +676,8 @@
     "Id": "stone_shovel",
     "Power": 4,
     "Block": false,
-    "Shape": "cube"
+    "Shape": "cube",
+    "Durability": 132
   },
   {
     "Hardness": 1,
@@ -686,7 +690,8 @@
     "Id": "iron_pick",
     "Power": 9,
     "Block": false,
-    "Shape": "cube"
+    "Shape": "cube",
+    "Durability": 251
   },
   {
     "Hardness": 1,
@@ -699,7 +704,8 @@
     "Id": "iron_axe",
     "Power": 9,
     "Block": false,
-    "Shape": "cube"
+    "Shape": "cube",
+    "Durability": 251
   },
   {
     "Hardness": 1,
@@ -712,7 +718,8 @@
     "Id": "iron_sword",
     "Power": 9,
     "Block": false,
-    "Shape": "cube"
+    "Shape": "cube",
+    "Durability": 251
   },
   {
     "Hardness": 1,
@@ -725,7 +732,8 @@
     "Id": "iron_shovel",
     "Power": 9,
     "Block": false,
-    "Shape": "cube"
+    "Shape": "cube",
+    "Durability": 251
   },
   {
     "Hardness": 1,
@@ -738,7 +746,8 @@
     "Id": "crystal_pick",
     "Power": 14,
     "Block": false,
-    "Shape": "cube"
+    "Shape": "cube",
+    "Durability": 1562
   },
   {
     "Hardness": 1,
@@ -751,7 +760,8 @@
     "Id": "crystal_axe",
     "Power": 14,
     "Block": false,
-    "Shape": "cube"
+    "Shape": "cube",
+    "Durability": 1562
   },
   {
     "Hardness": 1,
@@ -764,7 +774,8 @@
     "Id": "crystal_sword",
     "Power": 14,
     "Block": false,
-    "Shape": "cube"
+    "Shape": "cube",
+    "Durability": 1562
   },
   {
     "Hardness": 1,
@@ -777,7 +788,8 @@
     "Id": "crystal_shovel",
     "Power": 14,
     "Block": false,
-    "Shape": "cube"
+    "Shape": "cube",
+    "Durability": 1562
   },
   {
     "Hardness": 1,
@@ -790,7 +802,8 @@
     "Id": "bow",
     "Power": 8,
     "Block": false,
-    "Shape": "cube"
+    "Shape": "cube",
+    "Durability": 384
   },
   {
     "Hardness": 1,
@@ -816,7 +829,8 @@
     "Id": "shield",
     "Power": 0,
     "Block": false,
-    "Shape": "cube"
+    "Shape": "cube",
+    "Durability": 336
   },
   {
     "Hardness": 1,
@@ -1169,8 +1183,1110 @@
     "Block": false,
     "Shape": "cube"
   },
-  {"Id":"iron_helmet","Name":"铁头盔","Color":"#b8bec7","Stack":1,"Block":false,"Tier":2,"Use":"armor","ArmorSlot":0,"ArmorPoints":2,"Durability":165},
-  {"Id":"iron_chestplate","Name":"铁胸甲","Color":"#b8bec7","Stack":1,"Block":false,"Tier":2,"Use":"armor","ArmorSlot":1,"ArmorPoints":6,"Durability":240},
-  {"Id":"iron_leggings","Name":"铁护腿","Color":"#b8bec7","Stack":1,"Block":false,"Tier":2,"Use":"armor","ArmorSlot":2,"ArmorPoints":5,"Durability":225},
-  {"Id":"iron_boots","Name":"铁靴子","Color":"#b8bec7","Stack":1,"Block":false,"Tier":2,"Use":"armor","ArmorSlot":3,"ArmorPoints":2,"Durability":195}
+  {
+    "Id": "iron_helmet",
+    "Name": "铁头盔",
+    "Color": "#b8bec7",
+    "Stack": 1,
+    "Block": false,
+    "Tier": 2,
+    "Use": "armor",
+    "ArmorSlot": 0,
+    "ArmorPoints": 2,
+    "Durability": 165
+  },
+  {
+    "Id": "iron_chestplate",
+    "Name": "铁胸甲",
+    "Color": "#b8bec7",
+    "Stack": 1,
+    "Block": false,
+    "Tier": 2,
+    "Use": "armor",
+    "ArmorSlot": 1,
+    "ArmorPoints": 6,
+    "Durability": 240
+  },
+  {
+    "Id": "iron_leggings",
+    "Name": "铁护腿",
+    "Color": "#b8bec7",
+    "Stack": 1,
+    "Block": false,
+    "Tier": 2,
+    "Use": "armor",
+    "ArmorSlot": 2,
+    "ArmorPoints": 5,
+    "Durability": 225
+  },
+  {
+    "Id": "iron_boots",
+    "Name": "铁靴子",
+    "Color": "#b8bec7",
+    "Stack": 1,
+    "Block": false,
+    "Tier": 2,
+    "Use": "armor",
+    "ArmorSlot": 3,
+    "ArmorPoints": 2,
+    "Durability": 195
+  },
+  {
+    "Id": "wood_pick",
+    "Name": "木镐",
+    "Color": "#a97743",
+    "Stack": 1,
+    "Tier": 0,
+    "Use": "pick",
+    "Power": 2,
+    "Durability": 60
+  },
+  {
+    "Id": "wood_axe",
+    "Name": "木斧",
+    "Color": "#a97743",
+    "Stack": 1,
+    "Tier": 0,
+    "Use": "axe",
+    "Power": 3,
+    "Durability": 60
+  },
+  {
+    "Id": "wood_shovel",
+    "Name": "木铲",
+    "Color": "#a97743",
+    "Stack": 1,
+    "Tier": 0,
+    "Use": "shovel",
+    "Power": 2,
+    "Durability": 60
+  },
+  {
+    "Id": "wood_sword",
+    "Name": "木剑",
+    "Color": "#a97743",
+    "Stack": 1,
+    "Tier": 0,
+    "Use": "sword",
+    "Power": 3,
+    "Durability": 60
+  },
+  {
+    "Id": "torch",
+    "Name": "火把",
+    "Color": "#edb255",
+    "Block": true,
+    "Solid": false,
+    "Hardness": 0.1,
+    "Shape": "torch",
+    "Use": "light"
+  },
+  {
+    "Id": "copper_coil",
+    "Color": "#d99557",
+    "Name": "铜线圈"
+  },
+  {
+    "Id": "survey_lens",
+    "Color": "#87d7df",
+    "Stack": 1,
+    "Name": "勘测镜",
+    "Use": "survey"
+  },
+  {
+    "Id": "heat_lining",
+    "Color": "#c59362",
+    "Stack": 1,
+    "Name": "耐热衬片",
+    "Use": "lining"
+  },
+  {
+    "Id": "furnace_prism",
+    "Color": "#ffac51",
+    "Stack": 1,
+    "Name": "炉心棱镜",
+    "Use": "relic"
+  },
+  {
+    "Id": "frost_prism",
+    "Color": "#94ddff",
+    "Stack": 1,
+    "Name": "霜辉棱镜",
+    "Use": "relic"
+  },
+  {
+    "Hardness": 2,
+    "Color": "#687f87",
+    "Tier": 1,
+    "Block": true,
+    "Id": "calibration_bench",
+    "Name": "校准台",
+    "Use": "calibration_bench"
+  },
+  {
+    "Id": "ember_alloy",
+    "Color": "#e7a267",
+    "Name": "余烬合金"
+  },
+  {
+    "Tier": 3,
+    "Id": "ember_sword",
+    "Power": 17,
+    "Color": "#edb176",
+    "Use": "sword",
+    "Durability": 600,
+    "Name": "余烬剑",
+    "Stack": 1
+  },
+  {
+    "Tier": 3,
+    "Id": "ember_bow",
+    "Power": 13,
+    "Color": "#edb176",
+    "Use": "bow",
+    "Durability": 600,
+    "Name": "余烬弓",
+    "Stack": 1
+  },
+  {
+    "Id": "resonant_core",
+    "Color": "#7cf5d9",
+    "Stack": 1,
+    "Name": "共鸣晶核",
+    "Use": "relic"
+  },
+  {
+    "Id": "repair_kit",
+    "Color": "#b7b6a1",
+    "Name": "修理包",
+    "Use": "repair"
+  },
+  {
+    "Hardness": 1,
+    "Color": "#ffda8b",
+    "Block": true,
+    "Id": "dawn_heart",
+    "Name": "黎明之心纪念灯",
+    "Use": "light"
+  },
+  {
+    "Hardness": 2,
+    "Color": "#a67d60",
+    "Tier": 1,
+    "Block": true,
+    "Id": "copper_vein",
+    "Name": "铜矿"
+  },
+  {
+    "Hardness": 100,
+    "Color": "#c6b782",
+    "Block": true,
+    "Id": "quest_record",
+    "Name": "古代碑文",
+    "Use": "mainline"
+  },
+  {
+    "Hardness": 100,
+    "Color": "#688f82",
+    "Block": true,
+    "Id": "power_socket",
+    "Name": "供能节点",
+    "Use": "mainline"
+  },
+  {
+    "Hardness": 100,
+    "Color": "#96c4ce",
+    "Block": true,
+    "Id": "reflector",
+    "Name": "反射器",
+    "Use": "mainline"
+  },
+  {
+    "Hardness": 100,
+    "Color": "#bf9964",
+    "Block": true,
+    "Id": "core_console",
+    "Name": "核心控制台",
+    "Use": "mainline"
+  },
+  {
+    "Hardness": 100,
+    "Color": "#f1ba61",
+    "Block": true,
+    "Id": "energy_anchor",
+    "Name": "供能锚点",
+    "Use": "mainline"
+  },
+  {
+    "Id": "birch_log",
+    "Name": "白桦原木",
+    "Color": "#d5d3bf",
+    "Block": true,
+    "Solid": true,
+    "Hardness": 1.5,
+    "Shape": "cube"
+  },
+  {
+    "Id": "birch_leaves",
+    "Name": "白桦树叶",
+    "Color": "#86ab50",
+    "Block": true,
+    "Solid": false,
+    "Hardness": 0.25,
+    "Shape": "cube"
+  },
+  {
+    "Id": "pine_log",
+    "Name": "松木原木",
+    "Color": "#796047",
+    "Block": true,
+    "Solid": true,
+    "Hardness": 1.5,
+    "Shape": "cube"
+  },
+  {
+    "Id": "pine_leaves",
+    "Name": "松针树叶",
+    "Color": "#365f4b",
+    "Block": true,
+    "Solid": false,
+    "Hardness": 0.25,
+    "Shape": "cube"
+  },
+  {
+    "Id": "acacia_log",
+    "Name": "金合欢原木",
+    "Color": "#977150",
+    "Block": true,
+    "Solid": true,
+    "Hardness": 1.5,
+    "Shape": "cube"
+  },
+  {
+    "Id": "acacia_leaves",
+    "Name": "金合欢树叶",
+    "Color": "#a4a053",
+    "Block": true,
+    "Solid": false,
+    "Hardness": 0.25,
+    "Shape": "cube"
+  },
+  {
+    "Id": "tall_grass",
+    "Name": "高草",
+    "Color": "#78974b",
+    "Block": true,
+    "Solid": false,
+    "Hardness": 0.25,
+    "Shape": "bush"
+  },
+  {
+    "Id": "dry_grass",
+    "Name": "枯草",
+    "Color": "#b19c60",
+    "Block": true,
+    "Solid": false,
+    "Hardness": 0.25,
+    "Shape": "bush"
+  },
+  {
+    "Id": "fern",
+    "Name": "蕨草",
+    "Color": "#428a58",
+    "Block": true,
+    "Solid": false,
+    "Hardness": 0.25,
+    "Shape": "bush"
+  },
+  {
+    "Id": "reed",
+    "Name": "芦苇",
+    "Color": "#a4a25a",
+    "Block": true,
+    "Solid": false,
+    "Hardness": 0.25,
+    "Shape": "bush"
+  },
+  {
+    "Id": "red_flower",
+    "Name": "朱红花",
+    "Color": "#d25d4c",
+    "Block": true,
+    "Solid": false,
+    "Hardness": 0.25,
+    "Shape": "bush"
+  },
+  {
+    "Id": "blue_flower",
+    "Name": "蓝铃花",
+    "Color": "#699bc9",
+    "Block": true,
+    "Solid": false,
+    "Hardness": 0.25,
+    "Shape": "bush"
+  },
+  {
+    "Id": "brown_mushroom",
+    "Name": "褐菇",
+    "Color": "#ae8c5b",
+    "Block": true,
+    "Solid": false,
+    "Hardness": 0.25,
+    "Shape": "bush"
+  },
+  {
+    "Id": "red_mushroom",
+    "Name": "红斑菇",
+    "Color": "#c94f49",
+    "Block": true,
+    "Solid": false,
+    "Hardness": 0.25,
+    "Shape": "bush"
+  },
+  {
+    "Use": "shears",
+    "Name": "剪刀",
+    "Stack": 1,
+    "Id": "shears",
+    "Durability": 180,
+    "Power": 0,
+    "Color": "#d8dde0",
+    "Description": "右键剪羊毛或采集树叶、植物纤维。"
+  },
+  {
+    "Use": "hoe",
+    "Name": "铁锄",
+    "Stack": 1,
+    "Id": "iron_hoe",
+    "Durability": 220,
+    "Power": 0,
+    "Color": "#b7c1c8",
+    "Description": "右键草地或泥土翻成耕地；上方需要净空。"
+  },
+  {
+    "Use": "fish",
+    "Name": "钓鱼竿",
+    "Stack": 1,
+    "Id": "fishing_rod",
+    "Durability": 160,
+    "Power": 0,
+    "Color": "#aa793e",
+    "Description": "对水面右键抛竿；出现鱼讯后右键收线。"
+  },
+  {
+    "Color": "#b9c4cd",
+    "Id": "bucket",
+    "Description": "取水，或对成年牛挤奶。",
+    "Name": "铁桶",
+    "Stack": 1,
+    "Use": "bucket",
+    "Power": 0
+  },
+  {
+    "Color": "#77bde1",
+    "Id": "water_bucket",
+    "Description": "右键放置静态水源，浇灌附近耕地；留下铁桶。",
+    "Name": "水桶",
+    "Stack": 1,
+    "Use": "bucket",
+    "Power": 0
+  },
+  {
+    "Color": "#f7e9cb",
+    "Id": "milk_bucket",
+    "Description": "补充饥饿并清除短时药水效果；饮后返还铁桶。",
+    "Name": "牛奶桶",
+    "Stack": 1,
+    "Use": "drink",
+    "Power": 0
+  },
+  {
+    "Color": "#dfdfc9",
+    "Id": "bone",
+    "Description": "骷髅掉落；用于驯服狼或磨骨粉。",
+    "Name": "骨头",
+    "Use": "",
+    "Power": 0
+  },
+  {
+    "Color": "#ebe4d3",
+    "Id": "bone_meal",
+    "Description": "右键作物推进一个生长阶段。",
+    "Name": "骨粉",
+    "Use": "fertilizer",
+    "Power": 0
+  },
+  {
+    "Solid": false,
+    "Use": "cane",
+    "Name": "甘蔗",
+    "Id": "sugar_cane",
+    "Description": "岸边采集，水边沙土栽种，成熟后Q收获；加工成纸。",
+    "Hardness": 0.3,
+    "Power": 0,
+    "Block": true,
+    "Shape": "bush",
+    "Color": "#89ad4f"
+  },
+  {
+    "Color": "#e8dcc1",
+    "Id": "paper",
+    "Description": "制作地图、附魔台和书籍材料。",
+    "Name": "纸",
+    "Use": "",
+    "Power": 0
+  },
+  {
+    "Color": "#d49b3f",
+    "Id": "pumpkin",
+    "Description": "成熟作物，建筑装饰；分解种子或烹饪南瓜派。",
+    "Block": true,
+    "Name": "南瓜",
+    "Use": "",
+    "Power": 0
+  },
+  {
+    "Color": "#d5bd85",
+    "Id": "pumpkin_seed",
+    "Description": "右键耕地种植南瓜。",
+    "Name": "南瓜种子",
+    "Use": "seed",
+    "Power": 0
+  },
+  {
+    "Color": "#77a541",
+    "Id": "melon",
+    "Description": "食用补充饥饿；可分解种子再次种植。",
+    "Name": "西瓜",
+    "Use": "food",
+    "Power": 15
+  },
+  {
+    "Color": "#61503b",
+    "Id": "melon_seed",
+    "Description": "右键耕地种植西瓜。",
+    "Name": "西瓜种子",
+    "Use": "seed",
+    "Power": 0
+  },
+  {
+    "Color": "#d85649",
+    "Id": "apple",
+    "Description": "橡树叶少量掉落；食用或制作金苹果。",
+    "Name": "苹果",
+    "Use": "food",
+    "Power": 12
+  },
+  {
+    "Color": "#b4bec1",
+    "Id": "raw_cod",
+    "Description": "钓鱼或捕捉鳕鱼获得；喂猫或烹饪。",
+    "Name": "生鳕鱼",
+    "Use": "food",
+    "Power": 8
+  },
+  {
+    "Color": "#ca9d58",
+    "Id": "cooked_cod",
+    "Description": "营火烤熟的远征口粮。",
+    "Name": "熟鳕鱼",
+    "Use": "food",
+    "Power": 28
+  },
+  {
+    "Color": "#987342",
+    "Id": "bowl",
+    "Description": "汤食容器，食用后可重复使用。",
+    "Name": "碗",
+    "Use": "",
+    "Power": 0
+  },
+  {
+    "Color": "#bd9362",
+    "Id": "mushroom_stew",
+    "Description": "两种蘑菇与碗制作，食后返还碗。",
+    "Name": "蘑菇煲",
+    "Stack": 1,
+    "Use": "food",
+    "Power": 36
+  },
+  {
+    "Color": "#f5cc55",
+    "Id": "golden_apple",
+    "Description": "回复12生命，提供16点吸收护盾90秒；共享药水冷却，不叠加。",
+    "Name": "金苹果",
+    "Use": "tonic",
+    "Power": 0
+  },
+  {
+    "Use": "",
+    "Name": "金矿石",
+    "Id": "gold_ore",
+    "Description": "新世界深层金矿，铁镐采集后熔炉冶炼。",
+    "Hardness": 2.5,
+    "Power": 0,
+    "Block": true,
+    "Color": "#d6b657",
+    "Tier": 3
+  },
+  {
+    "Color": "#e5ba44",
+    "Id": "gold_ingot",
+    "Description": "金苹果、金甲与附魔材料。",
+    "Name": "金锭",
+    "Use": "",
+    "Power": 0
+  },
+  {
+    "Color": "#a5cad6",
+    "Id": "glass_bottle",
+    "Description": "对水面右键装水；制作药水，饮后返还。",
+    "Name": "玻璃瓶",
+    "Use": "bottle",
+    "Power": 0
+  },
+  {
+    "Color": "#7eafda",
+    "Id": "water_bottle",
+    "Description": "酿造用水；饮用返还玻璃瓶，不作为食物。",
+    "Name": "水瓶",
+    "Use": "drink",
+    "Power": 0
+  },
+  {
+    "Use": "brewing_stand",
+    "Name": "酿造台",
+    "Id": "brewing_stand",
+    "Description": "Q打开炼金配方；植物、晶矿与水瓶制作补给。",
+    "Hardness": 2,
+    "Power": 0,
+    "Block": true,
+    "Color": "#d7ad59",
+    "Shape": "brewing"
+  },
+  {
+    "Color": "#d45767",
+    "Id": "healing_potion",
+    "Description": "回复30生命，共享药水8秒冷却，返还玻璃瓶。",
+    "Name": "治疗药水",
+    "Stack": 8,
+    "Use": "tonic",
+    "Power": 0
+  },
+  {
+    "Color": "#edaa4c",
+    "Id": "fire_resistance_potion",
+    "Description": "120秒内降低75%喷口与灼烧伤害，返还玻璃瓶；不抵消重击。",
+    "Name": "抗火药水",
+    "Stack": 8,
+    "Use": "tonic",
+    "Power": 0
+  },
+  {
+    "Color": "#ead8ac",
+    "Id": "egg",
+    "Description": "成年鸡定时产蛋；用于南瓜派与繁殖补给。",
+    "Name": "鸡蛋",
+    "Use": "",
+    "Power": 0
+  },
+  {
+    "Color": "#ede6d9",
+    "Id": "feather",
+    "Description": "鸡掉落；制作箭与滑翔装备。",
+    "Name": "羽毛",
+    "Use": "",
+    "Power": 0
+  },
+  {
+    "Color": "#cecec4",
+    "Id": "string",
+    "Description": "蜘蛛掉落；制作绳索、钓鱼竿。",
+    "Name": "蛛丝",
+    "Use": "",
+    "Power": 0
+  },
+  {
+    "Color": "#57545a",
+    "Id": "gunpowder",
+    "Description": "苦力怕掉落；制作烟花，滑翔时可短时加速。",
+    "Name": "火药",
+    "Use": "",
+    "Power": 0
+  },
+  {
+    "Color": "#41475b",
+    "Id": "ink_sac",
+    "Description": "鱿鱼掉落；制作染料和探索地图。",
+    "Name": "墨囊",
+    "Use": "",
+    "Power": 0
+  },
+  {
+    "Color": "#a68874",
+    "Id": "armadillo_scute",
+    "Description": "对成年犰狳用剪刀梳理收集；制作与修理狼铠。",
+    "Name": "犰狳鳞甲",
+    "Use": "",
+    "Power": 0
+  },
+  {
+    "Color": "#7a9d42",
+    "Id": "turtle_scute",
+    "Description": "海龟幼体成年时留下；制作海龟壳。",
+    "Name": "海龟鳞甲",
+    "Use": "",
+    "Power": 0
+  },
+  {
+    "Color": "#aa774c",
+    "Id": "saddle",
+    "Description": "对驯服的马右键装鞍；Q骑乘，Shift下马。",
+    "Name": "鞍",
+    "Stack": 1,
+    "Use": "",
+    "Power": 0
+  },
+  {
+    "Color": "#d5554c",
+    "Id": "red_dye",
+    "Description": "工作台装备维护中给皮革甲、狼铠染色。",
+    "Name": "红染料",
+    "Use": "dye",
+    "Power": 0
+  },
+  {
+    "Color": "#5f83ba",
+    "Id": "blue_dye",
+    "Description": "工作台装备维护中给皮革甲、狼铠染色。",
+    "Name": "蓝染料",
+    "Use": "dye",
+    "Power": 0
+  },
+  {
+    "Use": "enchanting_table",
+    "Name": "附魔台",
+    "Id": "enchanting_table",
+    "Description": "Q消耗经验与晶矿，给护甲附加保护或耐久；金甲收益较高。",
+    "Hardness": 2,
+    "Power": 0,
+    "Block": true,
+    "Color": "#805294"
+  },
+  {
+    "Color": "#da785e",
+    "Id": "firework",
+    "Description": "滑翔时右键使用：短时推进，不能从地面起飞。",
+    "Name": "烟花火箭",
+    "Use": "firework",
+    "Power": 0
+  },
+  {
+    "Color": "#c69959",
+    "Id": "pumpkin_pie",
+    "Description": "南瓜、鸡蛋和小麦烹饪的饱腹食品。",
+    "Name": "南瓜派",
+    "Use": "food",
+    "Power": 38
+  },
+  {
+    "Use": "armor",
+    "Name": "皮革头盔",
+    "Stack": 1,
+    "Id": "leather_helmet",
+    "Description": "",
+    "Power": 0,
+    "Color": "#a97649",
+    "ArmorSlot": 0,
+    "Durability": 65,
+    "ArmorPoints": 1
+  },
+  {
+    "Use": "armor",
+    "Name": "皮革胸甲",
+    "Stack": 1,
+    "Id": "leather_chestplate",
+    "Description": "",
+    "Power": 0,
+    "Color": "#a97649",
+    "ArmorSlot": 1,
+    "Durability": 96,
+    "ArmorPoints": 3
+  },
+  {
+    "Use": "armor",
+    "Name": "皮革护腿",
+    "Stack": 1,
+    "Id": "leather_leggings",
+    "Description": "",
+    "Power": 0,
+    "Color": "#a97649",
+    "ArmorSlot": 2,
+    "Durability": 90,
+    "ArmorPoints": 2
+  },
+  {
+    "Use": "armor",
+    "Name": "皮革靴子",
+    "Stack": 1,
+    "Id": "leather_boots",
+    "Description": "",
+    "Power": 0,
+    "Color": "#a97649",
+    "ArmorSlot": 3,
+    "Durability": 78,
+    "ArmorPoints": 1
+  },
+  {
+    "Use": "armor",
+    "Name": "铜头盔",
+    "Stack": 1,
+    "Id": "copper_helmet",
+    "Description": "",
+    "Power": 0,
+    "Color": "#cc8859",
+    "ArmorSlot": 0,
+    "Durability": 110,
+    "ArmorPoints": 2
+  },
+  {
+    "Use": "armor",
+    "Name": "铜胸甲",
+    "Stack": 1,
+    "Id": "copper_chestplate",
+    "Description": "",
+    "Power": 0,
+    "Color": "#cc8859",
+    "ArmorSlot": 1,
+    "Durability": 160,
+    "ArmorPoints": 5
+  },
+  {
+    "Use": "armor",
+    "Name": "铜护腿",
+    "Stack": 1,
+    "Id": "copper_leggings",
+    "Description": "",
+    "Power": 0,
+    "Color": "#cc8859",
+    "ArmorSlot": 2,
+    "Durability": 150,
+    "ArmorPoints": 4
+  },
+  {
+    "Use": "armor",
+    "Name": "铜靴子",
+    "Stack": 1,
+    "Id": "copper_boots",
+    "Description": "",
+    "Power": 0,
+    "Color": "#cc8859",
+    "ArmorSlot": 3,
+    "Durability": 130,
+    "ArmorPoints": 1
+  },
+  {
+    "Use": "armor",
+    "Name": "锁链头盔",
+    "Stack": 1,
+    "Id": "chain_helmet",
+    "Description": "",
+    "Power": 0,
+    "Color": "#9a9da6",
+    "ArmorSlot": 0,
+    "Durability": 140,
+    "ArmorPoints": 2
+  },
+  {
+    "Use": "armor",
+    "Name": "锁链胸甲",
+    "Stack": 1,
+    "Id": "chain_chestplate",
+    "Description": "",
+    "Power": 0,
+    "Color": "#9a9da6",
+    "ArmorSlot": 1,
+    "Durability": 200,
+    "ArmorPoints": 5
+  },
+  {
+    "Use": "armor",
+    "Name": "锁链护腿",
+    "Stack": 1,
+    "Id": "chain_leggings",
+    "Description": "",
+    "Power": 0,
+    "Color": "#9a9da6",
+    "ArmorSlot": 2,
+    "Durability": 185,
+    "ArmorPoints": 4
+  },
+  {
+    "Use": "armor",
+    "Name": "锁链靴子",
+    "Stack": 1,
+    "Id": "chain_boots",
+    "Description": "",
+    "Power": 0,
+    "Color": "#9a9da6",
+    "ArmorSlot": 3,
+    "Durability": 165,
+    "ArmorPoints": 1
+  },
+  {
+    "Use": "armor",
+    "Name": "金头盔",
+    "Stack": 1,
+    "Id": "gold_helmet",
+    "Description": "",
+    "Power": 0,
+    "Color": "#dfb743",
+    "ArmorSlot": 0,
+    "Durability": 77,
+    "ArmorPoints": 2
+  },
+  {
+    "Use": "armor",
+    "Name": "金胸甲",
+    "Stack": 1,
+    "Id": "gold_chestplate",
+    "Description": "",
+    "Power": 0,
+    "Color": "#dfb743",
+    "ArmorSlot": 1,
+    "Durability": 112,
+    "ArmorPoints": 5
+  },
+  {
+    "Use": "armor",
+    "Name": "金护腿",
+    "Stack": 1,
+    "Id": "gold_leggings",
+    "Description": "",
+    "Power": 0,
+    "Color": "#dfb743",
+    "ArmorSlot": 2,
+    "Durability": 105,
+    "ArmorPoints": 3
+  },
+  {
+    "Use": "armor",
+    "Name": "金靴子",
+    "Stack": 1,
+    "Id": "gold_boots",
+    "Description": "",
+    "Power": 0,
+    "Color": "#dfb743",
+    "ArmorSlot": 3,
+    "Durability": 91,
+    "ArmorPoints": 1
+  },
+  {
+    "Use": "armor",
+    "Name": "晶矿头盔",
+    "Stack": 1,
+    "Id": "crystal_helmet",
+    "Description": "",
+    "Power": 0,
+    "Color": "#82e9d0",
+    "ArmorSlot": 0,
+    "Durability": 300,
+    "ArmorPoints": 3
+  },
+  {
+    "Use": "armor",
+    "Name": "晶矿胸甲",
+    "Stack": 1,
+    "Id": "crystal_chestplate",
+    "Description": "",
+    "Power": 0,
+    "Color": "#82e9d0",
+    "ArmorSlot": 1,
+    "Durability": 440,
+    "ArmorPoints": 7
+  },
+  {
+    "Use": "armor",
+    "Name": "晶矿护腿",
+    "Stack": 1,
+    "Id": "crystal_leggings",
+    "Description": "",
+    "Power": 0,
+    "Color": "#82e9d0",
+    "ArmorSlot": 2,
+    "Durability": 410,
+    "ArmorPoints": 5
+  },
+  {
+    "Use": "armor",
+    "Name": "晶矿靴子",
+    "Stack": 1,
+    "Id": "crystal_boots",
+    "Description": "",
+    "Power": 0,
+    "Color": "#82e9d0",
+    "ArmorSlot": 3,
+    "Durability": 360,
+    "ArmorPoints": 3
+  },
+  {
+    "Use": "armor",
+    "Name": "余烬合金头盔",
+    "Stack": 1,
+    "Id": "ember_helmet",
+    "Description": "",
+    "Power": 0,
+    "Color": "#e7a267",
+    "ArmorSlot": 0,
+    "Durability": 410,
+    "ArmorPoints": 3
+  },
+  {
+    "Use": "armor",
+    "Name": "余烬合金胸甲",
+    "Stack": 1,
+    "Id": "ember_chestplate",
+    "Description": "",
+    "Power": 0,
+    "Color": "#e7a267",
+    "ArmorSlot": 1,
+    "Durability": 600,
+    "ArmorPoints": 8
+  },
+  {
+    "Use": "armor",
+    "Name": "余烬合金护腿",
+    "Stack": 1,
+    "Id": "ember_leggings",
+    "Description": "",
+    "Power": 0,
+    "Color": "#e7a267",
+    "ArmorSlot": 2,
+    "Durability": 560,
+    "ArmorPoints": 6
+  },
+  {
+    "Use": "armor",
+    "Name": "余烬合金靴子",
+    "Stack": 1,
+    "Id": "ember_boots",
+    "Description": "",
+    "Power": 0,
+    "Color": "#e7a267",
+    "ArmorSlot": 3,
+    "Durability": 490,
+    "ArmorPoints": 3
+  },
+  {
+    "Use": "armor",
+    "Name": "海龟壳",
+    "Stack": 1,
+    "Id": "turtle_shell",
+    "Description": "头部装备，潜水耗气降低65%。",
+    "Power": 0,
+    "Color": "#629f51",
+    "ArmorSlot": 0,
+    "Durability": 240,
+    "ArmorPoints": 2
+  },
+  {
+    "Use": "armor",
+    "Name": "鞘翅",
+    "Stack": 1,
+    "Id": "elytra",
+    "Description": "占用胸部防护；空中按Space开始滑翔。主线完成后校准台制作。",
+    "Power": 0,
+    "Color": "#8d84b2",
+    "ArmorSlot": 1,
+    "Durability": 360,
+    "ArmorPoints": 0
+  },
+  {
+    "Use": "animal_armor",
+    "Name": "狼铠",
+    "Stack": 1,
+    "Id": "wolf_armor",
+    "Durability": 220,
+    "Power": 10,
+    "Color": "#bd7e69",
+    "Description": "右键为已驯服狼装备，吸收伤害并损耗耐久；Q管理与修理。"
+  },
+  {
+    "Use": "animal_armor",
+    "Name": "皮革马铠",
+    "Stack": 1,
+    "Id": "leather_horse_armor",
+    "Durability": 360,
+    "Power": 3,
+    "Color": "#a97649",
+    "Description": "对已驯服马右键装备；Q管理坐骑装备。"
+  },
+  {
+    "Use": "animal_armor",
+    "Name": "铜马铠",
+    "Stack": 1,
+    "Id": "copper_horse_armor",
+    "Durability": 400,
+    "Power": 5,
+    "Color": "#cc8859",
+    "Description": "对已驯服马右键装备；Q管理坐骑装备。"
+  },
+  {
+    "Use": "animal_armor",
+    "Name": "铁马铠",
+    "Stack": 1,
+    "Id": "iron_horse_armor",
+    "Durability": 440,
+    "Power": 7,
+    "Color": "#b9c4c8",
+    "Description": "对已驯服马右键装备；Q管理坐骑装备。"
+  },
+  {
+    "Use": "animal_armor",
+    "Name": "金马铠",
+    "Stack": 1,
+    "Id": "gold_horse_armor",
+    "Durability": 480,
+    "Power": 9,
+    "Color": "#dfb743",
+    "Description": "对已驯服马右键装备；Q管理坐骑装备。"
+  },
+  {
+    "Use": "animal_armor",
+    "Name": "晶矿马铠",
+    "Stack": 1,
+    "Id": "crystal_horse_armor",
+    "Durability": 520,
+    "Power": 11,
+    "Color": "#82e9d0",
+    "Description": "对已驯服马右键装备；Q管理坐骑装备。"
+  },
+  {
+    "Use": "animal_armor",
+    "Name": "余烬合金马铠",
+    "Stack": 1,
+    "Id": "ember_horse_armor",
+    "Durability": 560,
+    "Power": 13,
+    "Color": "#e7a267",
+    "Description": "对已驯服马右键装备；Q管理坐骑装备。"
+  },
+  {
+    "Use": "",
+    "Name": "红色羊毛",
+    "Block": true,
+    "Color": "#bb594c",
+    "Power": 0,
+    "Id": "red_wool",
+    "Description": "羊毛染色后用于建筑装饰。"
+  },
+  {
+    "Use": "",
+    "Name": "蓝色羊毛",
+    "Block": true,
+    "Color": "#6084b4",
+    "Power": 0,
+    "Id": "blue_wool",
+    "Description": "羊毛染色后用于建筑装饰。"
+  }
 ]

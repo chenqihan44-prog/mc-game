@@ -1,0 +1,12 @@
+Use case: precise-object-edit.
+Edit the supplied Chinese armor catalog poster. Preserve its parchment/wood/lantern composition, seven rows of four armor pieces, all existing leather/copper/chain/iron/gold rows, and the special equipment panel layout. Keep all other labels and icons intact.
+This revision adapts the design to this game's EXISTING crystal and ember-alloy materials. REMOVE the diamond and netherite material branches completely from this poster; do not introduce new ores or a Nether dimension.
+Change subtitle to exact "七种材质四件套 · 复用本游戏矿物".
+Keep title "盔甲系统扩充预览" and badge "设计稿 · 尚未实装".
+Sixth material row: label "晶矿", role "已有材料 · 高阶防护"; four names exact "晶矿头盔", "晶矿胸甲", "晶矿护腿", "晶矿靴子". Rework its icons from solid cyan diamond to pale mint crystal plates with luminous crystalline facet details. Material thumbnail should be a mint crystalline cluster rather than a diamond block.
+Seventh material row: label "余烬合金", role "已有合金 · 终阶强化"; four names exact "余烬合金头盔", "余烬合金胸甲", "余烬合金护腿", "余烬合金靴子". Change their dark netherite appearance to warm amber-copper alloy armor with dark joints and subtle ember-orange seam accents, solid metal rather than flame sprites. Its material thumbnail is a warm orange alloy ingot.
+Special equipment bottom row: replace "钻石马铠" with "晶矿马铠", retaining subtitle "坐骑高阶防护"; show pale mint crystalline plating. Replace "下界合金马铠" with "余烬合金马铠", subtitle "坐骑终阶防护"; show warm amber alloy plating. Preserve horse proportions.
+All labels must be clear, accurately written Simplified Chinese, no clipping of longer names such as 余烬合金头盔 and 余烬合金马铠.
+Footer first line retain "系统功能：独立装备槽 · 混搭 · 耐久与修理 · 韧性与抗击退".
+Footer second line change to "不新增钻石或下界材料；晶矿甲与余烬合金甲为拟新增装备".
+The revised poster must contain ZERO visible mentions of 钻石 or 下界 in material rows/cards, except the explanatory footer sentence. This is a proposed equipment addition, NOT already implemented armor.

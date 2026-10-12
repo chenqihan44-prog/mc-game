@@ -6,27 +6,35 @@ using Godot;
 namespace EmberLighthouse.UI;
 
 // Original 32px artwork shared by inventory, recipe book and held-item meshes.
-public static class ItemSprites
+public static partial class ItemSprites
 {
     private static readonly Dictionary<string,ImageTexture> textures=[];
     public static Texture2D Texture(ItemDef item)
     {
-        if(textures.TryGetValue(item.Id,out var cached))return cached;
-        using var art=CreateImage(item);var texture=ImageTexture.CreateFromImage(art);textures[item.Id]=texture;return texture;
+        string key=item.Id+item.Color;if(textures.TryGetValue(key,out var cached))return cached;
+        using var art=CreateImage(item);var texture=ImageTexture.CreateFromImage(art);textures[key]=texture;return texture;
     }
     public static void Release(){foreach(var t in textures.Values)t.Dispose();textures.Clear();}
     public static Image CreateImage(ItemDef item)
     {
-        var art=new Art();var c=Color.FromString(item.Color,Colors.White);Color edge=new("292825"),wood=new("986636"),metal=item.Tier==3?new("65dfdd"):item.Tier==2?new("dce4e8"):new("b9bbae");
+        var art=new Art();var c=Color.FromString(item.Color,Colors.White);Color edge=new("292825"),wood=item.Id=="ember_bow"?c:new("986636"),metal=item.Id.StartsWith("ember_",StringComparison.Ordinal)?c:item.Tier==3?new("65dfdd"):item.Tier==2?new("dce4e8"):item.Id.StartsWith("wood_",StringComparison.Ordinal)?new("b18148"):new("b9bbae");
         void P(int x,int y,int w,int h,Color color)=>art.Rect(x,y,w,h,color);
         void L(int x,int y,int xx,int yy,Color color,int width=1)=>art.Line(x,y,xx,yy,color,width);
         void Shape(Color color,params Vector2[] points)=>art.Polygon(points,color);
-        if(item.Use is "pick" or "axe" or "shovel" or "sword"){
+        if(item.Use=="armor")metal=c;
+        if(PaintExpansion(art,item)){}
+        else if(EmberLighthouse.World.PlantVisuals.Style(item.Id)>=5){
+            if(item.Id.EndsWith("mushroom",StringComparison.Ordinal)){P(14,19,5,11,new("d7c9a0"));Shape(c,new(5,20),new(8,13),new(15,9),new(23,13),new(28,20));P(6,20,21,3,c.Darkened(.3f));if(item.Id=="red_mushroom"){P(11,15,3,2,new("f1dfb9"));P(19,14,3,2,new("f1dfb9"));}}
+            else{L(16,29,16,8,new("628449"),2);for(int i=0;i<4;i++){L(16,24-i*3,7+i,17-i*3,c,2);L(16,26-i*3,25-i,19-i*3,c,2);}if(item.Id.EndsWith("flower",StringComparison.Ordinal)){art.Disc(16,9,7,c);art.Disc(16,9,2,new("eed998"));}if(item.Id=="reed"){P(14,2,5,9,new("ad9165"));L(7,29,7,10,new("8d9a57"),2);P(5,5,4,9,new("ad9165"));}}
+        }else if(item.Use is "pick" or "axe" or "shovel" or "sword"){
             L(6,27,22,7,edge,5);L(6,26,22,7,wood,3);L(7,24,20,9,wood.Lightened(.25f));
             if(item.Use=="pick"){Shape(edge,new(8,4),new(23,2),new(29,8),new(29,15),new(25,15),new(24,8),new(11,9),new(6,12));Shape(metal,new(9,5),new(22,4),new(27,9),new(27,12),new(24,7),new(11,7),new(8,10));L(11,5,21,4,metal.Lightened(.25f));}
             if(item.Use=="axe"){Shape(edge,new(16,3),new(27,3),new(29,12),new(21,17),new(15,12));Shape(metal,new(18,5),new(25,5),new(27,11),new(21,14),new(17,11));L(19,5,25,5,Colors.White);}
             if(item.Use=="shovel"){Shape(edge,new(22,2),new(29,4),new(29,11),new(24,16),new(17,10));Shape(metal,new(23,4),new(27,5),new(27,10),new(23,13),new(19,9));}
             if(item.Use=="sword"){L(13,18,28,3,edge,7);L(14,17,28,3,metal,4);L(14,16,27,3,metal.Lightened(.2f));L(10,14,19,23,edge,4);L(10,14,19,23,metal.Darkened(.2f),2);P(4,25,5,4,edge);P(5,26,3,2,metal);}
+        }
+        else if(item.Id=="torch"){
+            L(10,28,18,13,edge,6);L(10,27,18,14,wood,4);Shape(new("ed8b31"),new(13,16),new(10,9),new(15,10),new(18,2),new(23,10),new(22,15));Shape(new("ffe095"),new(15,14),new(17,7),new(21,11),new(20,15));
         }
         else if(item.Use=="armor"){
             if(item.ArmorSlot==0){Shape(edge,new(5,7),new(10,3),new(23,3),new(27,7),new(27,24),new(22,24),new(22,15),new(10,15),new(10,24),new(5,24));P(7,8,18,6,metal);P(10,5,13,3,metal);P(7,13,3,9,metal.Darkened(.22f));P(22,13,3,9,metal.Darkened(.22f));L(10,6,22,6,Colors.White);}
@@ -67,8 +75,9 @@ public static class ItemSprites
         else if(item.Id is "stick" or "arrow" or "charcoal"){
             L(5,28,26,4,edge,5);L(6,27,26,5,item.Id=="charcoal"?new("5d5040"):wood,3);L(7,25,24,6,item.Id=="charcoal"?new("80705b"):wood.Lightened(.3f));if(item.Id=="arrow"){Shape(new("d2dadb"),new(24,3),new(30,2),new(29,8),new(25,8));L(3,21,10,28,new("eae3ca"),3);L(5,18,13,26,new("bdbda3"),3);}
         }
-        else if(item.Id=="bow"){
+        else if(item.Use=="bow"){
             L(9,3,9,29,new("e2d5b4"));for(int y=3;y<=28;y++){int x=9+(int)(Math.Sin((y-3)/25f*Math.PI)*14);P(x-1,y,5,1,edge);P(x,y,3,1,wood);P(x,y,1,1,wood.Lightened(.4f));}P(19,13,5,7,new("76543a"));
+            if(item.Id=="ember_bow"){P(20,9,6,3,new("ffe4a1"));P(20,22,5,3,new("ffe4a1"));P(20,14,3,5,new("ed7144"));}
         }
         else if(item.Id=="shield"){
             Shape(edge,new(3,4),new(29,4),new(27,21),new(16,30),new(5,21));Shape(new("a17b48"),new(6,7),new(26,7),new(24,20),new(16,26),new(8,20));for(int x=9;x<26;x+=5)L(x,7,x-1,22,new("6c4e30"));L(5,6,27,6,new("e0dbbf"),2);L(15,7,15,26,new("bfc7c8"),3);P(13,14,6,5,new("d7dfda"));
@@ -95,6 +104,14 @@ public static class ItemSprites
             if(item.Id=="bed"){art.Cube(item,new(2,8),7);P(7,8,12,6,new("ede4c8"));L(5,15,18,22,new("bc5449"),8);L(9,17,25,13,new("d77a62"),5);P(4,23,3,7,wood);P(25,20,3,7,wood);}
             if(item.Id=="bookshelf"){art.Cube(item,Vector2.Zero,15);P(5,12,9,10,new("3e3328"));foreach(var p in new[]{(6,"b96146"),(8,"789b88"),(10,"c9b477"),(12,"67819c")})P(p.Item1,13,1,7,new(p.Item2));P(18,15,10,10,new("3e3328"));foreach(var p in new[]{(19,"ba864f"),(21,"6b9280"),(23,"a26366"),(25,"c2b891")})P(p.Item1,16,1,7,new(p.Item2));}
         }
+        else if(item.Id is "copper_coil" or "survey_lens" or "heat_lining" or "furnace_prism" or "frost_prism" or "resonant_core" or "ember_alloy" or "repair_kit"){
+            if(item.Id=="copper_coil"){for(int y=7;y<25;y+=5){art.Ellipse(16,y,11,5,edge);art.Ellipse(16,y,9,3,c);art.Ellipse(16,y,5,1,new("544638"));}L(24,22,28,28,c,3);}
+            else if(item.Id=="survey_lens"){art.Disc(18,12,11,edge);art.Disc(18,12,8,c);art.Disc(18,12,5,new("ceffff"));L(5,28,12,19,edge,7);L(5,27,12,19,wood,4);}
+            else if(item.Id=="repair_kit"){P(3,10,26,18,edge);P(5,12,22,14,c);P(10,5,12,7,edge);P(12,7,8,3,new("c9d1c6"));P(14,16,4,8,new("f4f1db"));P(11,19,10,3,new("f4f1db"));}
+            else if(item.Id=="heat_lining"){Shape(edge,new(5,4),new(26,4),new(28,26),new(4,28));P(7,6,17,19,c);for(int y=8;y<25;y+=4)L(8,y,23,y,new("785839"));}
+            else if(item.Id=="ember_alloy"){Shape(edge,new(3,15),new(10,7),new(26,7),new(30,20),new(23,26),new(3,23));Shape(c,new(5,16),new(11,9),new(24,9),new(27,20),new(22,23),new(5,21));L(12,11,22,11,new("ffe6b0"),2);}
+            else{Shape(edge,new(16,1),new(29,13),new(22,29),new(9,29),new(2,13));Shape(c,new(16,4),new(26,13),new(20,26),new(11,26),new(5,13));L(16,5,16,24,c.Lightened(.45f),3);L(7,13,24,13,c.Darkened(.25f),2);}
+        }
         else if(item.Block){
             if(item.Shape=="stairs"){art.Cube(item,new(0,7),7);art.Cube(item,new(0,-2),9,.65f);}
             else art.Cube(item,Vector2.Zero,item.Shape is "slab" or "rug"?item.Shape=="rug"?3:8:15);
@@ -111,7 +128,7 @@ public static class ItemSprites
             case "wood":if(face==2){int r=Math.Max(Math.Abs(x-7),Math.Abs(y-7));return r%3==0?new("735134"):new("b58c54");}return x%4==0?c.Darkened(.3f):c.Lightened(.06f);
             case "plank":case "stairs":case "slab":case "fence":return line||x%8==((y/5)%2)*4?c.Darkened(.23f):c;
             case "brick":case "ruin_brick":case "tile":return y%5==0||(x+((y/5)%2)*4)%8==0?c.Darkened(.28f):c;
-            case "coal_ore":case "iron_ore":case "crystal_ore":return (x*3+y*7)%17<5?Color.FromString(item.Color,Colors.White).Lightened(.12f):new Color("7b8182").Darkened((noise%5)*.03f);
+            case "gold_ore":case "coal_ore":case "iron_ore":case "crystal_ore":return (x*3+y*7)%17<5?Color.FromString(item.Color,Colors.White).Lightened(.12f):new Color("7b8182").Darkened((noise%5)*.03f);
             case "workbench":return face==2?(x%5==0||y%5==0?new("59422c"):new("c59b65")):y<3?new("a37342"):x%7==0?new("4b3727"):c;
             case "chest":return y==4||y==13?new("503c2c"):face==0&&x is >6 and <10&&y is >4 and <10?new("c3c2a4"):c;
             case "furnace":return face==0&&x is >3 and <12&&y is >5 and <13?new("242c30"):x%5==0||y%5==0?c.Darkened(.2f):c;

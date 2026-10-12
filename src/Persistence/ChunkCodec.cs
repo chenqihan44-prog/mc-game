@@ -29,7 +29,7 @@ public static class ChunkCodec
         string[] palette=values.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray();
         var numbers=palette.Select((id,index)=>(id,index)).ToDictionary(p=>p.id,p=>(ushort)p.index,StringComparer.Ordinal);
         using var raw=new MemoryStream();using(var writer=new BinaryWriter(raw,Utf8,true)){
-            writer.Write(Magic);writer.Write((byte)1);writer.Write(dense);writer.Write(chunk.X);writer.Write(chunk.Y);writer.Write(chunk.Z);writer.Write(terrain.Seed);writer.Write(Terrain.Version);writer.Write((ushort)edits.Count);writer.Write((ushort)palette.Length);
+            writer.Write(Magic);writer.Write((byte)1);writer.Write(dense);writer.Write(chunk.X);writer.Write(chunk.Y);writer.Write(chunk.Z);writer.Write(terrain.Seed);writer.Write(terrain.GeneratorVersion);writer.Write((ushort)edits.Count);writer.Write((ushort)palette.Length);
             foreach(string id in palette){byte[] bytes=Utf8.GetBytes(id);if(bytes.Length is <1 or >128)throw new InvalidDataException("方块 ID 长度无效");writer.Write((byte)bytes.Length);writer.Write(bytes);}
             writer.Write((ushort)values.Length);
             if(dense)foreach(string id in values)writer.Write(numbers[id]);
@@ -46,7 +46,7 @@ public static class ChunkCodec
         while((read=gzip.Read(buffer,0,buffer.Length))>0){if(raw.Length+read>MaxRawBytes)throw new InvalidDataException("解压区块过大");raw.Write(buffer,0,read);}
         raw.Position=0;using var reader=new BinaryReader(raw,Utf8,true);
         if(reader.ReadInt32()!=Magic||reader.ReadByte()!=1)throw new InvalidDataException("区块格式不受支持");
-        bool dense=reader.ReadBoolean();if(new Cell(reader.ReadInt32(),reader.ReadInt32(),reader.ReadInt32())!=chunk||reader.ReadInt32()!=terrain.Seed||reader.ReadInt32()!=Terrain.Version)throw new InvalidDataException("区块归属或生成器版本不符");
+        bool dense=reader.ReadBoolean();if(new Cell(reader.ReadInt32(),reader.ReadInt32(),reader.ReadInt32())!=chunk||reader.ReadInt32()!=terrain.Seed||reader.ReadInt32()!=terrain.GeneratorVersion)throw new InvalidDataException("区块归属或生成器版本不符");
         int modifications=reader.ReadUInt16(),paletteCount=reader.ReadUInt16();
         if(modifications!=expectedChanges||modifications>8192||(dense?"dense":"sparse")!=expectedEncoding||paletteCount>catalog.BlockIds.Length)throw new InvalidDataException("区块清单不符");
         var palette=new string[paletteCount];var known=new HashSet<string>(StringComparer.Ordinal);

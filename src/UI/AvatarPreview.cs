@@ -6,6 +6,7 @@ namespace EmberLighthouse.UI;
 public partial class AvatarPreview : Control
 {
     public Inventory? Equipment {get;set;}
+    public Catalog? Catalog {get;set;}
     private PresentationModel model=null!;
     public override void _Ready()
     {
@@ -14,7 +15,7 @@ public partial class AvatarPreview : Control
         viewport.AddChild(new WorldEnvironment{Environment=new Godot.Environment{BackgroundMode=Godot.Environment.BGMode.Color,BackgroundColor=new("202020"),AmbientLightSource=Godot.Environment.AmbientSource.Color,AmbientLightColor=new("dce8e3"),AmbientLightEnergy=.8f}});
         viewport.AddChild(new DirectionalLight3D{RotationDegrees=new(-30,-30,0),LightEnergy=1.1f});
         var camera=new Camera3D{Current=true,Projection=Camera3D.ProjectionType.Orthogonal,Size=2.18f,Position=new(2.5f,1.6f,5)};viewport.AddChild(camera);camera.LookAt(new(0,.99f,0));
-        model=PresentationModel.Avatar(Equipment);viewport.AddChild(model);
+        model=PresentationModel.Avatar(Equipment,Catalog);viewport.AddChild(model);
         var image=new TextureRect{Texture=viewport.GetTexture(),ExpandMode=TextureRect.ExpandModeEnum.IgnoreSize,StretchMode=TextureRect.StretchModeEnum.Scale,MouseFilter=MouseFilterEnum.Ignore};image.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);AddChild(image);
     }
     public override void _Process(double delta)

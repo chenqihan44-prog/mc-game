@@ -1,5 +1,6 @@
 shader_type spatial;
-render_mode cull_disabled;
+render_mode unshaded, cull_disabled;
+uniform float daylight = 1.0;
 varying vec3 world_position;
 varying vec4 tint;
 varying vec3 face_normal;
@@ -97,6 +98,19 @@ void fragment() {
     } else if (style == 28) {
         detail *= mod(p.x + p.y, 2.0) < 1.0 ? 0.90 : 1.03;
     }
-    ALBEDO = base * detail;
+    if (style == 34) {
+        bool mark = mod(p.y, 6.0) < 1.0 && mod(p.x + floor(p.y / 6.0) * 3.0, 9.0) < 5.0;
+        detail *= mark ? 0.25 : 1.03;
+    }
+    vec3 sky_light = mix(vec3(0.16, 0.21, 0.34), vec3(1.0, 0.98, 0.94), daylight) * (0.025 + daylight * 0.975) * pow(UV.x, 1.6);
+    vec3 torch_light = vec3(1.0, 0.70, 0.36) * pow(UV.y, 1.8) * 1.45;
+    vec3 illumination = max(vec3(0.0025), max(sky_light, torch_light));
+    ALBEDO = base * detail * illumination;
+    if (style == 33) {
+        bool flame = fract(world_position.y) > 0.46;
+        ALBEDO = flame ? vec3(1.0, 0.62, 0.16) : vec3(0.42, 0.25, 0.10) * detail * illumination;
+        EMISSION = flame ? vec3(1.0, 0.43, 0.07) * 1.6 : vec3(0.0);
+    }
+    if (style == 16) EMISSION = base * 0.3;
     ROUGHNESS = 0.92;
 }

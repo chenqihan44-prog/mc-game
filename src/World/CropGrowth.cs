@@ -3,10 +3,10 @@ namespace EmberLighthouse.World;
 public static class CropGrowth
 {
     public static double StepSeconds(string seed)=>seed switch{
-        "carrot_seed"=>60,"potato_seed"=>120,_=>90
+        "carrot_seed"=>60,"potato_seed"=>120,"pumpkin_seed"=>100,"melon_seed"=>80,"sugar_cane_seed"=>100,_=>90
     };
     public static string Produce(string seed)=>seed switch{
-        "wheat_seed"=>"grain","carrot_seed"=>"carrot",_=>"potato"
+        "wheat_seed"=>"grain","carrot_seed"=>"carrot","pumpkin_seed"=>"pumpkin","melon_seed"=>"melon","sugar_cane"=>"sugar_cane",_=>"potato"
     };
     public static int Stage(BlockEntity crop,double worldTime)
     {

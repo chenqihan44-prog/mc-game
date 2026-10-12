@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using EmberLighthouse.Core;
 using EmberLighthouse.Items;
+using EmberLighthouse.World;
 
 namespace EmberLighthouse.Rendering;
 
@@ -9,6 +10,7 @@ public readonly record struct Vertex(float X,float Y,float Z,float Nx,float Ny,f
 public readonly record struct PlantVertex(float X,float Y,float Z,float U,float V);
 public sealed class MeshData
 {
+    public VoxelLighting? Lighting {get;set;}
     public List<Vertex> Vertices {get;}=[];
     public List<int> Indices {get;}=[];
     public List<Vertex> WaterVertices {get;}=[];
@@ -55,19 +57,36 @@ public static class VoxelMesher
             bool open=d.Shape=="door"&&(doorOpen?.Invoke(p)??false);int r=rotation?.Invoke(p)??0;
             switch(d.Shape){
                 case "bush":
-                    var plant=crop?.Invoke(p)??(-1,(string?)null);float height=plant.Item1<0?.95f:.25f+plant.Item1*.2f;
-                    int style=plant.Item2=="wheat_seed"?(plant.Item1==3?2:1):plant.Item2=="carrot_seed"?3:plant.Item2=="potato_seed"?4:0;
+                    var plant=crop?.Invoke(p)??(-1,(string?)null);float height=plant.Item1<0?PlantVisuals.Height(d.Id):.25f+plant.Item1*.2f;
+                    int style=plant.Item2=="wheat_seed"?(plant.Item1==3?2:1):plant.Item2=="carrot_seed"?3:plant.Item2=="potato_seed"?4:plant.Item2=="pumpkin_seed"?14:plant.Item2=="melon_seed"?15:PlantVisuals.Style(d.Id);
                     CrossPlant(result,x,y,z,height,style);
                     break;
                 case "stairs":Box(result,x,y,z,0,0,0,1,.5f,1,id,d.Solid,r);Box(result,x,y,z,0,.5f,.5f,1,1,1,id,d.Solid,r);break;
+                case "brewing":
+                    Box(result,x,y,z,.08f,0,.08f,.92f,.14f,.92f,catalog.Number("cobble"),true,r);
+                    Box(result,x,y,z,.45f,.14f,.45f,.55f,.95f,.55f,catalog.Number("copper_block"),true,r);
+                    Box(result,x,y,z,.17f,.68f,.45f,.83f,.75f,.55f,catalog.Number("copper_block"),true,r);
+                    foreach(float bx in new[]{.2f,.5f,.8f})Box(result,x,y,z,bx-.07f,.14f,.15f,bx+.07f,.45f,.29f,id,true,r);break;
                 case "slab":Box(result,x,y,z,0,0,0,1,.5f,1,id,d.Solid,r);break;
+                case "rocks":Box(result,x,y,z,.12f,0,.18f,.44f,.21f,.48f,id,false,r);Box(result,x,y,z,.48f,0,.38f,.82f,.29f,.76f,id,false,r);Box(result,x,y,z,.25f,0,.66f,.44f,.13f,.88f,id,false,r);break;
                 case "rug":Box(result,x,y,z,0,0,0,1,.06f,1,id,false,r);break;
+                case "torch":Torch(result,x,y,z,id,r);break;
                 case "door":Box(result,x,y,z,0,0,0,1,1,.15f,id,d.Solid,(r+(open?1:0))%4);break;
                 case "window":Box(result,x,y,z,0,0,0,1,1,.15f,id,d.Solid,r);break;
                 case "fence":Box(result,x,y,z,.35f,0,.35f,.65f,1,.65f,id,d.Solid,r);Box(result,x,y,z,0,.3f,.43f,1,.5f,.57f,id,d.Solid,r);Box(result,x,y,z,0,.75f,.43f,1,.9f,.57f,id,d.Solid,r);break;
             }
         }
         return result;
+    }
+    private static void Torch(MeshData mesh,int x,int y,int z,ushort id,int mount)
+    {
+        float[] Point(float a,float h,float b){float px=.5f+a,pz=.5f+b;
+            if(mount is 1 or 2)px=(mount==1?.05f:.95f)+(mount==1?1:-1)*h*.34f+a;
+            if(mount is 3 or 4)pz=(mount==3?.05f:.95f)+(mount==3?1:-1)*h*.34f+b;
+            return [x+px,y+h+(mount==0?0:.12f),z+pz];}
+        float lo=-.065f,hi=.065f,top=mount==0?.68f:.58f;
+        for(int axis=0;axis<3;axis++)for(int sign=-1;sign<=1;sign+=2){int u=(axis+1)%3,v=(axis+2)%3;float[] low=[lo,0,lo],high=[hi,top,hi],a=new float[3];a[axis]=sign>0?high[axis]:low[axis];a[u]=low[u];a[v]=low[v];var b=(float[])a.Clone();b[u]=high[u];var c=(float[])b.Clone();c[v]=high[v];var d=(float[])a.Clone();d[v]=high[v];if(sign<0)(b,d)=(d,b);
+            AddQuad(mesh,Point(a[0],a[1],a[2]),Point(b[0],b[1],b[2]),Point(c[0],c[1],c[2]),Point(d[0],d[1],d[2]),axis,sign,id,false,false);}
     }
     private static void GroundLog(MeshData mesh,int x,int y,int z,ushort bark,ushort end,int rotation)
     {
@@ -83,7 +102,7 @@ public static class VoxelMesher
     }
     private static void CrossPlant(MeshData mesh,int x,int y,int z,float height,int style)
     {
-        float u0=style/5f,u1=(style+1)/5f;
+        float u0=style/(float)PlantVisuals.Count,u1=(style+1)/(float)PlantVisuals.Count;
         for(int plane=0;plane<2;plane++){
             int start=mesh.PlantVertices.Count;float z0=plane==0?.08f:.92f,z1=plane==0?.92f:.08f;
             mesh.PlantVertices.AddRange([new(x+.08f,y,z+z0,u0,1),new(x+.92f,y,z+z1,u1,1),new(x+.92f,y+height,z+z1,u1,0),new(x+.08f,y+height,z+z0,u0,0)]);

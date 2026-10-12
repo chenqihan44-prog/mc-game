@@ -16,8 +16,10 @@ public static class Equipment
     public static double Absorb(WorldSnapshot state,Catalog catalog,double damage)
     {
         if(state.Creative||!double.IsFinite(damage)||damage<=0)return 0;
-        double result=damage*(1-ArmorPoints(state,catalog)*.04);int wear=(int)Math.Min(int.MaxValue,Math.Max(1,Math.Ceiling(damage/4)));
-        for(int i=0;i<4;i++)if(state.Equipment.Slots[i] is { } item){int remaining=(item.Durability??catalog.Items[item.Id].Durability)-wear;item.Durability=remaining;if(remaining<=0)state.Equipment.Slots[i]=null;}
+        double effective=ArmorPoints(state,catalog);if(damage>20)effective=Math.Max(effective*.6,effective-(damage-20)/(5+ArmorTraits.Toughness(state)*2));
+        double protection=state.Equipment.Slots.Take(4).Where(i=>i!=null).Sum(i=>i!.Protection)*.015;
+        double result=damage*Math.Max(.15,1-effective*.04)*(1-Math.Min(.18,protection));int wear=(int)Math.Min(int.MaxValue,Math.Max(1,Math.Ceiling(damage/4)));
+        for(int i=0;i<4;i++)if(state.Equipment.Slots[i] is { } item){double factor=ArmorTraits.Material(item.Id)=="copper"?.8:1;int loss=Math.Max(1,(int)Math.Ceiling(wear*factor/(1+item.Unbreaking*.5)));int remaining=(item.Durability??catalog.Items[item.Id].Durability)-loss;item.Durability=remaining;if(remaining<=0)state.Equipment.Slots[i]=null;}
         return result;
     }
     public static bool SwapHands(WorldSnapshot state,int selected)

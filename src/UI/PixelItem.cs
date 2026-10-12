@@ -20,7 +20,7 @@ public partial class ItemGlyph : Control
     public override void _Draw()
     {
         if(Item==null)return;var def=Catalog.Items[Item.Id];float s=Math.Min(PixelScale,Math.Min(Size.X-6,Size.Y-6)/16);var origin=(Size-Vector2.One*16*s)/2;
-        PixelItem.Draw(this,def,origin,s);PixelItem.DrawDurability(this,def,Item,origin,s);
+        if(Item.Dye!="")def=def with{Color=ArmorTraits.Color(Item,Catalog)};PixelItem.Draw(this,def,origin,s);PixelItem.DrawDurability(this,def,Item,origin,s);
         if(Item.Count>1){string count=Item.Count.ToString();var font=ThemeDB.FallbackFont;int size=Math.Clamp((int)(8*s),12,24);float width=font.GetStringSize(count,HorizontalAlignment.Left,-1,size).X;var p=new Vector2(Size.X-width-3,Size.Y-4);DrawStringOutline(font,p,count,HorizontalAlignment.Left,-1,size,3,new("252525"));DrawString(font,p,count,HorizontalAlignment.Left,-1,size,Colors.White);}
     }
 }

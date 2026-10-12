@@ -80,8 +80,7 @@ public partial class Game
         routeAction="采掘 "+cell+" "+catalog.Id(world.Get(cell));RouteAim(cell);
         for(int obstruction=0;player!.Target()?.Hit!=cell&&obstruction<8;obstruction++){
             var hit=player.Target()?.Hit;
-            int tier=Held()?.Use is "pick" or "axe" or "shovel"?Held()!.Tier:0;
-            if(hit is not Cell blocker||blocker.Y<Math.Floor(player.GlobalPosition.Y)||catalog.Block(world.Get(blocker)) is not { } block||block.Tier>tier||block.Id is "bedrock" or "beacon")break;
+            if(hit is not Cell blocker||blocker.Y<Math.Floor(player.GlobalPosition.Y)||catalog.Block(world.Get(blocker)) is not { } block||!MiningRules.CanHarvest(block,Held())||block.Id is "bedrock" or "beacon")break;
             await RouteMine(blocker);RouteAim(cell);
         }
         if(player!.Target()?.Hit!=cell)throw new InvalidOperationException("目标被挡住："+routeAction+"，准星命中 "+player.Target()?.Hit);
@@ -143,10 +142,10 @@ public partial class Game
         // Wait for actual support at the new location before constructing a walking path.
         await RouteWait(()=>renderer!.IsTerrainReady(player.GlobalPosition)&&player.IsOnFloor()&&world.Solid(Explorer.ToCell(player.GlobalPosition+Vector3.Down*.05f)),15);
         if(world!.State.Inventory.Count("iron_pick")>0)RouteSelect("iron_pick");
-        int tier=Held()?.Use is "pick" or "axe" or "shovel"?Held()!.Tier:0;
+        int tier=MiningRules.HarvestTier(Held());
         var feet=player!.GlobalPosition;var start=new Cell((int)Math.Floor(feet.X),(int)Math.Round(feet.Y),(int)Math.Floor(feet.Z));
         var frontier=new PriorityQueue<Cell,int>();var cost=new Dictionary<Cell,int>{{start,0}};var previous=new Dictionary<Cell,Cell>();frontier.Enqueue(start,0);
-        bool CanDig(Cell p)=>catalog.Block(world.Get(p)) is { } block&&block.Tier<=tier&&block.Id is not ("bedrock" or "beacon" or "chest")&&(!world.State.Entities.TryGetValue(p.ToString(),out var entity)||entity.Storage.Slots.All(s=>s==null));
+        bool CanDig(Cell p)=>catalog.Block(world.Get(p)) is { } block&&MiningRules.CanHarvest(block,Held())&&block.Id is not ("bedrock" or "beacon" or "chest")&&(!world.State.Entities.TryGetValue(p.ToString(),out var entity)||entity.Storage.Slots.All(s=>s==null));
         int Clearance(Cell p){int blocks=0;foreach(var body in new[]{p,p+new Cell(0,1,0)})if(world.Solid(body)){if(!CanDig(body))return -1;blocks++;}return blocks;}
         int ThreatCost(Cell p){
             int risk=0;
@@ -204,7 +203,7 @@ public partial class Game
     {
         string id="";
         try{
-            routeWatch.Start();StartWorld(new(){Name="生存路线自动验证",Seed=42});id=world!.State.WorldId;
+            routeWatch.Start();StartWorld(new(){Name="生存路线自动验证",Seed=42,GeneratorVersion=2});id=world!.State.WorldId;
             if(world.State.Creative||world.State.Casual||world.State.Inventory.Slots.Any(s=>s!=null))throw new InvalidOperationException("路线没有从空背包标准生存开始");
             await RouteWait(()=>renderer!.IsTerrainReady(player!.GlobalPosition)&&player.IsOnFloor(),15);RouteMark("新生存世界就绪");RouteSelect(null);
             for(int x=2;x<=7;x++){await RouteWalk(new(x+.5f,37,2.5f));await RouteMine(new(x,37,4));}

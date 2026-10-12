@@ -13,6 +13,7 @@ public partial class ProjectilePool : Node3D
     public Action<double,Vector3> HitPlayer {get;set;}=null!;
     public Action<CreatureState,double> HitCreature {get;set;}=null!;
     public Func<Vector3,bool> ReadyTerrain {get;set;}=null!;
+    public Action? AnchorClosed {get;set;}
     private readonly MeshInstance3D[] views=new MeshInstance3D[ProjectileFlight.Limit];
     private readonly ProjectileState?[] shots=new ProjectileState?[ProjectileFlight.Limit];
     private Mesh arrow=null!,bolt=null!;
@@ -38,12 +39,12 @@ public partial class ProjectilePool : Node3D
     private void Bind(ProjectileState shot)
     {
         int index=Array.FindIndex(shots,s=>s==null);if(index<0)throw new InvalidOperationException("投射物池容量不足");
-        shots[index]=shot;var view=views[index];view.Mesh=shot.Hostile?bolt:arrow;view.MaterialOverride=shot.Hostile?boltMaterial:arrowMaterial;view.Visible=true;UpdateView(index);
+        shots[index]=shot;var view=views[index];view.Mesh=shot.Hostile&&!shot.Arrow?bolt:arrow;view.MaterialOverride=shot.Hostile&&!shot.Arrow?boltMaterial:arrowMaterial;view.Visible=true;UpdateView(index);
     }
     private void UpdateView(int index)
     {
         var shot=shots[index]!;var point=shot.Point;var dir=shot.Direction;views[index].GlobalPosition=new(point.X,point.Y,point.Z);
-        if(!shot.Hostile){var direction=new Vector3(dir.X,dir.Y,dir.Z).Normalized();views[index].GlobalBasis=Basis.LookingAt(direction,Math.Abs(direction.Y)>.98f?Vector3.Right:Vector3.Up);views[index].RotateObjectLocal(Vector3.Right,Mathf.Pi/2);}
+        if(!shot.Hostile||shot.Arrow){var direction=new Vector3(dir.X,dir.Y,dir.Z).Normalized();views[index].GlobalBasis=Basis.LookingAt(direction,Math.Abs(direction.Y)>.98f?Vector3.Right:Vector3.Up);views[index].RotateObjectLocal(Vector3.Right,Mathf.Pi/2);}
     }
     public override void _PhysicsProcess(double delta)
     {
@@ -56,6 +57,7 @@ public partial class ProjectilePool : Node3D
             // Retire before applying damage; death/save callbacks see no spent shot.
             shots[i]=null;views[i].Visible=false;World.State.Projectiles.Remove(shot);
             if(hit.Outcome==ProjectileOutcome.Blocked)BlockedCount++;
+            else if(hit.Outcome==ProjectileOutcome.Anchor)AnchorClosed?.Invoke();
             else if(hit.Outcome==ProjectileOutcome.Player)PlayerHits++;
             else if(hit.Outcome==ProjectileOutcome.Creature)CreatureHits++;
             if(hit.Outcome==ProjectileOutcome.Player){var direction=shot.Direction;var point=shot.Point-System.Numerics.Vector3.Normalize(direction)*2;HitPlayer(shot.Damage,new(point.X,point.Y,point.Z));}
