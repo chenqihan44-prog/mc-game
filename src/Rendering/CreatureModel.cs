@@ -32,6 +32,7 @@ public partial class CreatureModel : PresentationModel
     public static CreatureModel Create(string kind)
     {
         var m=new CreatureModel();
+        if(m.LoadGenerated(kind))return m;
         switch(kind){
             case "deer":
                 m.BodyHeight=1.55f;m.LabelHeight=2.03f;
@@ -120,8 +121,9 @@ public partial class CreatureModel : PresentationModel
         else if(giant){B(this,new(.60f,.57f,.065f),new(0,1.28f,-.255f),metal);B(this,new(.44f,.41f,.04f),new(0,1.28f,-.31f),"292e35");B(this,new(.27f,.31f,.04f),new(0,1.28f,-.352f),glow);B(this,new(.38f,.09f,.045f),new(0,1.28f,-.365f),glow);foreach(float s in new[]{-1f,1f})B(this,new(.06f,.36f,.04f),new(s*.42f,1.26f,-.25f),glow);B(this,new(.09f,.28f,.10f),new(0,2.17f,0),metal);}
         else{B(this,new(.22f,.22f,.045f),new(0,1.26f,-.25f),metal);B(this,new(.08f,.13f,.025f),new(0,1.26f,-.285f),glow);}
     }
-    public void Animate(double delta,Vector3 velocity,bool active,float attack=0)
+    public void Animate(double delta,Vector3 velocity,bool active,float attack=0,string style="",float strikeProgress=-1,float recoveryProgress=-1,bool charging=false,bool sitting=false,bool airborne=false)
     {
+        if(Generated){AnimateGenerated(delta,velocity,active,attack,style,strikeProgress,recoveryProgress,charging,sitting,airborne);return;}
         float speed=new Vector2(velocity.X,velocity.Z).Length();if(active)stride+=(float)delta*Mathf.Min(speed*3,16);
         float amount=active?Mathf.Min(speed/3,1)*.32f:0;
         attack=active?Mathf.Clamp(attack,0,1):0;Rotation=new(-attack*.14f,0,0);

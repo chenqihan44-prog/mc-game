@@ -6,6 +6,14 @@ namespace EmberLighthouse;
 
 public partial class Game
 {
+    private TextureRect WorldTerrainThumbnail(WorldEntry entry)
+    {
+        var preview=new TextureRect{CustomMinimumSize=new(134,90),ExpandMode=TextureRect.ExpandModeEnum.IgnoreSize,StretchMode=TextureRect.StretchModeEnum.KeepAspectCovered,TextureFilter=Control.TextureFilterEnum.Nearest,MouseFilter=Control.MouseFilterEnum.Pass,TooltipText="种子地形预览：展示角色附近的自然地形，不是存档实拍截图。"};
+        if(entry.Damaged||!Terrain.Supports(entry.GeneratorVersion)){preview.Texture=EmberLighthouse.UI.UiFactory.BackdropTexture();preview.TooltipText="存档需恢复；此处显示默认风景。";return preview;}
+        const int pixels=32,step=4;int x=(int)entry.Position[0]-pixels*step/2,z=(int)entry.Position[2]-pixels*step/2;
+        var terrain=new Terrain(entry.Seed,catalog,entry.GeneratorVersion);var data=MapRaster.Render(terrain,catalog,new System.Collections.Generic.Dictionary<EmberLighthouse.Core.Cell,ushort>(),x,z,step,pixels);
+        using var image=Image.CreateFromData(pixels,pixels,false,Image.Format.Rgba8,data);preview.Texture=ImageTexture.CreateFromImage(image);return preview;
+    }
     private void ShowDeleteWorld(WorldEntry entry)
     {
         SetScreen("delete-world");var col=Screen(overlay,"删除世界");var description=Label($"{entry.Name}\n编号：{entry.Id}\n普通删除移到「已删除世界」，可以恢复。永久删除直接清除文件，无法恢复。",17);description.AutowrapMode=TextServer.AutowrapMode.WordSmart;description.CustomMinimumSize=new(580,0);col.AddChild(description);
@@ -36,5 +44,10 @@ public partial class Game
         SetScreen("surface-refresh");var col=Screen(overlay,"更新自然地表");var text=Label(entry.Name+"\n减少自然灌木和草花，移除固定的出生物资排列，按种子分散物资。山体、湖泊、建筑、容器、作物与主线进度保留。",17);text.AutowrapMode=TextServer.AutowrapMode.WordSmart;col.AddChild(text);
         var backup=new CheckButton{Text="更新前备份原存档",ButtonPressed=true};col.AddChild(backup);
         col.AddChild(Button("确认更新地表",()=>{bool keepBackup=backup.ButtonPressed;RunWorldIo("更新自然地表",()=>{var saved=saves.Load(entry.Id).Snapshot;if(keepBackup)saves.Backup(entry.Id);var updated=StarterSupplies.Refresh(saved,catalog);saves.Save(updated);return true;},_=>{Toast("自然地表已更新，建筑和主线进度保留");ShowWorlds();},ShowWorlds);}));col.AddChild(Button("取消",ShowWorlds));
+    }
+    private void ShowNatureRefresh(WorldEntry entry)
+    {
+        SetScreen("surface-refresh");var col=Screen(overlay,"更新树木与矿藏");var text=Label(entry.Name+"\n增加树种、分层树冠与粗树干，降低自然煤矿和铜矿密度。保留山体、洞穴、主线、容器和玩家修改；建筑或砍伐位置周围保留原树木。更新前自动备份原存档。",17);text.AutowrapMode=TextServer.AutowrapMode.WordSmart;col.AddChild(text);
+        col.AddChild(Button("备份并更新",()=>RunWorldIo("更新树木与矿藏",()=>{var saved=saves.Load(entry.Id).Snapshot;saves.Backup(entry.Id);saves.Save(NaturalTrees.Refresh(saved,catalog));return true;},_=>{Toast("树木与矿藏已更新，原档已备份");ShowWorlds();},ShowWorlds)));col.AddChild(Button("取消",ShowWorlds));
     }
 }

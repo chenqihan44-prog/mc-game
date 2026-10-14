@@ -1,0 +1,54 @@
+{
+  "id": "wolf",
+  "blocks": 38,
+  "triangles": 1752,
+  "vertices": 3768,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegFrontL",
+    "KneeFrontL",
+    "LegRearL",
+    "KneeRearL",
+    "LegFrontR",
+    "KneeFrontR",
+    "LegRearR",
+    "KneeRearR",
+    "Jaw",
+    "TailTip"
+  ],
+  "textureSize": [
+    1024,
+    1024
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "bite"
+  ],
+  "byteSize": 271032,
+  "sha256": "857259fe819fd07c6e3f4364338f5e77ff48de98a1b27b73af54357a61d2666d",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "layered face and jaw",
+    "white eyes with species eye color",
+    "stepped upright ears",
+    "jointed paws",
+    "segmented heavy tail and pale chest ruff"
+  ],
+  "height": 1.2599999904632568,
+  "name": "狼",
+  "family": "quadruped",
+  "group": "land",
+  "previewClip": "bite",
+  "emissionMask": false,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

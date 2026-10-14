@@ -45,6 +45,7 @@ public static class Landscape
             bool protectedSite=false;foreach(var tower in terrain.TowerLocations)if(Math.Abs(cx-tower.X)<13&&Math.Abs(cz-tower.Z)<13){protectedSite=true;break;}if(protectedSite)continue;
             if(terrain.Adventure is {} layout&&layout.Nearby(new(cx,41,cz)) is {} site&&layout.Inside(new(cx,41,cz),site.Id,6))continue;
             int h=terrain.Surface(cx,cz);if(h<=Terrain.SeaLevel)continue;int dx=p.X-cx,dz=p.Z-cz,dy=p.Y-h;
+            if(terrain.GeneratorVersion>=8){var tree=NaturalTrees.Shape(hash,type);if(NaturalTrees.Block(tree,dx,dy,dz,ground-h) is {} treeBlock)return catalog.Number(treeBlock);continue;}
             if(dy<1||dy>12)continue;
             bool birch=type==0&&(hash>>8)%2==0,pine=type==3||type==4,acacia=type==2;
             int trunk=pine?7+(int)((hash>>11)%3):birch?5+(int)((hash>>11)%2):acacia?4:5;

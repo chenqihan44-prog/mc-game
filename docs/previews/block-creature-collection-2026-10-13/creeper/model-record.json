@@ -1,0 +1,51 @@
+{
+  "id": "creeper",
+  "blocks": 20,
+  "triangles": 912,
+  "vertices": 1968,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegFrontL",
+    "KneeFrontL",
+    "LegRearL",
+    "KneeRearL",
+    "LegFrontR",
+    "KneeFrontR",
+    "LegRearR",
+    "KneeRearR"
+  ],
+  "textureSize": [
+    1024,
+    1024
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "explode"
+  ],
+  "byteSize": 163688,
+  "sha256": "d90c29c8ea4fa38aef3e2b73439320696c8fbe7754bbc135cfd8c08388a5032b",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "four feet and no arms",
+    "mottled green pixel skin",
+    "recognizable recessed square face",
+    "body tremor during explosion anticipation"
+  ],
+  "height": 1.8199999332427979,
+  "name": "苦力怕",
+  "family": "quadruped",
+  "group": "enemies",
+  "previewClip": "explode",
+  "emissionMask": false,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

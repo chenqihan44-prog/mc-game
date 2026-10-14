@@ -6,6 +6,7 @@ namespace EmberLighthouse.Creatures;
 
 public sealed class ProjectileState
 {
+    public string OwnerId {get;set;}="";
     public double[] Position {get;set;}=[0,40,0];
     public double[] Velocity {get;set;}=[0,0,-10];
     public double Damage {get;set;}=10;
@@ -16,11 +17,12 @@ public sealed class ProjectileState
     public bool BypassCamp {get;set;}
     public void Validate()
     {
+        if(OwnerId==null||OwnerId!=""&&OwnerId!="host"&&(OwnerId.Length!=32||!System.Linq.Enumerable.All(OwnerId,Uri.IsHexDigit)))throw new InvalidOperationException("投射物来源无效");
         static bool VectorOk(double[]? value)=>value is {Length:3}&&Array.TrueForAll(value,double.IsFinite);
         if(!VectorOk(Position)||!Array.TrueForAll(Position,v=>Math.Abs(v)<=1_000_000)||!VectorOk(Velocity)||!double.IsFinite(Damage)||Damage<0||Damage>1000||!double.IsFinite(Remaining)||Remaining<0||Remaining>4||!double.IsFinite(Radius)||Radius<.01||Radius>.3||Speed<=0||Speed>60)throw new InvalidOperationException("投射物状态无效");
     }
     private double Speed=>Math.Sqrt(Velocity[0]*Velocity[0]+Velocity[1]*Velocity[1]+Velocity[2]*Velocity[2]);
-    public ProjectileState Copy()=>new(){Position=(double[])Position.Clone(),Velocity=(double[])Velocity.Clone(),Damage=Damage,Remaining=Remaining,Radius=Radius,Hostile=Hostile,Arrow=Arrow,BypassCamp=BypassCamp};
+    public ProjectileState Copy()=>new(){OwnerId=OwnerId,Position=(double[])Position.Clone(),Velocity=(double[])Velocity.Clone(),Damage=Damage,Remaining=Remaining,Radius=Radius,Hostile=Hostile,Arrow=Arrow,BypassCamp=BypassCamp};
     public Vector3 Point=>new((float)Position[0],(float)Position[1],(float)Position[2]);
     public Vector3 Direction=>new((float)Velocity[0],(float)Velocity[1],(float)Velocity[2]);
 }
@@ -31,7 +33,7 @@ public readonly record struct ProjectileHit(ProjectileOutcome Outcome,CreatureSt
 public static class ProjectileFlight
 {
     public const int Limit=24;
-    public static ProjectileHit Step(WorldState world,ProjectileState shot,double seconds,Func<Vector3,bool> ready,float playerHeight=1.8f)
+    public static ProjectileHit Step(WorldState world,ProjectileState shot,double seconds,Func<Vector3,bool> ready,float playerHeight=1.8f,Func<Vector3,float,ProjectileOutcome?>? hitPlayer=null)
     {
         if(!double.IsFinite(seconds)||seconds<0)throw new ArgumentOutOfRangeException(nameof(seconds));
         if(shot.Remaining<=0)return new(ProjectileOutcome.Expired);
@@ -51,7 +53,8 @@ public static class ProjectileFlight
                 return new(ProjectileOutcome.Blocked);
             }
             if(shot.Hostile){
-                if(CombatGeometry.BodyHit(point,player,playerHeight,.3f,(float)shot.Radius))return new(world.State.Creative||!shot.BypassCamp&&CreaturePopulation.SafeCamp(world,CombatGeometry.CellAt(player))&&!world.State.Mainline.FinaleActive?ProjectileOutcome.Absorbed:ProjectileOutcome.Player);
+                if(hitPlayer!=null){if(hitPlayer(point,(float)shot.Radius) is {} outcome)return new(outcome);}
+                else if(CombatGeometry.BodyHit(point,player,playerHeight,.3f,(float)shot.Radius))return new(world.State.Creative||!shot.BypassCamp&&CreaturePopulation.SafeCamp(world,CombatGeometry.CellAt(player))&&!world.State.Mainline.FinaleActive?ProjectileOutcome.Absorbed:ProjectileOutcome.Player);
             }else foreach(var creature in world.State.Creatures){
                 if(creature.Health<=0)continue;bool boss=creature.Kind is "guardian" or "colossus";
                 float height=creature.Kind switch{"colossus"=>10.9f,"guardian"=>2.6f,"mine_warden"=>2.2f,"furnace_warden"=>2.9f,"observatory_warden"=>2.78f,"cod"=>.45f,"squid" or "chicken"=>.95f,"turtle"=>.55f,"spider" or "skitter"=>.65f,"horse"=>1.9f,_=>1.5f};if(creature.BabyUntil>world.State.Time)height*=.6f;

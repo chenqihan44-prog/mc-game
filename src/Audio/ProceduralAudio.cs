@@ -41,7 +41,8 @@ public static class ProceduralAudio
                     else if(cue.StartsWith("hit_"))value*=.65;
                     else if(cue.StartsWith("place_"))value*=.85;
                     value*=attack*tail;
-                }else if(cue=="attack")value=(n*.23+low*.38)*env;
+                }else if(cue=="impact")value=(low*.8+n*.12)*env;
+                else if(cue=="attack")value=(n*.23+low*.38)*env;
                 else if(cue=="eat")value=(n*.27+Math.Sin(t*Math.Tau*hz)*.12)*env;
                 else if(cue=="craft")value=(Math.Sin(t*Math.Tau*hz)+n*.4)*env*.26*(Math.Sin(t*90)>.1?1:.25);
                 else value=(Math.Sin(t*Math.Tau*(cue=="death"?hz*(1-t/duration*.6):hz))*.3+low*.12)*env;

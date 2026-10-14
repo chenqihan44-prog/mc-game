@@ -1,0 +1,62 @@
+{
+  "id": "spider",
+  "blocks": 57,
+  "triangles": 2812,
+  "vertices": 5928,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "Jaw",
+    "Leg0L",
+    "Tip0L",
+    "Leg1L",
+    "Tip1L",
+    "Leg2L",
+    "Tip2L",
+    "Leg3L",
+    "Tip3L",
+    "Leg0R",
+    "Tip0R",
+    "Leg1R",
+    "Tip1R",
+    "Leg2R",
+    "Tip2R",
+    "Leg3R",
+    "Tip3R"
+  ],
+  "textureSize": [
+    1536,
+    1536
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "bite"
+  ],
+  "byteSize": 475392,
+  "sha256": "e8f6779b76640f28e0d267d1e64cb6752a132a98b4f1b26d9c127d2c03456b19",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "eight fully segmented legs",
+    "raised shell bands",
+    "five clustered glowing eyes",
+    "two-part mandibles",
+    "alternating diagonal gait",
+    "bite anticipation"
+  ],
+  "height": 0.6740404814481735,
+  "name": "蜘蛛",
+  "family": "arthropod",
+  "group": "enemies",
+  "previewClip": "bite",
+  "emissionMask": true,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

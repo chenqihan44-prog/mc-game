@@ -1,0 +1,54 @@
+{
+  "id": "fox",
+  "blocks": 34,
+  "triangles": 1560,
+  "vertices": 3360,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegFrontL",
+    "KneeFrontL",
+    "LegRearL",
+    "KneeRearL",
+    "LegFrontR",
+    "KneeFrontR",
+    "LegRearR",
+    "KneeRearR",
+    "Jaw",
+    "TailTip"
+  ],
+  "textureSize": [
+    1024,
+    1024
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "look"
+  ],
+  "byteSize": 243180,
+  "sha256": "bba044866ebb9f28bb5307697e8678282494e0a9205660499b3a9f4411bc481a",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "layered face and jaw",
+    "white eyes with species eye color",
+    "stepped upright ears",
+    "jointed paws",
+    "segmented bushy white-tipped tail"
+  ],
+  "height": 1.1299999952316284,
+  "name": "狐狸",
+  "family": "quadruped",
+  "group": "small_aquatic",
+  "previewClip": "walk",
+  "emissionMask": false,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

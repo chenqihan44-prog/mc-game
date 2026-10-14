@@ -1,0 +1,52 @@
+{
+  "id": "sheep",
+  "blocks": 45,
+  "triangles": 2300,
+  "vertices": 4800,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegFrontL",
+    "KneeFrontL",
+    "LegRearL",
+    "KneeRearL",
+    "LegFrontR",
+    "KneeFrontR",
+    "LegRearR",
+    "KneeRearR"
+  ],
+  "textureSize": [
+    1024,
+    1024
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "graze"
+  ],
+  "byteSize": 325128,
+  "sha256": "ed0248db534ae4e17244b217e082fcd34489bb88b92729f5f9099a6dfb7809d2",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "layered broad wool clumps",
+    "exposed tan face and ears",
+    "dark nose and hooves",
+    "separate forehead wool",
+    "grazing motion"
+  ],
+  "height": 1.1799999475479126,
+  "name": "羊",
+  "family": "quadruped",
+  "group": "land",
+  "previewClip": "walk",
+  "emissionMask": false,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

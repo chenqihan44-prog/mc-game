@@ -6,6 +6,8 @@
 *.zip binary
 *.png binary
 *.chunk binary
+*.glb binary
+*.blend binary
 
 # Save fixtures contain byte hashes; preserve their original bytes.
 tests/fixtures/published-format*/worlds/** binary

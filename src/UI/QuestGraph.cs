@@ -22,7 +22,7 @@ public partial class QuestGraph : Control
     {
         FocusMode=FocusModeEnum.All;ClipContents=true;MouseDefaultCursorShape=CursorShape.Drag;
         StyleBoxFlat Style(string bg,string border)=>new(){BgColor=new(bg),BorderColor=new(border),BorderWidthBottom=2,BorderWidthTop=2,BorderWidthLeft=2,BorderWidthRight=2,CornerRadiusBottomLeft=8,CornerRadiusBottomRight=8,CornerRadiusTopLeft=8,CornerRadiusTopRight=8};
-        completed=Style("183f36","65c99c");available=Style("3a3425","e1ad55");locked=Style("202832","4c5765");SelectNode(QuestJournal.Current(Nodes).Id,true);
+        completed=Style("283123e6","a3ba7e");available=Style("382819e6","dbb875");locked=Style("211c17c2","746149");SelectNode(QuestJournal.Current(Nodes).Id,true);
     }
     public Vector2 ScreenPoint(Vector2 world)=>(world-Center)*Zoom+Size/2;
     public Vector2 WorldPoint(Vector2 screen)=>(screen-Size/2)/Zoom+Center;
@@ -49,18 +49,18 @@ public partial class QuestGraph : Control
     public static string StatusName(QuestStatus status)=>status switch{QuestStatus.Completed=>"已完成",QuestStatus.Available=>"可进行",_=>"待解锁"};
     public override void _Draw()
     {
-        DrawRect(new(Vector2.Zero,Size),new("101922"));
-        for(int x=0;x<Size.X;x+=32)for(int y=0;y<Size.Y;y+=32)DrawCircle(new(x,y),1,new Color(1,1,1,.06f));
+        DrawRect(new(Vector2.Zero,Size),new(.07f,.06f,.035f,.16f));
+        for(int x=0;x<Size.X;x+=40)for(int y=0;y<Size.Y;y+=40)DrawCircle(new(x,y),1,new Color(.87f,.72f,.45f,.09f));
         foreach(var (from,to) in QuestJournal.Edges(Nodes)){
             var a=Nodes.First(n=>n.Id==from);var b=Nodes.First(n=>n.Id==to);var start=ScreenPoint(new(a.X+nodeSize.X,a.Y+nodeSize.Y/2));var end=ScreenPoint(new(b.X,b.Y+nodeSize.Y/2));var points=new Vector2[17];
-            for(int i=0;i<points.Length;i++){float t=i/16f;points[i]=start.BezierInterpolate(start+new Vector2(70*Zoom,0),end-new Vector2(70*Zoom,0),end,t);}DrawPolyline(points,b.Status==QuestStatus.Locked?new("465363"):b.Done?new("65c99c"):new("dcaa58"),Math.Max(1,3*Zoom),true);
-            DrawColoredPolygon([end,end+new Vector2(-9,-5)*Zoom,end+new Vector2(-9,5)*Zoom],b.Status==QuestStatus.Locked?new("465363"):new("dcaa58"));
+            for(int i=0;i<points.Length;i++){float t=i/16f;points[i]=start.BezierInterpolate(start+new Vector2(70*Zoom,0),end-new Vector2(70*Zoom,0),end,t);}DrawPolyline(points,b.Status==QuestStatus.Locked?new("71604a"):b.Done?new("a3ba7e"):UiFactory.Gold,Math.Max(1,3*Zoom),true);
+            DrawColoredPolygon([end,end+new Vector2(-9,-5)*Zoom,end+new Vector2(-9,5)*Zoom],b.Status==QuestStatus.Locked?new("71604a"):UiFactory.Gold);
         }
         var font=GetThemeFont("font");foreach(var node in Nodes){
-            var rect=NodeRect(node);DrawStyleBox(node.Status==QuestStatus.Completed?completed:node.Status==QuestStatus.Available?available:locked,rect);if(node.Id==SelectedId)DrawRect(rect.Grow(4),new("e9f5ff"),false,2);
+            var rect=NodeRect(node);DrawStyleBox(node.Status==QuestStatus.Completed?completed:node.Status==QuestStatus.Available?available:locked,rect);if(node.Id==SelectedId){DrawRect(rect.Grow(5),new(.86f,.7f,.42f,.3f),false,5);DrawRect(rect.Grow(3),UiFactory.Gold,false,2);}
             if(Catalog.Items.TryGetValue(node.Icon,out var icon))DrawTextureRect(ItemSprites.Texture(icon),new(rect.Position+new Vector2(10,20)*Zoom,Vector2.One*42*Zoom),false,node.Status==QuestStatus.Locked?new(.55f,.55f,.55f):Colors.White);
-            int size=Math.Max(10,(int)(18*Zoom));var color=node.Status==QuestStatus.Locked?new Color("91a0b0"):Colors.White;DrawString(font,rect.Position+new Vector2(61,39)*Zoom,node.Title,width:140*Zoom,fontSize:size,modulate:color);
-            if(Zoom>=.48f){DrawString(font,rect.Position+new Vector2(61,66)*Zoom,StatusName(node.Status),fontSize:Math.Max(10,(int)(14*Zoom)),modulate:node.Done?new("83d9b8"):node.Status==QuestStatus.Available?new("f0c77c"):new("7f8c9d"));DrawString(font,rect.Position+new Vector2(12,91)*Zoom,node.Id is "forge" or "snow"?"双域分支 · 顺序自选":node.Id is "bridge" or "reflector" or "guard"?"三节点分支 · 全部完成":"点击查看目标与准备",fontSize:Math.Max(9,(int)(11*Zoom)),modulate:new("9dabb6"));}
+            int size=Math.Max(10,(int)(18*Zoom));var color=node.Status==QuestStatus.Locked?UiFactory.Muted:UiFactory.Parchment;DrawString(font,rect.Position+new Vector2(61,39)*Zoom,node.Title,width:140*Zoom,fontSize:size,modulate:color);
+            if(Zoom>=.48f){DrawString(font,rect.Position+new Vector2(61,66)*Zoom,StatusName(node.Status),fontSize:Math.Max(10,(int)(14*Zoom)),modulate:node.Done?new("b9ce91"):node.Status==QuestStatus.Available?UiFactory.Gold:new("aa9576"));DrawString(font,rect.Position+new Vector2(12,91)*Zoom,node.Id is "forge" or "snow"?"双域分支 · 顺序自选":node.Id is "bridge" or "reflector" or "guard"?"三节点分支 · 全部完成":"点击查看目标与准备",fontSize:Math.Max(9,(int)(11*Zoom)),modulate:UiFactory.Muted);}
         }
     }
     public override void _ExitTree(){completed?.Dispose();available?.Dispose();locked?.Dispose();}

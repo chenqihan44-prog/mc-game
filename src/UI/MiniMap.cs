@@ -47,9 +47,9 @@ public partial class MiniMap : Control
     public override void _ExitTree(){texture?.Dispose();texture=null;world=null;}
     public override void _Draw()
     {
-        DrawRect(new Rect2(Vector2.Zero,Size),new Color("252525"));DrawRect(new Rect2(2,2,188,264),new Color("c6c6c6"));
-        DrawRect(mapRect,new Color("1e2428"));if(texture!=null)DrawTextureRect(texture,mapRect,false);
-        var font=ThemeDB.FallbackFont;DrawString(font,new(8,17),"N ↑",fontSize:14,modulate:new Color("373737"));
+        DrawRect(new Rect2(Vector2.Zero,Size),new Color("21190ee8"));DrawRect(new Rect2(1,1,190,266),UiFactory.Gold.Darkened(.25f),false,1);DrawRect(new Rect2(3,3,186,262),new Color("302316"));
+        DrawRect(mapRect,new Color("21190f"));if(texture!=null)DrawTextureRect(texture,mapRect,false);DrawRect(mapRect,UiFactory.Gold.Darkened(.3f),false,1);
+        var font=ThemeDB.FallbackFont;DrawString(font,new(8,17),"N ↑",fontSize:14,modulate:UiFactory.Gold);
         if(world==null)return;
         Vector2 Point(double x,double z)=>mapRect.Position+new Vector2((float)(x-centerX+48),(float)(z-centerZ+48))*mapRect.Size/Pixels;
         void Marker(double x,double z,Color color,int radius){if(!world.MapKnown((int)Math.Floor(x),(int)Math.Floor(z)))return;var p=Point(x,z);if(mapRect.Grow(-radius).HasPoint(p)){DrawCircle(p,radius+1,Colors.Black);DrawCircle(p,radius,color);}}
@@ -58,9 +58,9 @@ public partial class MiniMap : Control
         foreach(var m in world.State.Markers)Marker(m[0],m[1],Colors.White,3);
         var player=Point(position.X,position.Z);var heading=new Vector2(-MathF.Sin(yaw),-MathF.Cos(yaw));var side=new Vector2(-heading.Y,heading.X);
         if(mapRect.Grow(-7).HasPoint(player)){DrawCircle(player,7,Colors.Black);DrawColoredPolygon([player+heading*7,player-heading*4+side*4,player-heading*4-side*4],Colors.White);}
-        DrawString(font,new(8,219),$"X {position.X:0}   Z {position.Z:0}",fontSize:14,modulate:new Color("373737"));
-        DrawString(font,new(8,238),"天气 · "+WeatherText,fontSize:14,modulate:new Color("373737"));
-        DrawString(font,new(8,258),ClockText,fontSize:13,modulate:new Color("202020"));
+        DrawString(font,new(8,219),$"X {position.X:0}   Z {position.Z:0}",fontSize:14,modulate:UiFactory.Parchment);
+        DrawString(font,new(8,238),"天气 · "+WeatherText,fontSize:14,modulate:UiFactory.Muted);
+        DrawString(font,new(8,258),ClockText,fontSize:13,modulate:UiFactory.Gold);
     }
 }
 

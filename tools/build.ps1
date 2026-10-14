@@ -28,7 +28,14 @@ if($Test){& $dotnet run --project tests/CoreTests.csproj;if($LASTEXITCODE -ne 0)
 if($Export){New-Item -ItemType Directory -Force -Path $release | Out-Null
     $output=& $godot --headless --path $root --export-release 'Windows Desktop' (Join-Path $release 'EmberLighthouse.exe') 2>&1
     $output | Set-Content -LiteralPath (Join-Path $root 'test-results/export-engine.log')
-    if($LASTEXITCODE -ne 0 -or ($output | Select-String '^ERROR:')){throw 'Export failed; see test-results/export-engine.log'}
+    $exportExit=$LASTEXITCODE
+    # Sandbox startup can deny the Windows certificate store. Match only that
+    # exact diagnostic; resource, C# compilation and export errors remain fatal.
+    $certificateDiagnostic='(?m)^ERROR: Failed to read the root certificate store\.\r?\n[ \t]+at: get_system_ca_certificates \(platform/windows/os_windows\.cpp:2570\)\r?(?:\n|$)'
+    $engineText=$output -join "`n";$diagnostics=[regex]::Matches($engineText,$certificateDiagnostic)
+    $engineErrors=[regex]::Replace($engineText,$certificateDiagnostic,'')
+    [ordered]@{exitCode=$exportExit;output=$release;rootCertificateStoreReadFailures=$diagnostics.Count;otherEngineErrors=($engineErrors -match '(?m)^ERROR:')} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $root 'test-results/export-verification.json') -Encoding utf8
+    if($exportExit -ne 0 -or $engineErrors -match '(?m)^ERROR:'){throw 'Export failed; see test-results/export-engine.log'}
     if(!(Test-Path (Join-Path $release 'data_EmberLighthouse_windows_x86_64/EmberLighthouse.dll'))){throw 'Exported C# assembly missing'}
     Copy-Item -LiteralPath (Join-Path $root 'assets/LICENSES.md'),(Join-Path $root 'assets/GODOT_LICENSE.txt'),(Join-Path $root 'assets/GODOT_COPYRIGHT.txt') -Destination $release
 }

@@ -1,0 +1,62 @@
+{
+  "id": "skitter",
+  "blocks": 57,
+  "triangles": 2812,
+  "vertices": 5928,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "Jaw",
+    "Leg0L",
+    "Tip0L",
+    "Leg1L",
+    "Tip1L",
+    "Leg2L",
+    "Tip2L",
+    "Leg3L",
+    "Tip3L",
+    "Leg0R",
+    "Tip0R",
+    "Leg1R",
+    "Tip1R",
+    "Leg2R",
+    "Tip2R",
+    "Leg3R",
+    "Tip3R"
+  ],
+  "textureSize": [
+    1536,
+    1536
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "bite"
+  ],
+  "byteSize": 475672,
+  "sha256": "034cc2a0209a2d976ae92ca342be16e112cbdd67356d3d3f4a1f5a21c21b555a",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "eight fully segmented legs",
+    "raised shell bands",
+    "five clustered glowing eyes",
+    "two-part mandibles",
+    "alternating diagonal gait",
+    "bite anticipation"
+  ],
+  "height": 0.6740404814481735,
+  "name": "洞穴爬行者",
+  "family": "arthropod",
+  "group": "enemies",
+  "previewClip": "bite",
+  "emissionMask": true,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

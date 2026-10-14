@@ -1,0 +1,55 @@
+{
+  "id": "colossus",
+  "blocks": 164,
+  "triangles": 8144,
+  "vertices": 17136,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegL",
+    "KneeL",
+    "ArmL",
+    "HandL",
+    "LegR",
+    "KneeR",
+    "ArmR",
+    "HandR"
+  ],
+  "textureSize": [
+    2048,
+    2048
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "slam"
+  ],
+  "byteSize": 1255928,
+  "sha256": "0a9f853e9fa397fb81e73075ac362aada05bc6ff8d5cc8b2591096d5f7a7e49d",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "true eleven-block architectural scale",
+    "four-tier twin shoulder pylons",
+    "deep concentric chest opening",
+    "raised molten cross and diamond crystal",
+    "stacked piston forearms",
+    "large folded fingers and thumbs",
+    "tiered plated legs and feet",
+    "slam anticipation/contact/recovery"
+  ],
+  "height": 11.300000190734863,
+  "name": "熔心巨像",
+  "family": "biped",
+  "group": "bosses",
+  "previewClip": "slam",
+  "emissionMask": true,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

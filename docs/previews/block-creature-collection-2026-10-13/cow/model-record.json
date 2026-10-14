@@ -1,0 +1,55 @@
+{
+  "id": "cow",
+  "blocks": 51,
+  "triangles": 2372,
+  "vertices": 5040,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegFrontL",
+    "KneeFrontL",
+    "LegRearL",
+    "KneeRearL",
+    "LegFrontR",
+    "KneeFrontR",
+    "LegRearR",
+    "KneeRearR"
+  ],
+  "textureSize": [
+    768,
+    768
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "graze"
+  ],
+  "byteSize": 349820,
+  "sha256": "4d03a5c7baba8a48b771441f309b160c2247d1266438f51b555863b37401e6fe",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "longer reference legs",
+    "front white eyes and black pupils",
+    "coherent brown/cream patches and forehead stripe",
+    "elbowed two-part horns",
+    "pink inner ears",
+    "layered snout",
+    "udder and teats",
+    "split hooves"
+  ],
+  "height": 1.9544999599456787,
+  "name": "牛",
+  "family": "quadruped",
+  "group": "land",
+  "previewClip": "walk",
+  "acceptedPrototype": true,
+  "emissionMask": false,
+  "scope": "accepted revision-2 sample copied without mesh changes"
+}

@@ -22,6 +22,11 @@ public sealed class CreatureState
     public double AttackWindup {get;set;}=-1;
     public double AttackCooldown {get;set;}
     public double ChargeRemaining {get;set;}
+    public double StrikeRemaining {get;set;}
+    public double RecoveryRemaining {get;set;}
+    public double AttackWindupDuration {get;set;}
+    public double? FacingYaw {get;set;}
+    public string AttackTargetId {get;set;}="";
     public double[]? AttackAim {get;set;}
     public bool Provoked {get;set;}
 }

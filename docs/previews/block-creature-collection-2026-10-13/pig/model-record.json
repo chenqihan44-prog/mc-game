@@ -1,0 +1,53 @@
+{
+  "id": "pig",
+  "blocks": 42,
+  "triangles": 1832,
+  "vertices": 3960,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegFrontL",
+    "KneeFrontL",
+    "LegRearL",
+    "KneeRearL",
+    "LegFrontR",
+    "KneeFrontR",
+    "LegRearR",
+    "KneeRearR"
+  ],
+  "textureSize": [
+    768,
+    768
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "graze"
+  ],
+  "byteSize": 279712,
+  "sha256": "2c712a143c0f5aca64e0581e3a973df1742c7110c33eaabfc4b628a3236991cd",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "larger reference head",
+    "front white eyes and black pupils",
+    "folded upright ears",
+    "layered snout and nostrils",
+    "four-segment curled tail",
+    "split hooves"
+  ],
+  "height": 1.2443472146987915,
+  "name": "猪",
+  "family": "quadruped",
+  "group": "land",
+  "previewClip": "walk",
+  "acceptedPrototype": true,
+  "emissionMask": false,
+  "scope": "accepted revision-2 sample copied without mesh changes"
+}

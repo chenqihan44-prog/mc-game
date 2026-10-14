@@ -1,0 +1,52 @@
+{
+  "id": "skeleton",
+  "blocks": 49,
+  "triangles": 2172,
+  "vertices": 4728,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegL",
+    "KneeL",
+    "ArmL",
+    "HandL",
+    "LegR",
+    "KneeR",
+    "ArmR",
+    "HandR"
+  ],
+  "textureSize": [
+    1536,
+    1536
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "bolt"
+  ],
+  "byteSize": 333744,
+  "sha256": "480be5116d11ee8169c17a173dc18ac3d0a12018e4fdf0cad945f5d810c7ba7f",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "exposed skull sockets and teeth",
+    "four paired ribs and spine",
+    "thin separated bone limbs",
+    "articulated bow and string",
+    "bolt anticipation"
+  ],
+  "height": 1.8105000592768192,
+  "name": "骷髅",
+  "family": "biped",
+  "group": "enemies",
+  "previewClip": "bolt",
+  "emissionMask": false,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

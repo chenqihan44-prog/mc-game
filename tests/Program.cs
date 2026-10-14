@@ -521,9 +521,11 @@ Test("format3 migrates to equipment format4 with raw backup and empty new slots"
 });
 NaturalSurfaceTests.Run(catalog,(name,action)=>Test(name,action),testRoot);
 LightingDropTests.Run(catalog,(name,action)=>Test(name,action),testRoot);
+NatureFeedbackTests.Run(catalog,(name,action)=>Test(name,action),testRoot);
 ExpansionTests.Run(catalog,creatureDefs,(name,action)=>Test(name,action),testRoot);
 ExplorationTests.Run(catalog,(name,action)=>Test(name,action),testRoot);
 MainlineTests.Run(catalog,creatureDefs,(name,action)=>Test(name,action),testRoot);
+MultiplayerPersistenceTests.Run(catalog,(name,action)=>Test(name,action),testRoot);
 Directory.CreateDirectory(Path.Combine(root,"test-results"));File.WriteAllText(Path.Combine(root,"test-results","core.json"),JsonSerializer.Serialize(new{date=DateTime.UtcNow,failed,results},Catalog.JsonOptions));
 Environment.ExitCode=failed==0?0:1;
 

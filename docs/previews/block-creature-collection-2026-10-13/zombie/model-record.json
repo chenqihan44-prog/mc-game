@@ -1,0 +1,52 @@
+{
+  "id": "zombie",
+  "blocks": 33,
+  "triangles": 1484,
+  "vertices": 3216,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegL",
+    "KneeL",
+    "ArmL",
+    "HandL",
+    "LegR",
+    "KneeR",
+    "ArmR",
+    "HandR"
+  ],
+  "textureSize": [
+    1536,
+    1536
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "melee"
+  ],
+  "byteSize": 251240,
+  "sha256": "761ed7bba3131f9c51a3451ef837f938a8c32fc1a17c90dab2c1998eaabec6ca",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "green square head and hands",
+    "torn teal shirt",
+    "purple trousers",
+    "separate fingers",
+    "melee windup/strike/recovery"
+  ],
+  "height": 1.8105000592768192,
+  "name": "僵尸",
+  "family": "biped",
+  "group": "enemies",
+  "previewClip": "melee",
+  "emissionMask": false,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

@@ -1,0 +1,54 @@
+{
+  "id": "furnace_warden",
+  "blocks": 88,
+  "triangles": 4224,
+  "vertices": 8976,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegL",
+    "KneeL",
+    "ArmL",
+    "HandL",
+    "LegR",
+    "KneeR",
+    "ArmR",
+    "HandR"
+  ],
+  "textureSize": [
+    1536,
+    1536
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "charge"
+  ],
+  "byteSize": 631192,
+  "sha256": "5cb4ac6d5734de5163d50d971b4a6135c351ff7210a7433efb4a5a6a4af8a6b7",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "wide squat iron furnace body",
+    "orange core behind five physical grille bars",
+    "four chimney stacks",
+    "heavy copper heat shields",
+    "glowing forearm vents",
+    "hood-like slit-eye head",
+    "charge clip"
+  ],
+  "height": 2.758624792098999,
+  "name": "炉卫",
+  "family": "biped",
+  "group": "bosses",
+  "previewClip": "charge",
+  "emissionMask": true,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

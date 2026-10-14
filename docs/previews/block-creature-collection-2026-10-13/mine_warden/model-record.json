@@ -1,0 +1,54 @@
+{
+  "id": "mine_warden",
+  "blocks": 97,
+  "triangles": 4700,
+  "vertices": 9960,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegL",
+    "KneeL",
+    "ArmL",
+    "HandL",
+    "LegR",
+    "KneeR",
+    "ArmR",
+    "HandR"
+  ],
+  "textureSize": [
+    1536,
+    1536
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "bolt"
+  ],
+  "byteSize": 676324,
+  "sha256": "a11f0e037c8939ecf8cf4221354ac18caccef734a1fdc73b8c7936ac184631db",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "mining helmet and amber lamp",
+    "asymmetric broad left shoulder guard",
+    "weathered stone and brass plates",
+    "integrated stepped right-forearm bolt launcher",
+    "visible piston links",
+    "belt clamps",
+    "bolt clip"
+  ],
+  "height": 2.4660000801086426,
+  "name": "矿场哨长",
+  "family": "biped",
+  "group": "bosses",
+  "previewClip": "bolt",
+  "emissionMask": true,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

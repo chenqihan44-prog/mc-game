@@ -54,9 +54,10 @@ public partial class Game : Node3D
     private Cell? miningCell;
     private bool smoke,visualCheck;
     private bool interactionCheck,creatureCheck,combatCheck,actionsArmed;
+    private bool creatureMotionCheck;
     private bool quitting;
     private double populationClock;
-    private bool IsValidation=>smoke||visualCheck||soak||saveUiCheck||buildingCheck||audioCheck||interactionCheck||creatureCheck||combatCheck||routeCheck||boundaryCheck||creaturePathCheck||feedbackCheck||equipmentCheck||estateCheck||storageStartupCheck||presentationCheck||mainlineCheck||mainlinePreview||explorationCheck||explorationPreview||surfaceCheck||surfacePreview||expansionCheck||lightingCheck||jumpPlacementCheck;
+    private bool IsValidation=>natureCheck||creatureMotionCheck||UiStyleCheck||characterPreviewCheck||multiplayerCheck||smoke||visualCheck||soak||saveUiCheck||buildingCheck||audioCheck||interactionCheck||creatureCheck||combatCheck||routeCheck||boundaryCheck||feedbackCheck||equipmentCheck||estateCheck||storageStartupCheck||presentationCheck||mainlineCheck||mainlinePreview||explorationCheck||explorationPreview||surfaceCheck||surfacePreview||expansionCheck||lightingCheck||jumpPlacementCheck;
     private Cell? currentContainer;
     private string recipeQuery="";
     private string currentStation="hand";
@@ -64,6 +65,7 @@ public partial class Game : Node3D
     private string? binding;
     private MinecraftHud minecraftHud=null!;
     private DamageFeedback damageFeedback=null!;
+    private CombatFeedback combatFeedback=null!;
     private MiniMap miniMap=null!;
     private HeldItemView heldView=null!;
     private MiningProgress miningBar=null!;
@@ -82,12 +84,13 @@ public partial class Game : Node3D
             GD.Print("STARTUP_SETTINGS: "+JsonSerializer.Serialize(new{effectiveFileLogging=logging,baseFileLogging=ProjectSettings.GetSetting("debug/file_logging/enable_file_logging").AsBool(),pcFileLogging=ProjectSettings.GetSetting("debug/file_logging/enable_file_logging.pc").AsBool(),pcFeature=OS.HasFeature("pc"),headless=DisplayServer.GetName()=="headless",userDataDir=OS.GetUserDataDir()},Catalog.JsonOptions));
             GetTree().Quit(logging?10:0);return;
         }
-        smoke=OS.GetCmdlineUserArgs().Contains("--smoke");visualCheck=OS.GetCmdlineUserArgs().Contains("--visual-check");soak=OS.GetCmdlineUserArgs().Contains("--soak");
+        UiStyleCheck=OS.GetCmdlineUserArgs().Contains("--ui-style-check");characterPreviewCheck=OS.GetCmdlineUserArgs().Contains("--character-preview-check")||OS.GetCmdlineUserArgs().Contains("--multiplayer-menu-preview");multiplayerCheck=OS.GetCmdlineUserArgs().Contains("--multiplayer-check");smoke=OS.GetCmdlineUserArgs().Contains("--smoke");visualCheck=OS.GetCmdlineUserArgs().Contains("--visual-check");soak=OS.GetCmdlineUserArgs().Contains("--soak");
         saveUiCheck=OS.GetCmdlineUserArgs().Contains("--save-ui-check");buildingCheck=OS.GetCmdlineUserArgs().Contains("--building-check");
         audioCheck=OS.GetCmdlineUserArgs().Contains("--audio-check");
         interactionCheck=OS.GetCmdlineUserArgs().Contains("--interaction-check");
         creatureCheck=OS.GetCmdlineUserArgs().Contains("--creature-check");
         combatCheck=OS.GetCmdlineUserArgs().Contains("--combat-check");
+        creatureMotionCheck=OS.GetCmdlineUserArgs().Contains("--creature-motion-check");
         routeCheck=OS.GetCmdlineUserArgs().Contains("--route-check");
         boundaryCheck=OS.GetCmdlineUserArgs().Contains("--boundary-check");
         creaturePathCheck=OS.GetCmdlineUserArgs().Contains("--creature-path-check");
@@ -99,20 +102,25 @@ public partial class Game : Node3D
         mainlineCheck=OS.GetCmdlineUserArgs().Contains("--mainline-check");mainlinePreview=OS.GetCmdlineUserArgs().Contains("--mainline-preview");
         explorationCheck=OS.GetCmdlineUserArgs().Contains("--exploration-check");explorationPreview=OS.GetCmdlineUserArgs().Contains("--exploration-preview");
         surfaceCheck=OS.GetCmdlineUserArgs().Contains("--surface-check");surfacePreview=OS.GetCmdlineUserArgs().Contains("--surface-preview");
-        expansionCheck=OS.GetCmdlineUserArgs().Contains("--expansion-check");lightingCheck=OS.GetCmdlineUserArgs().Contains("--lighting-check");jumpPlacementCheck=OS.GetCmdlineUserArgs().Contains("--jump-placement-check");
+        expansionCheck=OS.GetCmdlineUserArgs().Contains("--expansion-check");lightingCheck=OS.GetCmdlineUserArgs().Contains("--lighting-check");jumpPlacementCheck=OS.GetCmdlineUserArgs().Contains("--jump-placement-check");natureCheck=OS.GetCmdlineUserArgs().Contains("--nature-check");
         gcStress=IsValidation&&OS.GetCmdlineUserArgs().Contains("--gc-stress");
         if(IsValidation&&DisplayServer.GetName()!="headless")GetWindow().Unfocusable=true;
         catalog=new(JsonSerializer.Deserialize<ItemDef[]>(FileAccessText("res://data/items.json"),Catalog.JsonOptions)!,JsonSerializer.Deserialize<Recipe[]>(FileAccessText("res://data/recipes.json"),Catalog.JsonOptions)!);
         creatureDefs=JsonSerializer.Deserialize<CreatureDef[]>(FileAccessText("res://data/creatures.json"),Catalog.JsonOptions)!;
         CreatureRules.Validate(creatureDefs,catalog);
         string userRoot=IsValidation?ProjectSettings.GlobalizePath("res://test-results/runtime"):OS.GetUserDataDir();
+        if(UiStyleCheck){var args=OS.GetCmdlineUserArgs();int index=Array.IndexOf(args,"--ui-style-report-dir");if(index<0||index+1>=args.Length)throw new ArgumentException("UI validation requires an isolated report directory");userRoot=Path.Combine(Path.GetFullPath(args[index+1]),"runtime");}
         if(storageStartupCheck){userRoot=PrepareStorageStartupFixture();RunStorageStartupCheck();}
         var canvas=new CanvasLayer();AddChild(canvas);var root=new Control{Theme=UiFactory.Theme(),MouseFilter=Control.MouseFilterEnum.Ignore};root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);canvas.AddChild(root);
         hudRoot=new Control{MouseFilter=Control.MouseFilterEnum.Ignore};hudRoot.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);root.AddChild(hudRoot);
         overlay=new Control{MouseFilter=Control.MouseFilterEnum.Ignore};overlay.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);root.AddChild(overlay);
         audio=new();AddChild(audio);
         BuildHud();GetTree().AutoAcceptQuit=false;startupUserRoot=userRoot;
+        InitializeNetwork(userRoot);
         if(!TryInitializeStorage())return;
+        InitializeMultiplayerValidation();
+        InitializeCharacterValidation();
+        InitializeUiStyleValidation();
         if(smoke||visualCheck)StartWorld(new(){Name="自动场景检查",Seed=42,Creative=!visualCheck,Casual=visualCheck});
         if(soak){settings.ViewDistance=8;StartWorld(new(){Name="自动耐久检查",Seed=42,Creative=true});InitializeValidation();}
         if(saveUiCheck)StartSaveUiCheck();
@@ -121,6 +129,7 @@ public partial class Game : Node3D
         if(interactionCheck)RunInteractionCheck();
         if(creatureCheck)RunCreatureCheck();
         if(combatCheck)RunCombatCheck();
+        if(creatureMotionCheck)RunCreatureMotionCheck();
         if(routeCheck)RunSurvivalRouteCheck();
         if(boundaryCheck)RunBoundaryCheck();
         if(creaturePathCheck)RunCreaturePathCheck();
@@ -134,14 +143,15 @@ public partial class Game : Node3D
         if(surfaceCheck||surfacePreview)RunSurfaceCheck();
         if(expansionCheck)RunExpansionCheck();
         if(lightingCheck)RunLightingCheck();
+        if(natureCheck)RunNatureCheck();
         if(jumpPlacementCheck)RunJumpPlacementCheck();
         GetTree().AutoAcceptQuit=false;
     }
     private static string FileAccessText(string path){using var f=Godot.FileAccess.Open(path,Godot.FileAccess.ModeFlags.Read);return f.GetAsText();}
     private void RegisterInput()
     {
-        foreach(var p in defaultKeys){if(!InputMap.HasAction(p.Key))InputMap.AddAction(p.Key);InputMap.ActionEraseEvents(p.Key);if(!IsValidation)InputMap.ActionAddEvent(p.Key,new InputEventKey{PhysicalKeycode=(Key)settings.Keys.GetValueOrDefault(p.Key,(long)p.Value.Key)});}
-        foreach(var p in new[]{("mine",MouseButton.Left),("use",MouseButton.Right)}){if(!InputMap.HasAction(p.Item1))InputMap.AddAction(p.Item1);InputMap.ActionEraseEvents(p.Item1);if(!IsValidation)InputMap.ActionAddEvent(p.Item1,new InputEventMouseButton{ButtonIndex=p.Item2});}
+        foreach(var p in defaultKeys){if(!InputMap.HasAction(p.Key))InputMap.AddAction(p.Key);InputMap.ActionEraseEvents(p.Key);if(!IsValidation||UiStyleCheck)InputMap.ActionAddEvent(p.Key,new InputEventKey{PhysicalKeycode=(Key)settings.Keys.GetValueOrDefault(p.Key,(long)p.Value.Key)});}
+        foreach(var p in new[]{("mine",MouseButton.Left),("use",MouseButton.Right)}){if(!InputMap.HasAction(p.Item1))InputMap.AddAction(p.Item1);InputMap.ActionEraseEvents(p.Item1);if(!IsValidation||UiStyleCheck)InputMap.ActionAddEvent(p.Item1,new InputEventMouseButton{ButtonIndex=p.Item2});}
     }
     private void BuildHud()
     {
@@ -149,18 +159,23 @@ public partial class Game : Node3D
         damageFeedback=new();hudRoot.AddChild(damageFeedback);
         miningBar=new();hudRoot.AddChild(miningBar);
         minecraftHud=new(){Catalog=catalog};minecraftHud.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);hudRoot.AddChild(minecraftHud);
+        combatFeedback=new();hudRoot.AddChild(combatFeedback);
         miniMap=new();hudRoot.AddChild(miniMap);
         status=Label("");status.Position=new(222,18);hudRoot.AddChild(status);
         hotbar=Label("",18);hotbar.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.BottomWide);hotbar.OffsetTop=-152;hotbar.OffsetBottom=-130;hotbar.HorizontalAlignment=HorizontalAlignment.Center;hudRoot.AddChild(hotbar);
         prompt=Label("",14);prompt.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.BottomWide);prompt.OffsetTop=-187;prompt.OffsetBottom=-165;prompt.HorizontalAlignment=HorizontalAlignment.Center;prompt.MouseFilter=Control.MouseFilterEnum.Ignore;hudRoot.AddChild(prompt);
-        var objectives=new PanelContainer{MouseFilter=Control.MouseFilterEnum.Ignore};objectives.AddThemeStyleboxOverride("panel",new StyleBoxFlat{BgColor=new(0.025f,.035f,.04f,.78f),ContentMarginLeft=12,ContentMarginRight=12,ContentMarginTop=10,ContentMarginBottom=10,CornerRadiusTopLeft=4,CornerRadiusBottomLeft=4});objectives.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.TopRight);objectives.OffsetLeft=-336;objectives.OffsetTop=18;objectives.OffsetRight=-18;hudRoot.AddChild(objectives);objective=Label("",15);objective.AutowrapMode=TextServer.AutowrapMode.WordSmart;objective.CustomMinimumSize=new(294,0);objective.MouseFilter=Control.MouseFilterEnum.Ignore;objectives.AddChild(objective);
+        var objectives=new PanelContainer{MouseFilter=Control.MouseFilterEnum.Ignore};objectives.AddThemeStyleboxOverride("panel",UiFactory.Panel(12));objectives.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.TopRight);objectives.OffsetLeft=-336;objectives.OffsetTop=18;objectives.OffsetRight=-18;hudRoot.AddChild(objectives);objective=Label("",15);objective.AutowrapMode=TextServer.AutowrapMode.WordSmart;objective.CustomMinimumSize=new(294,0);objective.MouseFilter=Control.MouseFilterEnum.Ignore;objectives.AddChild(objective);
         crosshair=Label("+",24);crosshair.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.Center);crosshair.Position-=new Vector2(8,16);crosshair.Visible=false;hudRoot.AddChild(crosshair);
         notice=Label("",18);notice.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.TopWide);notice.OffsetTop=25;notice.HorizontalAlignment=HorizontalAlignment.Center;notice.MouseFilter=Control.MouseFilterEnum.Ignore;hudRoot.GetParent().AddChild(notice);
     }
     private void SetScreen(string id)
     {
+        if(NetClient&&id!="play")StopClientMining();
+        if(RemoteContext){if((screen=="inventory"&&id!="inventory")||(screen=="workbench"&&id!="workbench"))ReturnCraftingItems();screen=id;executingGuest!.UiDirty=true;player!.Enabled=id!="death";if(id=="play"){ReleaseContainer(executingGuest.Peer);foreach(var c in overlay.GetChildren()){overlay.RemoveChild(c);c.QueueFree();}}return;}
+        if(InRoom&&id=="play")ReleaseContainer(1);
         if(screen=="journal"&&id!="journal")RememberJournalView();
-        if(id!="play")damageFeedback?.Reset();
+        if(id!="play"){damageFeedback?.Reset();combatFeedback?.Reset();nearLights?.Hold(Vector3.Zero,false);}
+        if(screen=="play"&&id!="play"){noticeTime=0;notice.Text="";}
         if((screen=="inventory"&&id!="inventory")||(screen=="workbench"&&id!="workbench"))ReturnCraftingItems();
         if(id!="play"){miningFeedback?.HideCracks();miningBar.Progress=0;miningBar.QueueRedraw();heldView.SetActive(false);}
         screen=id;if(player!=null)player.Enabled=id=="play";
@@ -169,36 +184,61 @@ public partial class Game : Node3D
         audio?.PauseWorld(id!="play");
         if(!IsValidation)Input.MouseMode=id=="play"?Input.MouseModeEnum.Captured:Input.MouseModeEnum.Visible;
         actionsArmed=false;
-        hudRoot.Visible=world!=null;overlay.Visible=id!="play";miningCell=null;mineProgress=0;
+        hudRoot.Visible=world!=null&&id=="play";overlay.Visible=id!="play";miningCell=null;mineProgress=0;
         if(id=="play"){foreach(var c in overlay.GetChildren()){overlay.RemoveChild(c);c.QueueFree();}}
     }
     private void ShowMenu()
     {
-        SetScreen("menu");hudRoot.Visible=false;var col=Screen(overlay,"方野：余烬灯塔");
-        col.AddChild(Label("在荒野筑起营地，让沉寂的灯塔再次亮起。",18));
-        col.AddChild(Button("新建世界",ShowNewWorld));col.AddChild(Button("读取与备份世界",ShowWorlds));col.AddChild(Button("设置",()=>ShowSettings("menu")));col.AddChild(Button("操作与帮助",()=>ShowHelp("menu")));col.AddChild(Button("制作人员与素材",()=>ShowCredits("menu")));col.AddChild(Button("退出",()=>QuitCleanly()));
-        col.AddChild(Label("开发版本 0.1 · 单人离线 · Windows / 键鼠",14));
+        SetScreen("menu");hudRoot.Visible=false;foreach(var child in overlay.GetChildren()){overlay.RemoveChild(child);child.QueueFree();}UiFactory.Backdrop(overlay,false,.04f);
+        var center=new LanternScreenFrame();center.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);overlay.AddChild(center);var scroll=new ScrollContainer{FollowFocus=true,HorizontalScrollMode=ScrollContainer.ScrollMode.Disabled};center.AddChild(scroll);
+        var panel=new PanelContainer{CustomMinimumSize=new(700,0)};panel.AddThemeStyleboxOverride("panel",new StyleBoxEmpty());scroll.AddChild(panel);var col=Column(panel);col.AddThemeConstantOverride("separation",16);
+        var title=Label("方野：余烬灯塔",58);title.AddThemeFontOverride("font",new SystemFont{FontNames=["SimSun","Microsoft YaHei"],FontWeight=700});title.AddThemeColorOverride("font_color",UiFactory.Parchment);col.AddChild(title);
+        col.AddChild(new UiOrnament{CustomMinimumSize=new(0,26)});col.AddChild(Label("在荒野筑起营地，让沉寂的灯塔再次亮起。",22));
+        var start=Button("新建世界",ShowNewWorld);start.CustomMinimumSize=new(0,90);start.AddThemeFontSizeOverride("font_size",34);UiFactory.DecorateAction(start,"compass",true);col.AddChild(start);
+        var grid=new GridContainer{Columns=2};grid.AddThemeConstantOverride("h_separation",18);grid.AddThemeConstantOverride("v_separation",16);col.AddChild(grid);
+        void Add(string text,string icon,Action action){var button=Button(text,action);button.CustomMinimumSize=new(336,68);button.SizeFlagsHorizontal=Control.SizeFlags.ExpandFill;button.AddThemeFontSizeOverride("font_size",22);UiFactory.DecorateAction(button,icon);grid.AddChild(button);}
+        Add("读取与备份世界","folder",ShowWorlds);Add("设置","settings",()=>ShowSettings("menu"));Add("操作与帮助","book",()=>ShowHelp("menu"));Add("制作人员与素材","people",()=>ShowCredits("menu"));
+        var join=Button("加入联机世界",ShowJoinRoom);join.CustomMinimumSize=new(0,48);UiFactory.DecorateAction(join,"connection");col.AddChild(join);center.Panel=panel;center.Scroller=scroll;center.Refresh();
+        var exit=Button("退出",()=>QuitCleanly());UiFactory.DecorateAction(exit,"exit");exit.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.TopRight);exit.OffsetLeft=-144;exit.OffsetRight=-24;exit.OffsetTop=22;exit.OffsetBottom=68;overlay.AddChild(exit);
+        var footer=Label("开发版本 0.3 · 单人 / 4人合作 · Windows / 键鼠",14);footer.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.BottomLeft);footer.OffsetLeft=26;footer.OffsetTop=-34;footer.OffsetBottom=-12;overlay.AddChild(footer);
     }
     private int? lastWorldSeed;
     private void ShowNewWorld()
     {
-        SetScreen("new");var col=Screen(overlay,"新建世界");var name=new LineEdit{Text="我的营地",PlaceholderText="世界名称"};lastWorldSeed=WorldSeeds.Random(lastWorldSeed);var seed=new LineEdit{Name="WorldSeed",Text=lastWorldSeed.Value.ToString(),PlaceholderText="留空自动随机，也可输入整数种子"};col.AddChild(name);col.AddChild(Label("世界种子：自动随机，也可手动输入以复现世界",15));var seedRow=Row(col);seed.SizeFlagsHorizontal=Control.SizeFlags.ExpandFill;seedRow.AddChild(seed);seedRow.AddChild(Button("随机种子",()=>{lastWorldSeed=WorldSeeds.Random(int.TryParse(seed.Text,out var old)?old:lastWorldSeed);seed.Text=lastWorldSeed.Value.ToString();}));
+        SetScreen("new");var col=Screen(overlay,"新建世界");col.AddThemeConstantOverride("separation",6);var name=new LineEdit{Text="我的营地",PlaceholderText="世界名称"};lastWorldSeed=WorldSeeds.Random(lastWorldSeed);var seed=new LineEdit{Name="WorldSeed",Text=lastWorldSeed.Value.ToString(),PlaceholderText="留空自动随机，也可输入整数种子"};col.AddChild(name);col.AddChild(Label("世界种子：自动随机，也可手动输入以复现世界",15));var seedRow=Row(col);seed.SizeFlagsHorizontal=Control.SizeFlags.ExpandFill;seedRow.AddChild(seed);seedRow.AddChild(Button("随机种子",()=>{lastWorldSeed=WorldSeeds.Random(int.TryParse(seed.Text,out var old)?old:lastWorldSeed);seed.Text=lastWorldSeed.Value.ToString();}));
         var landscape=Label("",16);col.AddChild(landscape);void UpdateLandscape(string value)=>landscape.Text=int.TryParse(value,out int parsed)?"开局区域："+Landscape.Names[Landscape.StartProfile(parsed)]+" · 地形版本 "+Terrain.Version:"输入种子后预览开局区域";seed.TextChanged+=UpdateLandscape;UpdateLandscape(seed.Text);
         var creative=new CheckButton{Text="创造模式：无限建筑材料，飞行，无生存损耗"};var casual=new CheckButton{Text="休闲难度：死亡保留物品，饥饿减缓"};ExclusiveModes(creative,casual);col.AddChild(creative);col.AddChild(casual);col.AddChild(Label("两项均关闭时为标准生存；创造与休闲不能同时启用。",15));
         var bonus=new CheckButton{Name="BonusChest",Text="出生奖励宝箱：在出生点附近提供一份基础补给",ButtonPressed=false};creative.Toggled+=enabled=>{bonus.Disabled=enabled;if(enabled)bonus.ButtonPressed=false;};col.AddChild(bonus);col.AddChild(Label("默认关闭；开启时只生成一个出生奖励箱。野外箱子改为稀有探索奖励。",14));
         col.AddChild(Label("新版主线 · 三塔归火：双域远征、深层遗址与熔心巨像。进入后按 J 查看日志。",15));
-        var error=Label("");col.AddChild(error);
-        col.AddChild(Button("进入荒野",()=>{if(string.IsNullOrWhiteSpace(seed.Text))seed.Text=WorldSeeds.Random(lastWorldSeed).ToString();if(!int.TryParse(seed.Text,out int value)){error.Text="种子必须是 32 位整数，或留空自动随机";return;}lastWorldSeed=value;var s=new WorldSnapshot{Name=string.IsNullOrWhiteSpace(name.Text)?"新世界":name.Text[..Math.Min(40,name.Text.Length)],Seed=value,Creative=creative.ButtonPressed,Casual=casual.ButtonPressed,BonusChest=bonus.ButtonPressed&&!creative.ButtonPressed};StartWorld(s);}));col.AddChild(Button("返回",ShowMenu));
+        var error=Label("");error.Visible=false;col.AddChild(error);
+        var actions=Row(col);var enter=Button("进入荒野",()=>{if(string.IsNullOrWhiteSpace(seed.Text))seed.Text=WorldSeeds.Random(lastWorldSeed).ToString();if(!int.TryParse(seed.Text,out int value)){error.Visible=true;error.Text="种子必须是 32 位整数，或留空自动随机";return;}lastWorldSeed=value;var s=new WorldSnapshot{Name=string.IsNullOrWhiteSpace(name.Text)?"新世界":name.Text[..Math.Min(40,name.Text.Length)],Seed=value,Creative=creative.ButtonPressed,Casual=casual.ButtonPressed,BonusChest=bonus.ButtonPressed&&!creative.ButtonPressed};StartWorld(s);});enter.SizeFlagsHorizontal=Control.SizeFlags.ExpandFill;UiFactory.DecorateAction(enter,"compass",true);actions.AddChild(enter);var back=Button("返回",ShowMenu);back.CustomMinimumSize=new(140,44);UiFactory.DecorateAction(back,"back");actions.AddChild(back);UiFactory.FitBody(col);
     }
     private void ShowWorlds()=>RunWorldIo("读取世界列表",()=>saves.ListDetails().OrderByDescending(e=>e.SavedUtc).ThenBy(e=>e.Id,StringComparer.Ordinal).ToArray(),DrawWorlds,ShowMenu);
     private void DrawWorlds(WorldEntry[] worlds)
     {
-        SetScreen("worlds");var col=Screen(overlay,"世界管理");var scroll=Scroll(col,340);scroll.HorizontalScrollMode=ScrollContainer.ScrollMode.Disabled;var entries=Column(scroll);entries.SizeFlagsHorizontal=Control.SizeFlags.ExpandFill;
-        foreach(var entry in worlds){var card=new PanelContainer{TooltipText="世界 ID："+entry.Id};entries.AddChild(card);var info=Column(card);info.SizeFlagsHorizontal=Control.SizeFlags.ExpandFill;var row=new HBoxContainer();row.AddThemeConstantOverride("separation",9);
-            info.AddChild(Label(entry.Name+(entry.Damaged?"（存档需恢复）":""),19));string mode=entry.Creative?"创造":entry.Casual?"休闲":"标准生存";string date=entry.SavedUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")??"无法读取";
-            info.AddChild(Label($"{mode} · 种子 {entry.Seed} · 第 {(int)(entry.Time/1200)+1} 天 · 编号 {entry.Id[..Math.Min(8,entry.Id.Length)]}",13));info.AddChild(Label($"最近保存 {date} · 位置 {entry.Position[0]:0}, {entry.Position[1]:0}, {entry.Position[2]:0}",13));row.AddChild(Button("读取",()=>RunWorldIo("读取世界",()=>saves.Load(entry.Id),loaded=>{StartWorld(loaded.Snapshot);if(loaded.Recovered)Toast("已从最近完整代际恢复，原文件已保留");else if(loaded.Migrated)Toast("旧存档已迁移；首次保存前会自动保留原格式备份");},ShowWorlds)));
-            row.AddChild(Button("备份",()=>RunWorldIo("备份世界",()=>saves.Backup(entry.Id),path=>{Toast("已备份至 "+path);ShowWorlds();},ShowWorlds)));row.AddChild(Button("删除",()=>ShowDeleteWorld(entry)));if(entry.GeneratorVersion==4)row.AddChild(Button("更新自然地表",()=>ShowSurfaceRefresh(entry)));foreach(var label in info.GetChildren().OfType<Label>())label.AutowrapMode=TextServer.AutowrapMode.WordSmart;info.AddChild(row);}
-        if(worlds.Length==0)entries.AddChild(Label("尚无世界。先创建一个新世界。"));col.AddChild(Button("已删除世界",ShowDeletedWorlds));col.AddChild(Button("从备份恢复",ShowBackups));col.AddChild(Button("返回",ShowMenu));
+        SetScreen("worlds");var col=Screen(overlay,"世界管理");var viewport=overlay.GetViewportRect().Size;((PanelContainer)col.GetParent()).CustomMinimumSize=new(Math.Clamp(viewport.X-64,340,920),0);
+        var subtitle=Label("选择一片荒野，继续你的旅程。",15);subtitle.AddThemeColorOverride("font_color",UiFactory.Muted);col.AddChild(subtitle);
+        var scroll=new ScrollContainer{CustomMinimumSize=new(0,Math.Clamp(viewport.Y-320*settings.UiScale,160,470)),HorizontalScrollMode=ScrollContainer.ScrollMode.Disabled,SizeFlagsHorizontal=Control.SizeFlags.ExpandFill};col.AddChild(scroll);
+        var entries=Column(scroll);entries.SizeFlagsHorizontal=Control.SizeFlags.ExpandFill;entries.AddThemeConstantOverride("separation",16);
+        foreach(var entry in worlds){
+            var card=new PanelContainer{TooltipText="世界 ID："+entry.Id,SizeFlagsHorizontal=Control.SizeFlags.ExpandFill};card.AddThemeStyleboxOverride("panel",UiFactory.Style("211e19",16));entries.AddChild(card);
+            var content=Column(card);var summary=Row(content);summary.AddThemeConstantOverride("separation",18);
+            var thumbnailFrame=new PanelContainer{CustomMinimumSize=new(140,96),SizeFlagsVertical=Control.SizeFlags.ShrinkCenter};thumbnailFrame.AddThemeStyleboxOverride("panel",UiFactory.Style("171915",3));summary.AddChild(thumbnailFrame);thumbnailFrame.AddChild(WorldTerrainThumbnail(entry));
+            var info=Column(summary);info.SizeFlagsHorizontal=Control.SizeFlags.ExpandFill;info.AddThemeConstantOverride("separation",7);
+            var title=Label(entry.Name+(entry.Damaged?"（存档需恢复）":""),23);title.AddThemeColorOverride("font_color",UiFactory.Gold);title.AutowrapMode=TextServer.AutowrapMode.WordSmart;info.AddChild(title);
+            string mode=entry.Creative?"创造":entry.Casual?"休闲":"标准生存";string date=entry.SavedUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")??"无法读取";
+            var detail=Label($"{mode} · 种子 {entry.Seed} · 第 {(int)(entry.Time/1200)+1} 天 · 编号 {entry.Id[..Math.Min(8,entry.Id.Length)]}",15);detail.AutowrapMode=TextServer.AutowrapMode.WordSmart;info.AddChild(detail);
+            var saved=Label($"最近保存：{date} · 位置 {entry.Position[0]:0}, {entry.Position[1]:0}, {entry.Position[2]:0}",14);saved.AddThemeColorOverride("font_color",UiFactory.Muted);saved.AutowrapMode=TextServer.AutowrapMode.WordSmart;info.AddChild(saved);
+            var row=Row(content);row.AddThemeConstantOverride("separation",12);
+            var read=Button("读取",()=>RunWorldIo("读取世界",()=>saves.Load(entry.Id),loaded=>{StartWorld(loaded.Snapshot);if(loaded.Recovered)Toast("已从最近完整代际恢复，原文件已保留");else if(loaded.Migrated)Toast("旧存档已迁移；首次保存前会自动保留原格式备份");},ShowWorlds));read.SizeFlagsHorizontal=Control.SizeFlags.ExpandFill;UiFactory.DecorateAction(read,"play",true);row.AddChild(read);
+            var backup=Button("备份",()=>RunWorldIo("备份世界",()=>saves.Backup(entry.Id),path=>{Toast("已备份至 "+path);ShowWorlds();},ShowWorlds));backup.SizeFlagsHorizontal=Control.SizeFlags.ExpandFill;UiFactory.DecorateAction(backup,"save");row.AddChild(backup);
+            var delete=Button("删除",()=>ShowDeleteWorld(entry));delete.SizeFlagsHorizontal=Control.SizeFlags.ExpandFill;UiFactory.DecorateAction(delete,"delete");row.AddChild(delete);
+            if(entry.GeneratorVersion==4){var refresh=Button("更新自然地表",()=>ShowSurfaceRefresh(entry));UiFactory.DecorateAction(refresh,"refresh");content.AddChild(refresh);}
+            if(entry.GeneratorVersion is >=4 and <Terrain.Version)content.AddChild(Button("更新树木与矿藏",()=>ShowNatureRefresh(entry)));
+        }
+        if(worlds.Length==0){var empty=Label("尚无世界\n创建你的第一片荒野，或从备份恢复旅程。",19);empty.HorizontalAlignment=HorizontalAlignment.Center;empty.CustomMinimumSize=new(0,140);empty.VerticalAlignment=VerticalAlignment.Center;empty.AutowrapMode=TextServer.AutowrapMode.WordSmart;entries.AddChild(empty);var create=Button("新建世界",ShowNewWorld);UiFactory.DecorateAction(create,"world",true);entries.AddChild(create);}
+        var tools=Row(col);var deleted=Button("已删除世界",ShowDeletedWorlds);deleted.SizeFlagsHorizontal=Control.SizeFlags.ExpandFill;UiFactory.DecorateAction(deleted,"delete");tools.AddChild(deleted);var restore=Button("从备份恢复",ShowBackups);restore.SizeFlagsHorizontal=Control.SizeFlags.ExpandFill;UiFactory.DecorateAction(restore,"refresh");tools.AddChild(restore);
+        var back=Button("返回",ShowMenu);UiFactory.DecorateAction(back,"back");col.AddChild(back);
     }
     private void StartWorld(WorldSnapshot snapshot)
     {
@@ -208,7 +248,7 @@ public partial class Game : Node3D
             ReturnWorkbenchItems();
             if(worldRoot!=null){RemoveChild(worldRoot);worldRoot.QueueFree();}creatures.Clear();graveMarkers.Clear();graveFallSpeed.Clear();
             world=new(catalog,snapshot);world.InitializeRewards();world.RepairTorchMounts();miniMap.Initialize(world);ReturnCraftingItems();worldRoot=new();AddChild(worldRoot);renderer=new();worldRoot.AddChild(renderer);renderer.Initialize(world);renderer.Radius=settings.ViewDistance;
-            player=new(){Model=world,TerrainReady=renderer.IsTerrainReady,Hurt=Hurt,BoundaryHit=()=>Toast("已到达世界边界"),AcceptUserInput=!IsValidation,LookMoved=heldView.Look};worldRoot.AddChild(player);
+            player=new(){Model=world,TerrainReady=renderer.IsTerrainReady,Hurt=Hurt,BoundaryHit=()=>Toast("已到达世界边界"),AcceptUserInput=!IsValidation,LookMoved=heldView.Look};worldRoot.AddChild(player);heldView.AppearanceId=networkAppearance;
             miningFeedback=new();worldRoot.AddChild(miningFeedback);
             player.GlobalPosition=Explorer.KeepInsideWorld(new((float)snapshot.Position[0],(float)snapshot.Position[1],(float)snapshot.Position[2]));
             snapshot.Position=[player.GlobalPosition.X,player.GlobalPosition.Y,player.GlobalPosition.Z];
@@ -220,7 +260,7 @@ public partial class Game : Node3D
             moon=new(){LightColor=new("829ddc"),LightEnergy=.12f,ShadowEnabled=false};worldRoot.AddChild(moon);UpdateDaylight();
             weatherView=new();worldRoot.AddChild(weatherView);weatherView.Initialize(world);
             nearLights=new();worldRoot.AddChild(nearLights);
-            projectiles=new(){World=world,Player=player,ReadyTerrain=renderer.IsTerrainReady,HitPlayer=(damage,origin)=>{projectileImpact=true;try{HurtFrom(damage,origin);}finally{projectileImpact=false;}},HitCreature=(state,damage)=>creatures.FirstOrDefault(c=>ReferenceEquals(c.State,state))?.Damage(damage),AnchorClosed=()=>{Toast("供能锚点已断流 "+world.State.Mainline.Anchors.Count+"/4");RequestSave();}};worldRoot.AddChild(projectiles);
+            projectiles=new(){World=world,Player=player,ReadyTerrain=renderer.IsTerrainReady,HitPlayer=(damage,origin)=>{projectileImpact=true;try{HurtFrom(damage,origin);}finally{projectileImpact=false;}},HitCreature=(state,damage,owner)=>{var c=creatures.FirstOrDefault(c=>ReferenceEquals(c.State,state));if(c!=null)DealCreatureDamage(c,damage,owner);},AnchorClosed=()=>{Toast("供能锚点已断流 "+world.State.Mainline.Anchors.Count+"/4");RequestSave();}};worldRoot.AddChild(projectiles);
             outline=new(){Mesh=SelectionEdges(),MaterialOverride=new StandardMaterial3D{AlbedoColor=new("252525"),ShadingMode=BaseMaterial3D.ShadingModeEnum.Unshaded},Visible=false,CastShadow=GeometryInstance3D.ShadowCastingSetting.Off};worldRoot.AddChild(outline);
             CreaturePopulation.Initialize(world,creatureDefs);foreach(var c in snapshot.Creatures.ToArray())SpawnCreature(c);populationClock=0;
             InitializeMainline();
@@ -241,6 +281,7 @@ public partial class Game : Node3D
         c.AttackPlayer=damage=>HurtFrom(damage,c.GlobalPosition);
         c.SoundCue=(cue,position)=>audio.Play(cue,position);
         c.FireProjectile=shot=>{shot.Arrow=d.Id=="skeleton";shot.BypassCamp=CreatureRules.Elite(d.Id)||state.Home!="";return projectiles!.Fire(shot);};
+        if(NetHost)SetupNetworkSimulation();
     }
     private void CreatureDied(Creature c)
     {
@@ -257,47 +298,52 @@ public partial class Game : Node3D
         if(!startupReady)return;
         PollSaves();
         PollWorldIo();
+        if(UiStyleCheck)TickUiStyleValidation(delta);
+        TickNetworking(delta);
+        if(multiplayerCheck)TickMultiplayerValidation(delta);
         if(saveUiCheck)RunSaveUiCheck();
         if(buildingCheck)RunBuildingCheck();
         if(audioCheck)RunAudioCheck();
         noticeTime-=delta;notice.Text=noticeTime>0?message:"";
         if(screen is "inventory" or "workbench"&&cursorGlyph!=null)cursorGlyph.Position=cursorGlyph.Position.Lerp(GetViewport().GetMousePosition()-Vector2.One*24,1-MathF.Exp(-(float)delta*35));
         if(world==null||player==null||renderer==null)return;
-        renderer.Stream(player.GlobalPosition);
+        if(NetHost)renderer.Stream(new[]{player.GlobalPosition}.Concat(roomPlayers.Values.Select(p=>p.Actor.GlobalPosition)));else renderer.Stream(player.GlobalPosition);
         if(soak)RunSoak();
         if(screen!="play"){heldView.Tick(delta,null,null,Vector3.Zero,false,false);return;}
-        world.Advance(delta);TickPopulation(delta);TickMainline(delta);if(screen!="play")return;saveClock+=delta;survivalClock+=delta;attackCooldown-=delta;
+        if(!NetClient){world.Advance(delta);TickPopulation(delta);TickMainline(delta);}if(screen!="play")return;saveClock+=delta;survivalClock+=delta;attackCooldown-=delta;
         world.RevealMap(player.GlobalPosition.X,player.GlobalPosition.Z);
         bool submerged=catalog.Id(world.Get(Explorer.ToCell(player.Camera.GlobalPosition)))=="water";
-        world.State.Air=submerged?Math.Max(0,world.State.Air-delta*(world.State.Equipment.Slots[0]?.Id=="turtle_shell"?.35:1)):Math.Min(15,world.State.Air+delta*5);minecraftHud.Underwater=submerged;minecraftHud.Air=world.State.Air;
-        if(submerged&&world.State.Air<=0)Hurt(delta*4);
-        if(saveClock>=60&&!smoke&&!soak){saveClock=0;RequestSave();}
-        if(survivalClock>=1){if(!world.State.Creative){double rate=world.State.Casual?.035:.12;var pos=Explorer.ToCell(player.GlobalPosition);double cold=world.Terrain.Biome(pos.X,pos.Z)==3?1+.35*(1-ArmorTraits.Warmth(world.State)):1;world.State.Hunger=Math.Max(0,world.State.Hunger-rate*cold*survivalClock*(Input.IsActionPressed("sprint")?2:1));if(world.State.Hunger<=0)Hurt(survivalClock*.8);else if(world.State.Hunger>65)world.State.Health=Math.Min(100,world.State.Health+survivalClock*.6);}survivalClock=0;world.Terrain.TrimCaches();}
+        if(!NetClient)world.State.Air=submerged?Math.Max(0,world.State.Air-delta*(world.State.Equipment.Slots[0]?.Id=="turtle_shell"?.35:1)):Math.Min(15,world.State.Air+delta*5);minecraftHud.Underwater=submerged;minecraftHud.Air=world.State.Air;
+        if(!NetClient&&submerged&&world.State.Air<=0)Hurt(delta*4);
+        if(!NetClient&&saveClock>=60&&!smoke&&!soak){saveClock=0;RequestSave();}
+        if(!NetClient&&survivalClock>=1){if(!world.State.Creative){double rate=world.State.Casual?.035:.12;var pos=Explorer.ToCell(player.GlobalPosition);double cold=world.Terrain.Biome(pos.X,pos.Z)==3?1+.35*(1-ArmorTraits.Warmth(world.State)):1;world.State.Hunger=Math.Max(0,world.State.Hunger-rate*cold*survivalClock*(Input.IsActionPressed("sprint")?2:1));if(world.State.Hunger<=0)Hurt(survivalClock*.8);else if(world.State.Hunger>65)world.State.Health=Math.Min(100,world.State.Health+survivalClock*.6);}survivalClock=0;world.Terrain.TrimCaches();}
         float daylight=UpdateDaylight();
         weatherView!.Tick(delta,player.Camera.GlobalPosition,daylight,1,settings.WeatherEffects);
         audio.Tick(delta,player,world,daylight);
         nearLights!.Tick(delta,world,player.GlobalPosition,renderer!.IsTerrainReady);
-        nearLights.Hold(player.Camera.GlobalPosition,false);
+        nearLights.Hold(player.Camera.GlobalPosition,Held()?.Id is "torch" or "lantern"||world.State.Equipment.Slots[Equipment.Offhand]?.Id is "torch" or "lantern");
         UpdateHud();UpdateGraveMarkers(delta);var target=player.Target();outline.Visible=target.HasValue;if(target.HasValue)outline.Position=new(target.Value.Hit.X+.5f,target.Value.Hit.Y+.5f,target.Value.Hit.Z+.5f);
-        TickExpansion(delta);
+        if(!NetClient)TickExpansion(delta);
         RearmActions();
-        if(actionsArmed&&Input.IsActionPressed("mine"))Mine(delta,target);else{miningCell=null;mineProgress=0;}
+        if(actionsArmed&&Input.IsActionPressed("mine"))Mine(delta,target);else{if(NetClient)StopClientMining();miningCell=null;mineProgress=0;}
         miningFeedback!.Tick(delta,world,miningCell,mineProgress);miningBar.Progress=mineProgress;miningBar.QueueRedraw();
         heldView.Tick(delta,world.State.Inventory.Slots[selected],world.State.Equipment.Slots[Equipment.Offhand],player.Velocity,mineProgress>0,true);
         if(smoke||visualCheck)RunSmoke(delta);
     }
     public override void _UnhandledInput(InputEvent e)
     {
-        if(!startupReady||IsValidation)return;
+        if(!startupReady||(IsValidation&&!UiStyleCheck))return;
         if(screen is "saving" or "world-io"){GetViewport().SetInputAsHandled();return;}
-        if(binding!=null&&e is InputEventKey k&&k.Pressed&&!k.Echo){settings.Keys[binding]=(long)k.PhysicalKeycode;binding=null;RegisterInput();PersistSettings();ShowSettings(world==null?"menu":"pause");GetViewport().SetInputAsHandled();return;}
-        if(e.IsActionPressed("pause")){if(world!=null){if(screen=="play")ShowPause();else SetScreen("play");}return;}
+        if(binding!=null&&e is InputEventKey k&&k.Pressed&&!k.Echo){if(k.Keycode==Key.Escape){binding=null;ShowSettings(world==null?"menu":"pause");}else{settings.Keys[binding]=(long)(k.PhysicalKeycode==Key.None?k.Keycode:k.PhysicalKeycode);binding=null;RegisterInput();PersistSettings();ShowSettings(world==null?"menu":"pause");}GetViewport().SetInputAsHandled();return;}
+        if(e.IsActionPressed("pause")){if(screen=="settings"){PersistSettings();if(world!=null)ShowPause();else ShowMenu();}else if(world!=null){if(screen=="remote-ui"){SendAction("close");SetScreen("play");}else if(screen=="play")ShowPause();else SetScreen("play");}else if(screen is "backups" or "deleted-worlds" or "delete-world" or "purge-deleted-world" or "surface-refresh")ShowWorlds();else if(screen=="delete-backup")ShowBackups();else if(screen=="connecting"){StopNetworking();ShowJoinRoom();}else if(screen!="menu")ShowMenu();GetViewport().SetInputAsHandled();return;}
         if(world!=null&&e.IsActionPressed("journal")&&screen is "play" or "journal"){if(screen=="journal")SetScreen("play");else ShowMainlineJournal();return;}
         if(HandleMapInput(e))return;
+        if(world!=null&&screen is "inventory" or "workbench" or "remote-ui"&&e.IsActionPressed("inventory")){if(screen=="remote-ui")SendAction("close");currentContainer=null;SetScreen("play");GetViewport().SetInputAsHandled();return;}
+        if(world!=null&&screen=="recipes"&&e.IsActionPressed("craft")){currentContainer=null;SetScreen("play");GetViewport().SetInputAsHandled();return;}
         if(screen!="play"||world==null)return;
         if(e is InputEventKey debugKey&&debugKey.PhysicalKeycode==Key.F3&&debugKey.Pressed&&!debugKey.Echo)debugHud=!debugHud;
-        if(e.IsActionPressed("inventory")){currentContainer=null;ShowInventory();}
-        else if(e.IsActionPressed("craft")){currentStation="hand";ShowRecipes();}
+        if(e.IsActionPressed("inventory")){if(!SendAction("inventory")){currentContainer=null;ShowInventory();}}
+        else if(e.IsActionPressed("craft")){if(!SendAction("craft")){currentStation="hand";ShowRecipes();}}
         else if(e.IsActionPressed("interact"))Interact();
         else if(e.IsActionPressed("rotate")){rotation=(rotation+1)%4;Toast("放置朝向："+rotation*90+"°");}
         else if(e.IsActionPressed("drop"))DropSelected();
@@ -329,13 +375,21 @@ public partial class Game : Node3D
     }
     private ItemDef? Held()=>world!.State.Inventory.Slots[selected] is { } s?catalog.Items[s.Id]:null;
     private ItemDef? OffhandHeld()=>world!.State.Equipment.Slots[Equipment.Offhand] is { } s?catalog.Items[s.Id]:null;
-    private void SwapHands(){if(world==null||screen!="play")return;Equipment.SwapHands(world.State,selected);miningCell=null;mineProgress=0;audio.Play("ui");}
+    private void SwapHands(){if(SendAction("swap"))return;if(world==null||screen!="play")return;Equipment.SwapHands(world.State,selected);miningCell=null;mineProgress=0;audio.Play("ui");}
     private void Mine(double delta,(Cell Hit,Cell Before,float Distance)? target)
     {
+        if(NetClient){
+            clientMiningActive=true;clientMineClock+=delta;if(clientMineClock>=.075){clientMineClock=0;SendAction("mine");}
+            if(target.HasValue){var clientCell=target.Value.Hit;var clientTool=Held();if(miningCell!=clientCell||miningToolId!=clientTool?.Id){miningCell=clientCell;miningToolId=clientTool?.Id;mineProgress=0;}
+                var block=catalog.Block(world!.Get(clientCell));bool clientLoose=block?.Id=="wood"&&!world.Changes.ContainsKey(clientCell)&&!world.State.Entities.ContainsKey(clientCell.ToString())&&world.Terrain.IsLooseWood(clientCell);
+                if(block!=null)mineProgress=world.State.Creative||MiningRules.CanHarvest(block,clientTool)||clientLoose?Math.Min(.99,mineProgress+delta/MiningRules.Seconds(block,clientTool,clientLoose)):0;
+            }else{miningCell=null;miningToolId=null;mineProgress=0;}heldView.Swing();return;
+        }
         if(attackCooldown>0)return;
         if(Attack()){miningCell=null;mineProgress=0;return;}
         if(!target.HasValue){miningCell=null;mineProgress=0;heldView.Swing();attackCooldown=.3;return;}var p=target.Value.Hit;var tool=Held();if(miningCell!=p||miningToolId!=tool?.Id){miningCell=p;miningToolId=tool?.Id;mineProgress=0;}
         var def=catalog.Block(world!.Get(p))!;int tier=MiningRules.HarvestTier(tool);bool loose=def.Id=="wood"&&!world.Changes.ContainsKey(p)&&!world.State.Entities.ContainsKey(p.ToString())&&world.Terrain.IsLooseWood(p);
+        if(!world.State.Creative&&!MiningRules.CanHarvest(def,tool)&&!loose){mineProgress=0;attackCooldown=.35;Toast("需要合适等级的镐才能采集 "+def.Name);return;}
         mineProgress+=world.State.Creative?1:delta/MiningRules.Seconds(def,tool,loose);
         if(mineProgress>=1){var partner=world.DoorPartner(p);bool canHarvest=MiningRules.CanHarvest(def,tool)||loose;
             if(!world.State.Creative&&!canHarvest)Toast("需要合适等级的镐才能采集 "+def.Name);
@@ -349,12 +403,12 @@ public partial class Game : Node3D
             if(!projectiles!.CanFire){Toast("飞行中的投射物较多，请稍候");attackCooldown=.2;return true;}
             var inventory=world!.State.Inventory.Copy();if(!world.State.Creative&&!inventory.Remove("arrow",1)){Toast("缺少箭");attackCooldown=.5;return true;}
             var origin=start+dir*.35f;var velocity=dir*22;
-            if(projectiles.Fire(new(){Position=[origin.X,origin.Y,origin.Z],Velocity=[velocity.X,velocity.Y,velocity.Z],Damage=held.Power*2,Remaining=1.5,Radius=.06})){world.State.Inventory=inventory;WearHeldTool();heldView.Swing();attackCooldown=.8;audio.Play("attack");}
+            if(projectiles.Fire(new(){OwnerId=world.ActivePlayerId,Position=[origin.X,origin.Y,origin.Z],Velocity=[velocity.X,velocity.Y,velocity.Z],Damage=held.Power*2,Remaining=1.5,Radius=.06})){world.State.Inventory=inventory;WearHeldTool();heldView.Swing();attackCooldown=.8;audio.Play("attack");}
             return true;
         }
         var target=creatures.Where(c=>c.State.Health>0&&c!=player.Mount).Select(c=>{var aim=c.GlobalPosition+Vector3.Up*c.GetChild<CreatureModel>(0).BodyHeight*.5f;return(Creature:c,Projection:(aim-start).Dot(dir),Distance:(aim-start).Cross(dir).Length());}).Where(p=>p.Projection>0&&p.Projection<range&&p.Distance<1).OrderBy(p=>p.Projection).FirstOrDefault();
         if(target.Creature==null||!target.Creature.HasLineOfSight(start))return false;
-        target.Creature.Damage(held?.Use is "sword" or "axe"?held.Power*2:4);WearHeldTool(held?.Use=="sword"?1:2);heldView.Swing();attackCooldown=held?.Use=="bow"?.8:.45;audio.Play("attack");return true;
+        DealCreatureDamage(target.Creature,held?.Use is "sword" or "axe"?held.Power*2:4,world!.ActivePlayerId);WearHeldTool(held?.Use=="sword"?1:2);heldView.Swing();attackCooldown=.45;audio.Play("attack");return true;
     }
     private void WearHeldTool(int amount=1)
     {
@@ -362,6 +416,7 @@ public partial class Game : Node3D
     }
     private void Use()
     {
+        if(SendAction("use"))return;
         if(TryUseHand(world!.State.Inventory,selected)){heldView.Swing();return;}if(TryUseHand(world.State.Equipment,Equipment.Offhand))heldView.Swing(true);
     }
     private bool TryUseHand(Inventory supply,int slot)
@@ -384,6 +439,7 @@ public partial class Game : Node3D
     }
     private void Interact()
     {
+        if(SendAction("interact"))return;
         var grave=world!.State.Graves.FirstOrDefault(g=>g.LegacyContainer&&new Vector3((float)g.Position[0],(float)g.Position[1],(float)g.Position[2]).DistanceTo(player!.GlobalPosition)<3);
         if(grave!=null){int before=world.State.Inventory.Slots.Where(s=>s!=null).Sum(s=>s!.Count);foreach(var slot in grave.Items.Slots)if(slot!=null){int remaining=world.State.Inventory.Add(slot,catalog);slot.Count=remaining;}for(int i=0;i<grave.Items.Slots.Length;i++)if(grave.Items.Slots[i]?.Count==0)grave.Items.Slots[i]=null;if(world.State.Inventory.Slots.Where(s=>s!=null).Sum(s=>s!.Count)>before)audio.Play("pickup");if(grave.Items.Slots.All(s=>s==null)){world.State.Graves.Remove(grave);Toast("已取回背包");}else Toast("背包已满，剩余物品仍留在原处");return;}
         if(InteractExpansion())return;
@@ -392,15 +448,15 @@ public partial class Game : Node3D
         if(id=="brewing_stand"){currentContainer=p;currentStation=id;ShowRecipes();return;}
         if(InteractMainline(p,id))return;
         if(id=="door"){if(world.State.Entities.TryGetValue(p.ToString(),out var e)){e.Open=!e.Open;world.Set(p,world.Get(p));renderer!.RefreshEdit(p);var other=p+new Cell(0,e.Stage==1?-1:1,0);if(world.State.Entities.TryGetValue(other.ToString(),out var top)){top.Open=e.Open;world.Set(other,world.Get(other));renderer.RefreshEdit(other);}audio.Play("door",new(p.X+.5f,p.Y+.5f,p.Z+.5f));}return;}
-        if(id=="bed"){world.State.Respawn=[p.X+.5,p.Y+.7,p.Z+.5];if(!DayCycle.Night(world.State.SkyTime)){Toast("已设置复活点；白天无需睡觉");RequestSave();return;}world.Advance(DayCycle.SecondsUntilBoundary(world.State.SkyTime)+240);world.State.Health=100;Toast("已安全过夜");RequestSave();return;}
+        if(id=="bed"){if(RoomSleep(p))return;world.State.Respawn=[p.X+.5,p.Y+.7,p.Z+.5];if(!DayCycle.Night(world.State.SkyTime)){Toast("已设置复活点；白天无需睡觉");RequestSave();return;}world.Advance(DayCycle.SecondsUntilBoundary(world.State.SkyTime)+240);world.State.Health=100;Toast("已安全过夜");RequestSave();return;}
         if(id=="beacon"){ShowBeacon(p);return;}
         if(id=="lantern"){Toast("提灯会自动照亮附近");return;}
         if(world.State.Entities.TryGetValue(p.ToString(),out var entity)&&entity.Kind=="crop"){Harvest(p,entity);return;}
-        if(id=="chest"){bool first=!world.State.Entities.ContainsKey(p.ToString());var chest=ChestLoot.Open(world,p);if(first)Toast(chest.LootTheme);currentContainer=p;ShowInventory();return;}
+        if(id=="chest"){if(!TryLockContainer(p))return;bool first=!world.State.Entities.ContainsKey(p.ToString());var chest=ChestLoot.Open(world,p);if(first)Toast(chest.LootTheme);currentContainer=p;ShowInventory();return;}
         if(id is "workbench" or "calibration_bench" or "campfire" or "furnace" && !world.State.Entities.ContainsKey(p.ToString())){
             var facility=new BlockEntity{Kind=id,LastTime=world.State.Time};world.State.Entities[p.ToString()]=facility;
         }
-        if(id is "workbench" or "calibration_bench" or "campfire" or "furnace"){currentStation=id;currentContainer=p;ShowRecipes();return;}
+        if(id is "workbench" or "calibration_bench" or "campfire" or "furnace"){if(id is "campfire" or "furnace"&&!TryLockContainer(p))return;currentStation=id;currentContainer=p;ShowRecipes();return;}
         Toast("此处没有可使用的设施");
     }
     private void Plant(Cell ground,string seed)
@@ -414,23 +470,25 @@ public partial class Game : Node3D
     }
     private void DropSelected()
     {
+        if(SendAction("drop"))return;
         var slot=world!.State.Inventory.Slots[selected];if(slot==null)return;var at=player!.GlobalPosition-player.Camera.GlobalBasis.Z*1.2f+Vector3.Up*.6f;if(world.Solid(Explorer.ToCell(at)))at=player.GlobalPosition+Vector3.Up*.6f;world.Drop(slot,[at.X,at.Y,at.Z],1.5);world.State.Inventory.Slots[selected]=null;Toast("物品已丢在地上，接近后自动拾取");
     }
     private void Hurt(double damage)
     {
-        if(world==null||world.State.Creative||screen!="play"||!double.IsFinite(damage)||damage<=0)return;
+        if(SendAction("fall",damage))return;
+        if(world==null||world.State.Creative||screen!="play"&&!InRoom||!double.IsFinite(damage)||damage<=0)return;
         RecordRouteDamage(damage);
         if(world.State.Effects.ShieldUntil>world.State.Time&&world.State.Effects.Shield>0){double absorbed=Math.Min(damage,world.State.Effects.Shield);world.State.Effects.Shield-=absorbed;damage-=absorbed;if(damage<=0)return;}
         world.State.Health-=damage;damageFeedback.Trigger();Toast($"受伤 −{damage:0.#}");audio.Play("hurt");
         if(world.State.Health<=0)audio.Play("death");
-        if(world.State.Health<=0){bool finale=world.State.Mainline.FinaleActive;EndFishing();if(player!.Mount is {} mount){player.RemoveCollisionExceptionWith(mount);mount.RemoveCollisionExceptionWith(player);mount.Mounted=false;player.Mount=null;}world.Die();if(finale)ResetMainlineBattle();player!.GlobalPosition=new((float)world.State.Position[0],(float)world.State.Position[1],(float)world.State.Position[2]);player.Velocity=Vector3.Zero;SetScreen("death");var col=Screen(overlay,"你在荒野中倒下了");col.AddChild(Label(world.State.Casual?"物品已保留。":finale?"背包已转移到地心遗址入口；已完成机关和灯塔进度保留。":"物品保留在地图标记的背包中；再次死亡仍可取回。"));col.AddChild(Button("从营地复活",()=>SetScreen("play")));col.AddChild(Button("保存并返回主菜单",ReturnMenu));RequestSave();}
+        if(world.State.Health<=0){bool finale=world.State.Mainline.FinaleActive;EndFishing();if(player!.Mount is {} mount){player.RemoveCollisionExceptionWith(mount);mount.RemoveCollisionExceptionWith(player);mount.Mounted=false;player.Mount=null;}world.Die();if(finale&&!InRoom)ResetMainlineBattle();player!.GlobalPosition=new((float)world.State.Position[0],(float)world.State.Position[1],(float)world.State.Position[2]);player.Velocity=Vector3.Zero;SetScreen("death");var col=Screen(overlay,"你在荒野中倒下了");col.AddChild(Label(world.State.Casual?"物品已保留。":finale?"背包已转移到地心遗址入口；已完成机关和灯塔进度保留。":"物品保留在地图标记的背包中；再次死亡仍可取回。"));col.AddChild(Button("从营地复活",()=>SetScreen("play")));col.AddChild(Button("保存并返回主菜单",ReturnMenu));RequestSave();}
     }
     private void HurtFrom(double damage,Vector3 attacker)
     {
         if(world!=null&&player!=null&&CreaturePopulation.SafeCamp(world,Explorer.ToCell(player.GlobalPosition))&&!world.State.Mainline.FinaleActive&&!creatures.Any(c=>(CreatureRules.Elite(c.Definition.Id)||c.State.Home!="")&&c.GlobalPosition.DistanceSquaredTo(player.GlobalPosition)<55*55))return;
-        if(world==null||world.State.Creative||screen!="play"||!double.IsFinite(damage)||damage<=0)return;
+        if(world==null||world.State.Creative||screen!="play"&&!InRoom||!double.IsFinite(damage)||damage<=0)return;
         bool shield=Held()?.Use=="shield"||OffhandHeld()?.Use=="shield"&&Held()?.Block!=true&&Held()?.Use is not("food" or "seed" or "bow");
-        if(player!=null&&shield&&Input.IsActionPressed("use")&&(-player.Camera.GlobalBasis.Z).Dot((attacker-player.GlobalPosition).Normalized())>.2f){int wear=(int)Math.Max(1,Math.Ceiling(damage/4));damage*=.35;audio.Play("shield");if(Held()?.Use=="shield")WearHeldTool(wear);else if(ToolUse.Wear(world.State.Equipment,Equipment.Offhand,catalog,world.State.Creative,wear))Toast("盾牌已损坏");}
+        if(player!=null&&shield&&(RemoteContext?executingGuest!.Blocking:Input.IsActionPressed("use"))&&(-player.Camera.GlobalBasis.Z).Dot((attacker-player.GlobalPosition).Normalized())>.2f){int wear=(int)Math.Max(1,Math.Ceiling(damage/4));damage*=.35;audio.Play("shield");if(Held()?.Use=="shield")WearHeldTool(wear);else if(ToolUse.Wear(world.State.Equipment,Equipment.Offhand,catalog,world.State.Creative,wear))Toast("盾牌已损坏");}
         damage=Equipment.Absorb(world.State,catalog,damage);
         if(projectileImpact)damage*=1-ArmorTraits.Pieces(world.State,"chain")*.04;
         if(player!=null){var away=player.GlobalPosition-attacker;away.Y=0;if(away.LengthSquared()>.001)player.Impact=away.Normalized()*2*(float)(1-ArmorTraits.Knockback(world.State));}
@@ -438,12 +496,14 @@ public partial class Game : Node3D
     }
     private bool SaveNow()
     {
+        if(NetClient)return true;if(RemoteContext){networkSaveRequested=true;return true;}CaptureNetworkSave();
         if(world==null)return true;
         ReturnWorkbenchItems();
         try{saves.Save(world.State);lastSaved=DateTime.Now.ToString("HH:mm:ss");return true;}catch(Exception e){GD.PushError(e);Toast("保存失败，尚未写入："+e.Message);return false;}
     }
     private void RequestSave(Action<bool>? completed=null)
     {
+        if(NetClient){completed?.Invoke(true);return;}if(RemoteContext){networkSaveRequested=true;completed?.Invoke(true);return;}CaptureNetworkSave();
         if(world==null){completed?.Invoke(true);return;}
         ReturnWorkbenchItems();
         try{var task=saveQueue.Enqueue(world.State);if(!saveCallbacks.TryGetValue(task,out var callbacks)){callbacks=[];saveCallbacks.Add(task,callbacks);}if(completed!=null)callbacks.Add(completed);}
@@ -460,6 +520,7 @@ public partial class Game : Node3D
     }
     private void SaveAndLeave(Action leave)
     {
+        if(NetClient){StopNetworking();leave();return;}
         ReturnCraftingItems();SetScreen("saving");var col=Screen(overlay,"正在保存世界");col.AddChild(Label("保存完成后返回；请保留游戏窗口。",16));RequestSave(success=>{if(success)leave();else ShowPause();});
     }
     private void RunWorldIo<T>(string label,Func<T> work,Action<T> completed,Action failed)
@@ -480,8 +541,10 @@ public partial class Game : Node3D
     }
     private void ClearWorldView()
     {
+        StopNetworking();
         EndFishing();
         damageFeedback?.Reset();
+        combatFeedback?.Reset();
         heldView?.SetActive(false);
         if(worldRoot!=null){RemoveChild(worldRoot);worldRoot.QueueFree();worldRoot=null;}
         weatherView=null;nearLights=null;projectiles=null;miningFeedback=null;sun=null!;environment=null!;outline=null!;
@@ -489,14 +552,18 @@ public partial class Game : Node3D
     }
     private async void QuitCleanly(int exitCode=0)
     {
-        if(quitting)return;quitting=true;ClearWorldView();
+        if(quitting)return;quitting=true;SetProcess(false);SetPhysicsProcess(false);SetProcessUnhandledInput(false);ClearWorldView();
+        cursorGlyph=null;
+        foreach(var control in overlay.GetChildren()){overlay.RemoveChild(control);control.QueueFree();}
         // Stop submitting new collision shapes before draining deferred deletion
         // and physics-server frees. A delay while streaming still creates new RIDs.
         for(int i=0;i<3;i++)await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
         for(int i=0;i<3;i++)await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);
+        GC.Collect();GC.WaitForPendingFinalizers();
+        for(int i=0;i<2;i++)await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);
         GetTree().Quit(exitCode);
     }
-    private void ReturnMenu()=>SaveAndLeave(()=>{ClearWorldView();ShowMenu();});
+    private void ReturnMenu(){if(RemoteContext){SendNet(executingGuest!.Peer,"closed","你已离开房间");CallDeferred(nameof(DeferredGuestLeave),executingGuest.Peer);return;}SaveAndLeave(()=>{ClearWorldView();ShowMenu();});}
     private void Toast(string text){message=text;noticeTime=7;}
     private static ImmediateMesh SelectionEdges()
     {
@@ -508,14 +575,15 @@ public partial class Game : Node3D
     }
     private void UpdateGraveMarkers(double delta)
     {
-        world!.TickDroppedItems(delta,p=>renderer!.IsTerrainReady(new(p.X,p.Y,p.Z)));int picked=world.PickTouchingItems(world.State.Position,player!.Crouching?1.1:1.8);if(picked>0)audio.Play("pickup");
+        if(world==null||player==null)return;
+        if(!NetClient){world!.TickDroppedItems(delta,p=>renderer!.IsTerrainReady(new(p.X,p.Y,p.Z)));int picked=world.PickTouchingItems(world.State.Position,player!.Crouching?1.1:1.8);if(picked>0)audio.Play("pickup");}
         var visible=world.State.Graves.Where(g=>new Vector3((float)g.Position[0],(float)g.Position[1],(float)g.Position[2]).DistanceSquaredTo(player.GlobalPosition)<48*48).OrderBy(g=>Math.Pow(g.Position[0]-player.GlobalPosition.X,2)+Math.Pow(g.Position[2]-player.GlobalPosition.Z,2)).Take(96).ToHashSet();
         foreach(var g in graveMarkers.Keys.ToArray())if(!visible.Contains(g)){graveMarkers[g].QueueFree();graveMarkers.Remove(g);}
         foreach(var g in visible){if(!graveMarkers.TryGetValue(g,out var view)){view=new();worldRoot!.AddChild(view);graveMarkers[g]=view;}view.Update(g,catalog,player.GlobalPosition,world.State.Time,renderer!.ItemLightAt);}
     }
     public override void _Input(InputEvent e)
     {
-        if(IsValidation){GetViewport().SetInputAsHandled();return;}
+        if(IsValidation&&!UiStyleCheck){GetViewport().SetInputAsHandled();return;}
         if(screen!="play"&&(e is InputEventMouseButton{Pressed:true,ButtonIndex:MouseButton.Left}||e is InputEventKey{Pressed:true,Echo:false,Keycode:Key.Enter}))audio?.Play("ui");
     }
     private void RearmActions()

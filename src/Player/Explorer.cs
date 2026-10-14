@@ -19,12 +19,14 @@ public partial class Explorer : CharacterBody3D
     public Action<Vector2>? LookMoved {get;set;}
     public bool Enabled {get;set;}
     public bool AcceptUserInput {get;set;}=true;
+    public bool NetworkReplica {get;set;}
     public float Sensitivity {get;set;}=.0023f;
     public bool Flying {get;set;}
     public bool Swimming {get;private set;}
     public bool Crouching {get;private set;}
     public Creature? Mount {get;set;}
     public bool Gliding {get;private set;}
+    public void SetReplicaMovementFlags(bool flying,bool gliding){if(NetworkReplica){Flying=flying;Gliding=gliding;}}
     public double GlideBoost {get;set;}
     public Vector3 Impact {get;set;}
     private double glideWearClock;
@@ -32,24 +34,39 @@ public partial class Explorer : CharacterBody3D
     private float pitch,fallSpeed;
     private double boundaryNoticeCooldown;
     private CollisionShape3D collision=null!;
+    private CapsuleShape3D bodyShape=null!;
     public override void _Ready()
     {
-        collision=new(){Shape=new CapsuleShape3D{Radius=BodyRadius,Height=1.8f},Position=new(0,.9f,0)};AddChild(collision);
-        Camera=new(){Position=new(0,1.62f,0),Current=true,Fov=78,Far=400};AddChild(Camera);
+        bodyShape=new(){Radius=BodyRadius,Height=1.8f};collision=new(){Shape=bodyShape,Position=new(0,.9f,0)};AddChild(collision);
+        Camera=new(){Position=new(0,1.62f,0),Current=!NetworkReplica,Fov=78,Far=400};AddChild(Camera);
         FloorSnapLength=.3f;SafeMargin=BodyMargin;
     }
     public override void _UnhandledInput(InputEvent e)
     {
-        if(!Enabled||!AcceptUserInput)return;
+        if(NetworkReplica||!Enabled||!AcceptUserInput)return;
         if(e is InputEventMouseMotion motion&&Input.MouseMode==Input.MouseModeEnum.Captured){RotateY(-motion.Relative.X*Sensitivity);pitch=Math.Clamp(pitch-motion.Relative.Y*Sensitivity,-1.53f,1.53f);Camera.Rotation=new(pitch,0,0);LookMoved?.Invoke(motion.Relative);}
         if(e.IsActionPressed("fly")&&Model.State.Creative)Flying=!Flying;
     }
     public override void _PhysicsProcess(double delta)
     {
+        if(NetworkReplica)return;
         if(!Enabled){Velocity=Vector3.Zero;return;}
         if(Mount is {} horse){
             if(horse.State.Health<=0){RemoveCollisionExceptionWith(horse);horse.Mounted=false;Mount=null;}
-            else {if(Input.IsActionJustPressed("crouch")&&Dismount())return;var move=Transform.Basis*new Vector3(Input.GetVector("left","right","forward","back").X,0,Input.GetVector("left","right","forward","back").Y);var v=horse.Velocity;v.X=move.X*8;v.Z=move.Z*8;if(!horse.IsOnFloor())v.Y-=22*(float)delta;else{v.Y=0;if(Input.IsActionJustPressed("jump"))v.Y=7.3f;}var mountNext=KeepInsideWorld(horse.GlobalPosition+v*(float)delta);if(TerrainReady(mountNext)){horse.Velocity=v;horse.MoveAndSlide();horse.GlobalPosition=KeepInsideWorld(horse.GlobalPosition);horse.State.Position=[horse.GlobalPosition.X,horse.GlobalPosition.Y,horse.GlobalPosition.Z];if(move.LengthSquared()>.01)horse.Rotation=new(0,Mathf.Atan2(-move.X,-move.Z),0);}GlobalPosition=horse.GlobalPosition+Vector3.Up*1.15f;Model.State.Position=[GlobalPosition.X,GlobalPosition.Y,GlobalPosition.Z];Velocity=Vector3.Zero;return;}
+            else {
+                if(Input.IsActionJustPressed("crouch")&&Dismount())return;
+                var mountInput=Input.GetVector("left","right","forward","back");
+                var move=Transform.Basis*new Vector3(mountInput.X,0,mountInput.Y);var v=horse.Velocity;
+                float blend=1-MathF.Exp(-8*(float)delta);v.X=Mathf.Lerp(v.X,move.X*8,blend);v.Z=Mathf.Lerp(v.Z,move.Z*8,blend);
+                if(!horse.IsOnFloor())v.Y-=22*(float)delta;else{v.Y=0;if(Input.IsActionJustPressed("jump"))v.Y=7.3f;}
+                var mountNext=KeepInsideWorld(horse.GlobalPosition+v*(float)delta);
+                if(TerrainReady(mountNext)){
+                    horse.Velocity=v;horse.MoveAndSlide();horse.GlobalPosition=KeepInsideWorld(horse.GlobalPosition);
+                    horse.State.Position=[horse.GlobalPosition.X,horse.GlobalPosition.Y,horse.GlobalPosition.Z];
+                    if(move.LengthSquared()>.01)horse.Rotation=new(0,Mathf.LerpAngle(horse.Rotation.Y,Mathf.Atan2(-move.X,-move.Z),1-MathF.Exp(-7*(float)delta)),0);
+                }
+                GlobalPosition=horse.GlobalPosition+Vector3.Up*1.15f;Model.State.Position=[GlobalPosition.X,GlobalPosition.Y,GlobalPosition.Z];Velocity=Vector3.Zero;return;
+            }
         }
         boundaryNoticeCooldown=Math.Max(0,boundaryNoticeCooldown-delta);
         var inside=KeepInsideWorld(GlobalPosition);
@@ -58,7 +75,7 @@ public partial class Explorer : CharacterBody3D
         if(!TerrainReady(GlobalPosition)){SyncPosition();return;}
         bool crouch=Input.IsActionPressed("crouch");
         if(Crouching&&!crouch&&Model.Solid(ToCell(GlobalPosition+Vector3.Up*1.6f)))crouch=true;
-        if(crouch!=Crouching){Crouching=crouch;((CapsuleShape3D)collision.Shape).Height=crouch?1.1f:1.8f;collision.Position=new(0,crouch?.55f:.9f,0);Camera.Position=new(0,crouch?.95f:1.62f,0);}
+        if(crouch!=Crouching){Crouching=crouch;bodyShape.Height=crouch?1.1f:1.8f;collision.Position=new(0,crouch?.55f:.9f,0);Camera.Position=new(0,crouch?.95f:1.62f,0);}
         Swimming=Model.Catalog.Id(Model.Get(ToCell(GlobalPosition+Vector3.Up*.8f)))=="water";
         Vector2 input=Input.GetVector("left","right","forward","back");Vector3 direction=(Transform.Basis*new Vector3(input.X,0,input.Y)).Normalized();
         float speed=Crouching?2:Input.IsActionPressed("sprint")&&Model.State.Hunger>5?7.2f:4.6f;speed*=(float)ArmorTraits.Mobility(Model.State);if(Swimming)speed=2.8f;if(Flying)speed*=2;
@@ -97,6 +114,13 @@ public partial class Explorer : CharacterBody3D
         if(GlobalPosition.Y<-5)Hurt(1000);
         SyncPosition();
     }
+    public void SetReplicaPose(Vector3 position,float yaw,float lookPitch,bool crouching)
+    {
+        GlobalPosition=KeepInsideWorld(position);Rotation=new(0,yaw,0);pitch=Math.Clamp(lookPitch,-1.53f,1.53f);Crouching=crouching;
+        if(Camera!=null){Camera.Current=false;Camera.Rotation=new(pitch,0,0);Camera.Position=new(0,crouching?.95f:1.62f,0);}
+        if(collision!=null){bodyShape.Height=crouching?1.1f:1.8f;collision.Position=new(0,crouching?.55f:.9f,0);}
+    }
+    public override void _ExitTree(){bodyShape?.Dispose();}
     public static Cell ToCell(Vector3 p)=>new((int)Math.Floor(p.X),(int)Math.Floor(p.Y),(int)Math.Floor(p.Z));
     public (Cell Hit,Cell Before,float Distance)? Target(float range=6,bool water=false)
     {

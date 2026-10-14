@@ -1,0 +1,50 @@
+const fs = require('node:fs/promises');
+const path = require('node:path');
+const { pathToFileURL } = require('node:url');
+const { chromium } = require(path.resolve(__dirname, '../.tools/lux3d/browser-runtime/node_modules/playwright'));
+let browser;
+(async () => {
+ const directory = path.resolve(process.argv[2]);
+ const output = path.join(directory, 'inspection');
+ await fs.mkdir(output, { recursive: true });
+ const selected = process.argv[3] ? process.argv[3].split(',') : null;
+ browser = await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-dev-shm-usage','--js-flags=--max-old-space-size=8192']});
+ const context = await browser.newContext({viewport:{width:1600,height:1200},deviceScaleFactor:1,offline:true});
+ const page = await context.newPage();
+ const errors = [];
+ page.on('pageerror', e => errors.push(e.message));
+ await page.goto(pathToFileURL(path.join(directory,'preview.html')).href, {waitUntil:'load',timeout:60000});
+ const cards = page.locator('#items .card');
+ const count = await cards.count();
+ const observations = [];
+ for(let n=0;n<count;n++) {
+   const card=cards.nth(n);
+   const id=(await card.getAttribute('id')).replace(/^item-/,'');
+   if(selected && !selected.includes(id)) continue;
+   const viewport=card.locator('.viewport');
+   await viewport.scrollIntoViewIfNeeded();
+   await page.waitForFunction(id=>document.querySelector('#item-'+id+' .viewport')?.dataset.previewState==='ready',id,{timeout:60000});
+   await page.waitForTimeout(300);
+   await viewport.screenshot({path:path.join(output,id+'-view-1.png')});
+   const start=Number(await viewport.getAttribute('data-interactions')||0);
+   const rect=await viewport.boundingBox();
+   const x=rect.x+rect.width*.5,y=rect.y+rect.height*.5;
+   await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+rect.height*.25,y,{steps:18});await page.mouse.up();
+   await page.waitForTimeout(500);
+   const rotate=Number(await viewport.getAttribute('data-interactions')||0);
+   await viewport.screenshot({path:path.join(output,id+'-view-2.png')});
+   await page.mouse.move(x,y);await page.mouse.wheel(0,-160);await page.waitForTimeout(500);
+   const zoom=Number(await viewport.getAttribute('data-interactions')||0);
+   await viewport.screenshot({path:path.join(output,id+'-zoom.png')});
+   await card.locator('.reset').click();await page.waitForTimeout(300);
+   const result={id,loaded:true,rotateVerified:rotate>start,zoomVerified:zoom>rotate};
+   observations.push(result);
+   await fs.writeFile(path.join(output,id+'-browser-check.json'),JSON.stringify(result,null,2));
+   console.log(JSON.stringify(result));
+ }
+ const report={browser:'Chrome headless, offline, SwiftShader',modelCount:count,selectedModels:selected,observations,pageErrors:errors,passed:observations.length===(selected ? selected.length : count)&&observations.every(i=>i.loaded&&i.rotateVerified&&i.zoomVerified)&&errors.length===0};
+ await fs.writeFile(path.join(output,selected ? 'browser-verification-'+selected[0]+'.json' : 'browser-verification.json'),JSON.stringify(report,null,2));
+ await browser.close();
+ if(!report.passed)process.exitCode=1;
+})().catch(async e=>{console.error(e.message);if(browser)await browser.close();process.exitCode=1;});
+

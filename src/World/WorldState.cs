@@ -24,6 +24,7 @@ public sealed class BlockEntity
 }
 public sealed class Grave
 {
+    public string? OwnerId {get;set;}
     public double[] Position {get;set;}=[0,40,0];
     public Inventory Items {get;set;}=new();
     public Dictionary<int,double[]> ItemPositions {get;set;}=[];
@@ -34,7 +35,9 @@ public sealed class Grave
 }
 public sealed class WorldSnapshot
 {
-    public const int CurrentFormat=7;
+    public const int CurrentFormat=8;
+    public Dictionary<string,MultiplayerPlayerState> Players {get;set;}=[];
+    public int SelectedHotbar {get;set;}
     public bool BonusChest {get;set;}
     public bool BonusChestInitialized {get;set;}
     public ActiveEffects Effects {get;set;}=new();
@@ -77,6 +80,9 @@ public sealed class WorldSnapshot
     public WeatherState Weather {get;set;}=new();
     public void ValidateShape()
     {
+        if(Players==null||Players.Any(p=>p.Value==null||p.Key!=p.Value.Id))throw new InvalidOperationException("联机玩家集合无效");
+        foreach(var player in Players.Values)player.Validate();
+        if(SelectedHotbar<0||SelectedHotbar>8)throw new InvalidOperationException("快捷栏选择无效");
         if(Mainline==null||Effects==null)throw new InvalidOperationException("主线进度或补给效果缺失");Mainline.Validate();Effects.Validate();
         static bool PositionOk(double[]? position)=>position is {Length:3}&&position.All(double.IsFinite);
         if(string.IsNullOrWhiteSpace(Name)||WorldId==null||WorldId.Length!=32||!WorldId.All(Uri.IsHexDigit)||!PositionOk(Position)||!PositionOk(Respawn)||!double.IsFinite(Time)||Time<0||!double.IsFinite(Health)||!double.IsFinite(Hunger)||!double.IsFinite(Air)||Health<0||Health>100||Hunger<0||Hunger>100||Air<0||Air>15||Experience<0)throw new InvalidOperationException("玩家状态或世界标识无效");
@@ -87,7 +93,7 @@ public sealed class WorldSnapshot
         if(!double.IsFinite(Population.NextSpawnTime)||Population.NextSpawnTime<0||Population.Sequence<0||Creatures.Count>CreaturePopulation.Limit||Creatures.Where(c=>CreatureRules.Elite(c.Kind)).GroupBy(c=>c.Kind).Any(g=>g.Count()>1))throw new InvalidOperationException("生物数量或生成进度无效");
         if(Entities.Any(p=>p.Value==null||p.Value.Storage==null||!Coordinates.InWorld(Cell.Parse(p.Key)))||Graves.Any(g=>g==null||g.Items==null||!PositionOk(g.Position))||Creatures.Any(c=>c==null||!PositionOk(c.Position)||!double.IsFinite(c.Health))||Markers.Any(p=>p is not {Length:2}||!p.All(double.IsFinite))||Beacons.Any(i=>i<0||i>=Terrain.Towers.Length))throw new InvalidOperationException("容器、生物、背包或地图状态无效");
         foreach(var g in Graves)if(g.ItemPositions==null||g.ItemVelocities==null||!double.IsFinite(g.PickupAfter)||g.PickupAfter<0||g.ItemPositions.Any(p=>p.Key<0||p.Key>=g.Items.Slots.Length||!PositionOk(p.Value))||g.ItemVelocities.Any(p=>p.Key<0||p.Key>=g.Items.Slots.Length||!PositionOk(p.Value)))throw new InvalidOperationException("掉落物状态无效");
-        foreach(var c in Creatures){if(!double.IsFinite(c.AttackWindup)||c.AttackWindup< -1||c.AttackWindup>5||!double.IsFinite(c.AttackCooldown)||c.AttackCooldown<0||c.AttackCooldown>10||!double.IsFinite(c.ChargeRemaining)||c.ChargeRemaining<0||c.ChargeRemaining>4||c.AttackAim!=null&&!PositionOk(c.AttackAim)||(c.AttackWindup>=0||c.ChargeRemaining>0)&&c.AttackAim==null)throw new InvalidOperationException("生物战斗状态无效");LifeRules.Validate(c);}
+        foreach(var c in Creatures){if(!double.IsFinite(c.AttackWindup)||c.AttackWindup< -1||c.AttackWindup>5||!double.IsFinite(c.AttackCooldown)||c.AttackCooldown<0||c.AttackCooldown>10||!double.IsFinite(c.ChargeRemaining)||c.ChargeRemaining<0||c.ChargeRemaining>4||c.AttackAim!=null&&!PositionOk(c.AttackAim)||(c.AttackWindup>=0||c.ChargeRemaining>0||c.StrikeRemaining>0)&&c.AttackAim==null||!double.IsFinite(c.StrikeRemaining)||c.StrikeRemaining<0||c.StrikeRemaining>1||!double.IsFinite(c.RecoveryRemaining)||c.RecoveryRemaining<0||c.RecoveryRemaining>2||!double.IsFinite(c.AttackWindupDuration)||c.AttackWindupDuration<0||c.AttackWindupDuration>5||c.FacingYaw is {} yaw&&!double.IsFinite(yaw)||c.AttackTargetId==null||c.AttackTargetId!=""&&(c.AttackTargetId.Length!=32||!c.AttackTargetId.All(Uri.IsHexDigit)))throw new InvalidOperationException("生物战斗状态无效");LifeRules.Validate(c);}
         if(Creatures.Select(c=>c.Id).Distinct().Count()!=Creatures.Count)throw new InvalidOperationException("生物标识重复");
         if(Projectiles.Count>ProjectileFlight.Limit||Projectiles.Any(p=>p==null))throw new InvalidOperationException("投射物数量无效");foreach(var p in Projectiles)p.Validate();
     }
@@ -96,7 +102,8 @@ public sealed class WorldSnapshot
         ValidateShape();
         var copy=(WorldSnapshot)MemberwiseClone();copy.Position=(double[])Position.Clone();copy.Respawn=(double[])Respawn.Clone();copy.Changes=new(Changes);copy.Inventory=Inventory.Copy();copy.Crafting=Crafting.Copy();copy.Equipment=Equipment.Copy();copy.Cursor=Cursor?.Copy();
         copy.Entities=Entities.ToDictionary(p=>p.Key,p=>new BlockEntity{Kind=p.Value.Kind,LootTheme=p.Value.LootTheme,Storage=p.Value.Storage.Copy(),LastTime=p.Value.LastTime,Stage=p.Value.Stage,Rotation=p.Value.Rotation,Open=p.Value.Open,RecipeId=p.Value.RecipeId,FinishTime=p.Value.FinishTime,CropId=p.Value.CropId,GrowthStepSeconds=p.Value.GrowthStepSeconds});
-        copy.Graves=Graves.Select(g=>new Grave{Position=(double[])g.Position.Clone(),Items=g.Items.Copy(),PickupAfter=g.PickupAfter,LegacyContainer=g.LegacyContainer,Death=g.Death,ItemPositions=g.ItemPositions.ToDictionary(p=>p.Key,p=>(double[])p.Value.Clone()),ItemVelocities=g.ItemVelocities.ToDictionary(p=>p.Key,p=>(double[])p.Value.Clone())}).ToList();copy.Beacons=new(Beacons);copy.Discovered=new(Discovered);copy.ExploredMap=new(ExploredMap);copy.FavoriteRecipes=new(FavoriteRecipes);copy.Markers=Markers.Select(p=>(double[])p.Clone()).ToList();
+        copy.Players=Players.ToDictionary(p=>p.Key,p=>p.Value.Copy());
+        copy.Graves=Graves.Select(g=>new Grave{OwnerId=g.OwnerId,Position=(double[])g.Position.Clone(),Items=g.Items.Copy(),PickupAfter=g.PickupAfter,LegacyContainer=g.LegacyContainer,Death=g.Death,ItemPositions=g.ItemPositions.ToDictionary(p=>p.Key,p=>(double[])p.Value.Clone()),ItemVelocities=g.ItemVelocities.ToDictionary(p=>p.Key,p=>(double[])p.Value.Clone())}).ToList();copy.Beacons=new(Beacons);copy.Discovered=new(Discovered);copy.ExploredMap=new(ExploredMap);copy.FavoriteRecipes=new(FavoriteRecipes);copy.Markers=Markers.Select(p=>(double[])p.Clone()).ToList();
         copy.Effects=Effects.Copy();copy.Mainline=Mainline.Copy();copy.Creatures=Creatures.Select(c=>c.Copy()).ToList();copy.Projectiles=Projectiles.Select(p=>p.Copy()).ToList();copy.Population=new(){Initialized=Population.Initialized,NextSpawnTime=Population.NextSpawnTime,Sequence=Population.Sequence};copy.Weather=new(){Phase=Weather.Phase,Cycle=Weather.Cycle,Remaining=Weather.Remaining,Blend=Weather.Blend};return copy;
     }
 }
@@ -106,6 +113,8 @@ public sealed partial class WorldState
     public Catalog Catalog {get;}
     public Terrain Terrain {get;}
     public WorldSnapshot State {get;}
+    public bool MultiplayerActive {get;set;}
+    public string ActivePlayerId {get;set;}="host";
     public Dictionary<Cell,ushort> Changes {get;}=[];
     private readonly Dictionary<Cell,Dictionary<Cell,ushort>> changesByChunk=[];
     public long Session {get;}=DateTime.UtcNow.Ticks;
@@ -126,6 +135,7 @@ public sealed partial class WorldState
     {
         Catalog=catalog;State=snapshot;
         snapshot.ValidateShape();
+        foreach(var player in snapshot.Players.Values)player.Validate(catalog);
         if(!Terrain.Supports(snapshot.GeneratorVersion)||snapshot.FormatVersion!=WorldSnapshot.CurrentFormat)throw new InvalidOperationException("不支持的世界版本，请保留原档");
         snapshot.Weather.Validate();
         snapshot.Inventory.Validate(catalog);
@@ -265,7 +275,7 @@ public sealed partial class WorldState
     {
         bool finale=global::EmberLighthouse.World.Mainline.Enabled(State)&&State.Mainline.FinaleActive;
         if(!State.Casual&&!State.Creative){var dropped=new Inventory(41);for(int i=0;i<36;i++)dropped.Slots[i]=State.Inventory.Slots[i]?.Copy();for(int i=0;i<5;i++)dropped.Slots[36+i]=State.Equipment.Slots[i]?.Copy();Drop(dropped,State.Position,.5,true);State.Inventory=new();State.Equipment=new(5);State.Experience=0;}
-        if(finale){var entry=Terrain.Adventure!.Site("vault").Entry;if(!State.Casual&&!State.Creative)State.Graves.Last().Position=[entry.X+.5,entry.Y,entry.Z+.5];global::EmberLighthouse.World.Mainline.ResetFinale(this);}
+        if(finale){var entry=Terrain.Adventure!.Site("vault").Entry;if(!State.Casual&&!State.Creative)State.Graves.Last().Position=[entry.X+.5,entry.Y,entry.Z+.5];if(!MultiplayerActive)global::EmberLighthouse.World.Mainline.ResetFinale(this);}
         State.Position=(double[])State.Respawn.Clone();State.Health=100;State.Hunger=80;State.Air=15;State.Effects=new();
     }
     public void Advance(double seconds)

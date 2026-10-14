@@ -1,0 +1,54 @@
+{
+  "id": "observatory_warden",
+  "blocks": 95,
+  "triangles": 4516,
+  "vertices": 9624,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegL",
+    "KneeL",
+    "ArmL",
+    "HandL",
+    "LegR",
+    "KneeR",
+    "ArmR",
+    "HandR"
+  ],
+  "textureSize": [
+    1536,
+    1536
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "bolt"
+  ],
+  "byteSize": 661312,
+  "sha256": "f885f1cd8fc3d5c06cc8ba9b26fafb38e55f9b86ccfeaacfd2ed3e44e7b0d0d7",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "tall narrow scout proportions",
+    "layered angular shoulder capes",
+    "single framed cyan optic",
+    "open U-shaped sensing antenna",
+    "long telescopic integrated emitter",
+    "slender piston legs with energy seams",
+    "bolt aim clip"
+  ],
+  "height": 3.0946500301361084,
+  "name": "观测哨长",
+  "family": "biped",
+  "group": "bosses",
+  "previewClip": "bolt",
+  "emissionMask": true,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

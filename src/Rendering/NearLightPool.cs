@@ -16,7 +16,7 @@ public partial class NearLightPool : Node3D
     public override void _Ready()
     {
         for(int i=0;i<lights.Length;i++){lights[i]=new(){Visible=false,ShadowEnabled=true,ShadowBlur=2,OmniRange=15,OmniAttenuation=1.5f,LightColor=new(1,.76f,.44f),LightEnergy=1.8f};AddChild(lights[i]);}
-        heldLight=new(){Visible=false,ShadowEnabled=false,OmniRange=8,OmniAttenuation=.6f,LightColor=new(1,.72f,.35f),LightEnergy=3.2f};AddChild(heldLight);
+        heldLight=new(){Visible=false,ShadowEnabled=true,ShadowBlur=1.5f,OmniRange=10,OmniAttenuation=1.2f,LightColor=new(1,.72f,.35f),LightEnergy=2.2f};AddChild(heldLight);
     }
     public void Tick(double delta,WorldState world,Vector3 position,Func<Vector3,bool> terrainReady)
     {
@@ -37,5 +37,6 @@ public partial class NearLightPool : Node3D
         }
     }
     public void Hold(Vector3 eye,bool lit){heldLight.Position=eye+new Vector3(.25f,-.25f,0);heldLight.Visible=lit;}
+    public bool HeldVisible=>heldLight.Visible;
     private static Vector3 Center(Cell p)=>new(p.X+.5f,p.Y+.7f,p.Z+.5f);
 }

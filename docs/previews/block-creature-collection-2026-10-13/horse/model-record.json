@@ -1,0 +1,54 @@
+{
+  "id": "horse",
+  "blocks": 35,
+  "triangles": 1636,
+  "vertices": 3504,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegFrontL",
+    "KneeFrontL",
+    "LegRearL",
+    "KneeRearL",
+    "LegFrontR",
+    "KneeFrontR",
+    "LegRearR",
+    "KneeRearR",
+    "TailTip"
+  ],
+  "textureSize": [
+    1024,
+    1024
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "graze"
+  ],
+  "byteSize": 255764,
+  "sha256": "860ef355939fc2fbef120589a0aac635fa1d9d76f4ae7462b6221e579a418979",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "raised elongated neck",
+    "long muzzle and forehead blaze",
+    "layered dark mane",
+    "strong haunches",
+    "long jointed legs",
+    "segmented hanging tail"
+  ],
+  "height": 2.444913387298584,
+  "name": "马",
+  "family": "quadruped",
+  "group": "land",
+  "previewClip": "walk",
+  "emissionMask": false,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

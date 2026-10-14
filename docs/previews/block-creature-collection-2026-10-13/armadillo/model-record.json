@@ -1,0 +1,54 @@
+{
+  "id": "armadillo",
+  "blocks": 59,
+  "triangles": 2628,
+  "vertices": 5712,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegFrontL",
+    "KneeFrontL",
+    "LegRearL",
+    "KneeRearL",
+    "LegFrontR",
+    "KneeFrontR",
+    "LegRearR",
+    "KneeRearR"
+  ],
+  "textureSize": [
+    1024,
+    1024
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "curl"
+  ],
+  "byteSize": 373704,
+  "sha256": "eceebcd98d612ed7ebed725abbb1c0bdd17334048ff94a2dc51d73e4743b4830",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "six articulated shell bands",
+    "distinct light band edges",
+    "elongated nose",
+    "small upright ears",
+    "short clawed feet",
+    "ringed tapering tail",
+    "curl anticipation"
+  ],
+  "height": 0.687000036239624,
+  "name": "犰狳",
+  "family": "quadruped",
+  "group": "small_aquatic",
+  "previewClip": "walk",
+  "emissionMask": false,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

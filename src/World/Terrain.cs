@@ -9,7 +9,7 @@ namespace EmberLighthouse.World;
 
 public sealed class Terrain(int seed,Catalog catalog,int generatorVersion=Terrain.Version)
 {
-    public const int Version=7, SeaLevel=34;
+    public const int Version=8, SeaLevel=34;
     public int Seed {get;}=seed;
     public int GeneratorVersion {get;}=Supports(generatorVersion)?generatorVersion:throw new ArgumentOutOfRangeException(nameof(generatorVersion));
     public static bool Supports(int version)=>version is >=1 and <=Version;
@@ -125,10 +125,10 @@ public sealed class Terrain(int seed,Catalog catalog,int generatorVersion=Terrai
         if(p.Y>h-4)return catalog.Number(b==2?"sand":"dirt");
         uint ore=RandomField.Hash(Seed,p.X/2,p.Y/2,p.Z/2,11)%100;
         if(GeneratorVersion>=6&&p.Y<28&&p.Y<h-5&&ore>=24&&ore<27)return catalog.Number("gold_ore");
-        if(GeneratorVersion>=3&&p.Y<h-4&&ore>=17&&ore<24)return catalog.Number("copper_vein");
+        if(GeneratorVersion>=3&&p.Y<h-4&&ore>=17&&ore<(GeneratorVersion>=8?19:24))return catalog.Number("copper_vein");
         if(p.Y<16&&ore<5)return catalog.Number("crystal_ore");
         if(p.Y<h-5&&ore<11)return catalog.Number("iron_ore");
-        if(ore<17)return catalog.Number("coal_ore");
+        if(GeneratorVersion>=8?ore>=11&&ore<14:ore<17)return catalog.Number("coal_ore");
         if(p.Y<8)return catalog.Number("basalt");
         return catalog.Number("stone");
     }

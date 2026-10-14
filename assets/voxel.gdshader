@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode unshaded, cull_disabled;
+render_mode cull_disabled, ambient_light_disabled, specular_disabled;
 uniform float daylight = 1.0;
 varying vec3 world_position;
 varying vec4 tint;
@@ -105,12 +105,18 @@ void fragment() {
     vec3 sky_light = mix(vec3(0.16, 0.21, 0.34), vec3(1.0, 0.98, 0.94), daylight) * (0.025 + daylight * 0.975) * pow(UV.x, 1.6);
     vec3 torch_light = vec3(1.0, 0.70, 0.36) * pow(UV.y, 1.8) * 1.45;
     vec3 illumination = max(vec3(0.0025), max(sky_light, torch_light));
-    ALBEDO = base * detail * illumination;
+    ALBEDO = base * detail;
+    EMISSION += ALBEDO * illumination;
     if (style == 33) {
         bool flame = fract(world_position.y) > 0.46;
-        ALBEDO = flame ? vec3(1.0, 0.62, 0.16) : vec3(0.42, 0.25, 0.10) * detail * illumination;
+        ALBEDO = flame ? vec3(1.0, 0.62, 0.16) : vec3(0.42, 0.25, 0.10) * detail;
         EMISSION = flame ? vec3(1.0, 0.43, 0.07) * 1.6 : vec3(0.0);
     }
     if (style == 16) EMISSION = base * 0.3;
     ROUGHNESS = 0.92;
+}
+void light() {
+    // Daylight is already occluded by the voxel field. Point lights contribute
+    // realtime illumination with native terrain shadows for held torches.
+    if (!LIGHT_IS_DIRECTIONAL) DIFFUSE_LIGHT += max(dot(NORMAL, LIGHT), 0.0) * ATTENUATION * LIGHT_COLOR / PI;
 }

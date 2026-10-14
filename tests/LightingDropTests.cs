@@ -51,7 +51,7 @@ public static class LightingDropTests
         });
         test("drop physics stops at ground, saves individual positions and migrates old containers",()=>{
             var w=new WorldState(catalog,new());for(int x=600;x<604;x++)for(int z=600;z<604;z++)w.Set(new(x,99,z),catalog.Number("stone"));var item=w.Drop(new Stack("iron_chestplate",1,19){HeatLining=true},[601.5,104,601.5]);for(int i=0;i<150;i++)w.TickDroppedItems(.02,_=>true);var p=WorldState.ItemPosition(item,0);Check(p[1]>100.1&&p[1]<100.2,"item fell through floor or floats high");var copy=w.State.Copy();item.ItemPositions[0][0]=900;Check(copy.Graves[0].ItemPositions[0][0]<604,"drop position aliases snapshot");var store=new SaveStore(Path.Combine(root,"lighting-drops","worlds"),catalog);store.Save(copy);var loaded=store.Load(copy.WorldId).Snapshot;Check(loaded.Graves.Single().ItemPositions[0][1]==copy.Graves[0].ItemPositions[0][1]&&loaded.Graves[0].Items.Slots[0]?.HeatLining==true,"saved drop lost model position or metadata");
-            loaded.FormatVersion=6;SaveMigrations.ToCurrent(loaded);Check(loaded.Graves.Single().LegacyContainer&&loaded.FormatVersion==7,"old bags cannot be recovered");
+            loaded.FormatVersion=6;SaveMigrations.ToCurrent(loaded);Check(loaded.Graves.Single().LegacyContainer&&loaded.FormatVersion==WorldSnapshot.CurrentFormat,"old bags cannot be recovered");
         });
     }
 }

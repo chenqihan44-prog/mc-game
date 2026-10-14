@@ -1,0 +1,51 @@
+{
+  "id": "chicken",
+  "blocks": 32,
+  "triangles": 1440,
+  "vertices": 3120,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "WingL",
+    "LegFrontL",
+    "KneeFrontL",
+    "WingR",
+    "LegFrontR",
+    "KneeFrontR"
+  ],
+  "textureSize": [
+    1024,
+    1024
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "peck"
+  ],
+  "byteSize": 221824,
+  "sha256": "885c69a4d7dca273ccb543d5eade836d3532d62f948aa5603d182707a58aae32",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "two legs with three forward toes and back toe",
+    "layered folded wing feathers",
+    "red stepped comb and wattle",
+    "two-part yellow beak",
+    "fan tail",
+    "peck motion"
+  ],
+  "height": 1.003589117899537,
+  "name": "鸡",
+  "family": "bird",
+  "group": "land",
+  "previewClip": "walk",
+  "emissionMask": false,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

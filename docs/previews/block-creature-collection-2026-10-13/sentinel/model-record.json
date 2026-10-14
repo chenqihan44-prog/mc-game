@@ -1,0 +1,53 @@
+{
+  "id": "sentinel",
+  "blocks": 89,
+  "triangles": 4316,
+  "vertices": 9144,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegL",
+    "KneeL",
+    "ArmL",
+    "HandL",
+    "LegR",
+    "KneeR",
+    "ArmR",
+    "HandR"
+  ],
+  "textureSize": [
+    1536,
+    1536
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "bolt"
+  ],
+  "byteSize": 626044,
+  "sha256": "f1e926e5df8c556d6c7c794c5a9eda49e6cfab5e63fccdf30f2eb7db212a15c4",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "turquoise patina armor and bronze rims",
+    "single amber optic",
+    "stone chest plate",
+    "integrated forearm bolt weapon",
+    "segmented fingers and piston legs",
+    "bolt windup/strike/recovery"
+  ],
+  "height": 1.9524999856948853,
+  "name": "遗迹哨兵",
+  "family": "biped",
+  "group": "enemies",
+  "previewClip": "bolt",
+  "emissionMask": true,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

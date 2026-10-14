@@ -1,0 +1,53 @@
+{
+  "id": "boar",
+  "blocks": 41,
+  "triangles": 1868,
+  "vertices": 4032,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegFrontL",
+    "KneeFrontL",
+    "LegRearL",
+    "KneeRearL",
+    "LegFrontR",
+    "KneeFrontR",
+    "LegRearR",
+    "KneeRearR"
+  ],
+  "textureSize": [
+    1024,
+    1024
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "charge"
+  ],
+  "byteSize": 284440,
+  "sha256": "b81867274efcfa9faa6fd980e5ae94ec1d18cddd1593c65f9f71ebcda2e7b8bd",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "raised bristle ridge",
+    "broad shoulder",
+    "square snout and nostrils",
+    "two-part ivory tusks",
+    "short heavy legs",
+    "charge anticipation"
+  ],
+  "height": 1.2184975147247314,
+  "name": "野猪",
+  "family": "quadruped",
+  "group": "land",
+  "previewClip": "charge",
+  "emissionMask": false,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

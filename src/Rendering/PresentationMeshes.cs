@@ -17,6 +17,11 @@ public partial class PresentationModel : Node3D
     public Node3D Head {get;private set;}=null!;
     public Node3D RightArm {get;private set;}=null!;
     public Node3D LeftArm {get;private set;}=null!;
+    public Node3D RightLeg {get;private set;}=null!;
+    public Node3D LeftLeg {get;private set;}=null!;
+    public Node3D Torso {get;private set;}=null!;
+    public Node3D RightLowerLeg {get;private set;}=null!;
+    public Node3D LeftLowerLeg {get;private set;}=null!;
     public void Box(Node3D parent,Vector3 size,Vector3 position,Color color)
     {
         var mesh=new BoxMesh{Size=size};var material=new StandardMaterial3D{AlbedoColor=color,Roughness=1};owned.Add(mesh);owned.Add(material);parent.AddChild(new MeshInstance3D{Mesh=mesh,MaterialOverride=material,Position=position,CastShadow=GeometryInstance3D.ShadowCastingSetting.Off});
@@ -70,16 +75,23 @@ public partial class PresentationModel : Node3D
         }
         return model;
     }
-    public static PresentationModel Arm(bool left=false)
+    public static PresentationModel Arm(bool left=false,string appearanceId="adventurer")
     {
-        var model=new PresentationModel();model.TexturedBox(model,new(.22f,.66f,.22f),new(0,-.33f,0),face=>Skin("arm",face,left));Sleeve(model,model,left);return model;
+        appearanceId=CharacterAppearances.Normalize(appearanceId);var model=new PresentationModel();model.TexturedBox(model,new(.22f,.66f,.22f),new(0,-.33f,0),face=>Skin("arm",face,left,appearanceId));Sleeve(model,model,left,appearanceId);return model;
     }
-    public static PresentationModel Avatar(Inventory? equipment,Catalog? catalog=null)
+    public static PresentationModel Avatar(Inventory? equipment,Catalog? catalog=null,string appearanceId="adventurer")
     {
-        var model=new PresentationModel{Head=new(),RightArm=new(),LeftArm=new()};model.Head.Position=new(0,1.5f,0);model.AddChild(model.Head);model.RightArm.Position=new(-.34f,1.24f,0);model.LeftArm.Position=new(.34f,1.24f,0);model.AddChild(model.RightArm);model.AddChild(model.LeftArm);
-        model.TexturedBox(model.Head,new(.45f,.45f,.45f),new(0,.225f,0),face=>Skin("head",face));model.TexturedBox(model,new(.45f,.68f,.25f),new(0,1.15f,0),face=>Skin("body",face));
-        foreach(var (arm,left) in new[]{(model.RightArm,false),(model.LeftArm,true)})model.TexturedBox(arm,new(.22f,.68f,.25f),new(0,-.26f,0),face=>Skin("arm",face,left));
-        model.TexturedBox(model,new(.22f,.68f,.25f),new(-.115f,.48f,0),face=>Skin("leg",face));model.TexturedBox(model,new(.22f,.68f,.25f),new(.115f,.48f,0),face=>Skin("leg",face,true));
+        appearanceId=CharacterAppearances.Normalize(appearanceId);
+        var model=new PresentationModel{Head=new(),RightArm=new(),LeftArm=new(),RightLeg=new(),LeftLeg=new(),Torso=new(),RightLowerLeg=new(),LeftLowerLeg=new()};model.Head.Position=new(0,1.5f,0);model.AddChild(model.Head);model.RightArm.Position=new(-.34f,1.24f,0);model.LeftArm.Position=new(.34f,1.24f,0);model.AddChild(model.RightArm);model.AddChild(model.LeftArm);
+        model.RightLeg.Position=new(-.115f,.82f,0);model.LeftLeg.Position=new(.115f,.82f,0);model.AddChild(model.RightLeg);model.AddChild(model.LeftLeg);
+        model.RightLowerLeg.Position=new(0,-.34f,0);model.LeftLowerLeg.Position=new(0,-.34f,0);model.RightLeg.AddChild(model.RightLowerLeg);model.LeftLeg.AddChild(model.LeftLowerLeg);
+        model.TexturedBox(model.Head,new(.45f,.45f,.45f),new(0,.225f,0),face=>Skin("head",face,false,appearanceId));model.TexturedBox(model,new(.45f,.68f,.25f),new(0,1.15f,0),face=>Skin("body",face,false,appearanceId));
+        foreach(var (arm,left) in new[]{(model.RightArm,false),(model.LeftArm,true)})model.TexturedBox(arm,new(.22f,.68f,.25f),new(0,-.26f,0),face=>Skin("arm",face,left,appearanceId));
+        foreach(var (upper,lower,left) in new[]{(model.RightLeg,model.RightLowerLeg,false),(model.LeftLeg,model.LeftLowerLeg,true)}){
+            model.TexturedBox(upper,new(.22f,.34f,.25f),new(0,-.17f,0),face=>LegSkin(face,left,appearanceId,false));
+            model.TexturedBox(lower,new(.22f,.34f,.25f),new(0,-.17f,0),face=>LegSkin(face,left,appearanceId,true));
+        }
+        if(appearanceId=="adventurer"){
         // Layered hair, hood, coat tails and pouches follow the supplied adventurer sheet.
         Color hair=new("24242d"),blue=new("4169c2"),dark=new("262831"),silver=new("b8becb");
         model.Box(model.Head,new(.49f,.12f,.48f),new(0,.45f,-.015f),hair);
@@ -99,27 +111,120 @@ public partial class PresentationModel : Node3D
         Sleeve(model,model.RightArm,false);Sleeve(model,model.LeftArm,true);
         model.Box(model,new(.075f,.04f,.02f),new(0,1.30f,-.214f),silver);model.Box(model,new(.035f,.10f,.02f),new(0,1.30f,-.215f),silver);
         foreach(float s in new[]{-1f,1f})for(int i=0;i<3;i++)model.Box(model,new(.055f,.045f,.018f),new(s*(.14f-i*.043f),1.30f-i*.04f,-.215f),silver);
+        }else AppearanceLayers(model,appearanceId);
         Color armor=new("b9c4c8"),shade=new("7e909e");
         void Tint(int slot){if(equipment?.Slots[slot] is {} item){armor=catalog!=null?new(ArmorTraits.Color(item,catalog)):new("b9c4c8");shade=armor.Darkened(.25f);}}
         Tint(0);
         if(equipment?.Slots[0]!=null){model.Box(model.Head,new(.49f,.1f,.49f),new(0,.435f,0),armor);model.Box(model.Head,new(.055f,.34f,.49f),new(-.23f,.26f,0),shade);model.Box(model.Head,new(.055f,.34f,.49f),new(.23f,.26f,0),shade);}
         Tint(1);
         if(equipment?.Slots[1]?.Id=="elytra"){foreach(float s in new[]{-1f,1f}){var wing=new Node3D{Position=new(s*.13f,1.40f,-.22f),Rotation=new(0,s*.22f,-s*.22f)};model.AddChild(wing);model.Box(wing,new(.24f,.75f,.05f),new(s*.13f,-.32f,-.02f),armor);}}
-        else if(equipment?.Slots[1]!=null){model.Box(model,new(.49f,.61f,.28f),new(0,1.15f,0),armor);model.Box(model,new(.28f,.20f,.28f),new(-.34f,1.3f,0),shade);model.Box(model,new(.28f,.20f,.28f),new(.34f,1.3f,0),shade);model.Box(model,new(.05f,.5f,.01f),new(0,1.15f,.15f),shade);}
+        else if(equipment?.Slots[1]!=null){model.Box(model,new(.49f,.61f,.28f),new(0,1.15f,0),armor);model.Box(model.RightArm,new(.28f,.20f,.28f),new(0,.06f,0),shade);model.Box(model.LeftArm,new(.28f,.20f,.28f),new(0,.06f,0),shade);model.Box(model,new(.05f,.5f,.01f),new(0,1.15f,.15f),shade);}
         Tint(2);
-        if(equipment?.Slots[2]!=null)foreach(float x in new[]{-.115f,.115f})model.Box(model,new(.235f,.47f,.27f),new(x,.63f,0),shade);
-        Tint(3);if(equipment?.Slots[3]!=null)foreach(float x in new[]{-.115f,.115f})model.Box(model,new(.24f,.24f,.32f),new(x,.22f,.025f),armor);
+        if(equipment?.Slots[2]!=null)foreach(var (upper,lower) in new[]{(model.RightLeg,model.RightLowerLeg),(model.LeftLeg,model.LeftLowerLeg)}){model.Box(upper,new(.235f,.34f,.27f),new(0,-.125f,0),shade);model.Box(lower,new(.235f,.13f,.27f),new(0,-.02f,0),shade);}
+        Tint(3);if(equipment?.Slots[3]!=null)foreach(var leg in new[]{model.RightLowerLeg,model.LeftLowerLeg})model.Box(leg,new(.24f,.24f,.32f),new(0,-.26f,.025f),armor);
+        // Reparent the upper body around its waist without changing its standing
+        // positions. Accessories and armor then follow the same torso pose.
+        model.Torso.Position=new(0,.82f,0);model.AddChild(model.Torso);
+        foreach(var node in model.GetChildren())if(node is Node3D part&&part!=model.Torso&&part!=model.RightLeg&&part!=model.LeftLeg){model.RemoveChild(part);model.Torso.AddChild(part);part.Position-=model.Torso.Position;}
         return model;
     }
-    private static void Sleeve(PresentationModel model,Node3D arm,bool left)
+    private static Image LegSkin(int face,bool left,string appearanceId,bool lower)
     {
+        using var skin=Skin("leg",face,left,appearanceId);return skin.GetRegion(new Rect2I(0,lower?12:0,16,12));
+    }
+    private static (Color Skin,Color Hair,Color Coat,Color Shirt,Color Trousers,Color Leather,Color Trim,Color Eyes) Palette(string id)=>id switch{
+        "ranger"=>(new("e9c5a0"),new("74462e"),new("657748"),new("d9c9a2"),new("3b4835"),new("654932"),new("bda26b"),new("65865a")),
+        "artisan"=>(new("f1cbb4"),new("b35b39"),new("d48a3f"),new("f1e2be"),new("33495d"),new("3c3c3b"),new("c4a366"),new("b87d35")),
+        _=>(new("eddae2"),new("dce4ed"),new("354968"),new("92c5d7"),new("394456"),new("45415d"),new("ad86bc"),new("9c73c3"))
+    };
+    private static void AppearanceLayers(PresentationModel model,string id)
+    {
+        var p=Palette(id);bool artisan=id=="artisan",frost=id=="frost";
+        model.Box(model.Head,new(.49f,.12f,.48f),new(0,.45f,-.008f),p.Hair);
+        // Block bob, cropped chestnut bangs and swept silver hair have distinct silhouettes.
+        for(int i=0;i<6;i++){
+            float x=-.20f+i*.08f,drop=artisan?(i<3?.14f:.10f):frost?.08f+i*.02f:.10f+(i%3)*.032f;
+            model.Box(model.Head,new(.085f,drop,.06f),new(x,.43f-drop/2,.247f),i%2==0?p.Hair:p.Hair.Lightened(.10f));
+        }
+        if(artisan){
+            foreach(float sign in new[]{-1f,1f}){model.Box(model.Head,new(.08f,.35f,.40f),new(sign*.25f,.25f,-.04f),p.Hair);model.Box(model.Head,new(.08f,.075f,.30f),new(sign*.25f,.075f,-.06f),p.Hair.Darkened(.12f));}
+            model.Box(model.Head,new(.49f,.35f,.07f),new(0,.25f,-.25f),p.Hair.Darkened(.1f));
+            // Brass goggles sit above the fringe, leaving the amber eyes unobstructed.
+            model.Box(model.Head,new(.52f,.04f,.04f),new(0,.45f,.26f),p.Leather);
+            foreach(float x in new[]{-.13f,.13f}){model.Box(model.Head,new(.14f,.105f,.07f),new(x,.475f,.285f),p.Trim);model.Box(model.Head,new(.09f,.06f,.015f),new(x,.475f,.327f),new("60808c"));model.Box(model.Head,new(.026f,.025f,.017f),new(x-.025f,.487f,.337f),new("d5e4db"));}
+        }else{
+            model.Box(model.Head,new(.47f,.23f,.065f),new(0,.33f,-.25f),p.Hair.Darkened(.12f));
+            foreach(float sign in new[]{-1f,1f})model.Box(model.Head,new(.06f,frost?.22f:.17f,.34f),new(sign*.246f,.33f,-.045f),p.Hair);
+            for(int i=0;i<4;i++){var tuft=new Node3D{Position=new(-.14f+i*.09f,.52f,-.06f),Rotation=new(0,0,frost?-.2f:(i%2==0?.14f:-.14f))};model.Head.AddChild(tuft);model.Box(tuft,new(.10f,.07f,.18f),Vector3.Zero,p.Hair.Lightened(i%2*.12f));}
+        }
+        model.Box(model,new(.47f,.44f,.06f),new(0,1.20f,-.16f),p.Coat.Darkened(.12f));
+        model.Box(model,new(.49f,.09f,.29f),new(0,.86f,0),p.Leather);
+        model.Box(model,new(.09f,.075f,.03f),new(0,.86f,.16f),p.Trim);
+        if(artisan){
+            model.Box(model,new(.33f,.49f,.035f),new(0,.98f,.15f),p.Leather);
+            foreach(float x in new[]{-.11f,.11f})model.Box(model,new(.035f,.30f,.02f),new(x,1.30f,.15f),p.Leather);
+            model.Box(model,new(.25f,.12f,.035f),new(0,1.05f,.184f),p.Leather.Lightened(.12f));
+            foreach(float x in new[]{-.075f,0,.075f})model.Box(model,new(.021f,.16f,.025f),new(x,1.07f,.21f),p.Trim);
+            model.Box(model,new(.12f,.18f,.10f),new(.25f,.80f,.08f),new("805635"));
+            model.Box(model,new(.035f,.25f,.035f),new(-.25f,.84f,.13f),p.Trim);model.Box(model,new(.13f,.05f,.05f),new(-.25f,.97f,.13f),new("59666a"));
+        }else{
+            model.Box(model,new(.51f,.14f,.32f),new(0,1.44f,0),frost?p.Shirt:p.Coat.Darkened(.18f));
+            foreach(float sign in new[]{-1f,1f}){
+                float length=frost?.53f:.31f;var tail=new Node3D{Position=new(sign*.17f,.82f,-.12f),Rotation=new(0,0,-sign*.09f)};model.AddChild(tail);
+                model.Box(tail,new(.20f,length,.08f),new(0,-length/2,0),p.Coat);model.Box(tail,new(.20f,.035f,.085f),new(0,-length+.015f,0),p.Trim);
+                if(!frost){model.Box(model,new(.13f,.16f,.09f),new(sign*.25f,.83f,.12f),p.Leather);model.Box(model,new(.035f,.055f,.015f),new(sign*.25f,.85f,.17f),p.Trim);}
+            }
+            if(frost){model.Box(model,new(.13f,.42f,.05f),new(.13f,1.18f,.175f),p.Shirt);model.Box(model,new(.135f,.045f,.055f),new(.13f,.985f,.177f),p.Trim);model.Box(model,new(.08f,.14f,.06f),new(-.17f,1.36f,.18f),p.Trim);}
+            else{var strap=new Node3D{Position=new(0,1.18f,.15f),Rotation=new(0,0,-.53f)};model.AddChild(strap);model.Box(strap,new(.055f,.62f,.026f),Vector3.Zero,p.Leather);model.Box(strap,new(.08f,.06f,.03f),new(0,.1f,.005f),p.Trim);}
+        }
+        Sleeve(model,model.RightArm,false,id);Sleeve(model,model.LeftArm,true,id);
+        foreach(var leg in new[]{model.RightLowerLeg,model.LeftLowerLeg}){model.Box(leg,new(.225f,.24f,.28f),new(0,-.24f,.025f),p.Leather);model.Box(leg,new(.23f,.045f,.30f),new(0,-.35f,.028f),p.Leather.Darkened(.25f));model.Box(leg,new(.235f,.045f,.285f),new(0,-.12f,.025f),p.Trim);}
+    }
+    private static Image AppearanceSkin(string part,int face,bool left,string id)
+    {
+        var p=Palette(id);int height=part=="head"?16:24;var image=Image.CreateEmpty(16,height,false,Image.Format.Rgba8);
+        for(int y=0;y<height;y++)for(int x=0;x<16;x++){
+            Color c=part switch{"head"=>p.Skin,"leg"=>p.Trousers,_=>p.Coat};
+            if(part=="head"){
+                if(face is 4 or 1||y<3||face is 2 or 3&&y<(id=="artisan"?14:9))c=p.Hair;
+                if(face==0){
+                    if(y==7&&x is >=2 and <=5 or >=10 and <=13)c=p.Hair.Darkened(.25f);
+                    if(y is 8 or 9&&x is >=2 and <=5 or >=10 and <=13)c=new("f7f3ed");
+                    if(y is 8 or 9&&x is 4 or 5 or 10 or 11)c=p.Eyes;
+                    if(y==8&&x is 5 or 10)c=p.Eyes.Darkened(.5f);
+                    if(y==12&&x is 7 or 8)c=id=="artisan"?new("bd8071"):p.Skin.Darkened(.2f);
+                    if(id=="artisan"&&y==10&&x is 2 or 13)c=new("e5a392");
+                }
+            }else if(part=="body"){
+                if(face==0&&x is >=5 and <=10&&y<19)c=p.Shirt;
+                if(face==0&&x is 4 or 11)c=p.Trim;
+                if(y>19)c=p.Leather;if(y==21&&face==0&&x is 7 or 8)c=p.Trim;
+                if(id=="artisan"&&face==0&&y>=10&&x is >=2 and <=13)c=p.Leather;
+            }else if(part=="arm"){
+                if(y>=15)c=p.Skin;if(y is 12 or 13)c=p.Trim;if(y is >=19 and <=22)c=p.Leather;
+                if(face==0&&x is 0 or 15)c=c.Darkened(.14f);
+            }else{
+                if(y>=17)c=p.Leather;if(y is 4 or 5)c=p.Trim.Darkened(.25f);if(x is 0 or 15)c=c.Darkened(.15f);
+            }
+            float noise=((x*3+y*7+face*11+(left?3:0))%7-3)*.009f;image.SetPixel(x,y,noise>=0?c.Lightened(noise):c.Darkened(-noise));
+        }
+        return image;
+    }
+    private static void Sleeve(PresentationModel model,Node3D arm,bool left,string appearanceId="adventurer")
+    {
+        if(appearanceId!="adventurer"){
+            var p=Palette(appearanceId);model.Box(arm,new(.245f,.24f,.27f),new(0,-.09f,0),p.Coat);
+            model.Box(arm,new(.24f,.06f,.27f),new(0,-.39f,0),p.Trim);model.Box(arm,new(.235f,.11f,.26f),new(0,-.53f,0),p.Leather);
+            if(appearanceId=="artisan")model.Box(arm,new(.018f,.10f,.07f),new((left?1:-1)*.13f,-.20f,.07f),p.Trim);return;
+        }
         float side=left?1:-1;Color silver=new("b8becb"),blue=new("4169c2");
         model.Box(arm,new(.25f,.16f,.28f),new(0,-.08f,0),new("535663"));
         model.Box(arm,new(.018f,.045f,.11f),new(side*.135f,-.08f,.01f),blue);model.Box(arm,new(.019f,.11f,.038f),new(side*.136f,-.08f,.01f),blue);
         model.Box(arm,new(.235f,.06f,.265f),new(0,-.39f,0),silver);model.Box(arm,new(.24f,.12f,.27f),new(0,-.52f,0),new("24252d"));model.Box(arm,new(.015f,.055f,.10f),new(side*.127f,-.51f,0),silver);
     }
-    private static Image Skin(string part,int face,bool left=false)
+    private static Image Skin(string part,int face,bool left=false,string appearanceId="adventurer")
     {
+        if(appearanceId!="adventurer")return AppearanceSkin(part,face,left,appearanceId);
         int height=part=="head"?16:24;var image=Image.CreateEmpty(16,height,false,Image.Format.Rgba8);
         for(int y=0;y<height;y++)for(int x=0;x<16;x++){
             Color c=part=="head"?new("f1cdb5"):new("2c2d37");float variation=((x*3+y*7+face*11)%7-3)*.012f;c=variation>=0?c.Lightened(variation):c.Darkened(-variation);

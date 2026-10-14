@@ -1,0 +1,60 @@
+{
+  "id": "squid",
+  "blocks": 49,
+  "triangles": 2204,
+  "vertices": 4776,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "Tentacle0",
+    "TipTentacle0",
+    "Tentacle1",
+    "TipTentacle1",
+    "Tentacle2",
+    "TipTentacle2",
+    "Tentacle3",
+    "TipTentacle3",
+    "Tentacle4",
+    "TipTentacle4",
+    "Tentacle5",
+    "TipTentacle5",
+    "Tentacle6",
+    "TipTentacle6",
+    "Tentacle7",
+    "TipTentacle7"
+  ],
+  "textureSize": [
+    1536,
+    1536
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "swim",
+    "dart",
+    "pulse"
+  ],
+  "byteSize": 360792,
+  "sha256": "1dc8d35394486f583424d0996984acd275200a7339e7ae8c32ee020661d6b81e",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "tapered mantle and lateral fins",
+    "prominent side eyes",
+    "eight separately jointed tentacles",
+    "painted/raised sucker rows",
+    "swim and pulse clips"
+  ],
+  "height": 1.4421674013137817,
+  "name": "鱿鱼",
+  "family": "squid",
+  "group": "small_aquatic",
+  "previewClip": "swim",
+  "emissionMask": false,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

@@ -1,0 +1,55 @@
+{
+  "id": "guardian",
+  "blocks": 111,
+  "triangles": 5748,
+  "vertices": 11952,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegL",
+    "KneeL",
+    "ArmL",
+    "HandL",
+    "LegR",
+    "KneeR",
+    "ArmR",
+    "HandR"
+  ],
+  "textureSize": [
+    1536,
+    1536
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "slam"
+  ],
+  "byteSize": 861680,
+  "sha256": "afd24d69ba39954b4b8955ecdc04b38df13738aa77ccb2416f5ec68c8ebbbf89",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "long articulated legs",
+    "layered shoulder armor with bronze markings",
+    "three-section chest armor",
+    "recessed emissive core and raised rune",
+    "belt and buckle",
+    "separate kneecaps and segmented toes",
+    "folded finger geometry and thumb",
+    "helmet, recessed glowing eyes and jaw"
+  ],
+  "height": 3.0797139406204224,
+  "name": "余烬守护者",
+  "family": "biped",
+  "group": "bosses",
+  "previewClip": "slam",
+  "acceptedPrototype": true,
+  "emissionMask": true,
+  "scope": "accepted revision-2 sample copied without mesh changes"
+}

@@ -11,7 +11,7 @@ public sealed partial class WorldState
 {
     public Grave Drop(Inventory items,double[] position,double delay=.4,bool death=false)
     {
-        var g=new Grave{Items=items.Copy(),Position=(double[])position.Clone(),PickupAfter=State.Time+delay,Death=death};State.Graves.Add(g);return g;
+        var g=new Grave{Items=items.Copy(),Position=(double[])position.Clone(),PickupAfter=State.Time+delay,Death=death,OwnerId=death?ActivePlayerId:null};State.Graves.Add(g);return g;
     }
     public Grave Drop(Stack item,double[] position,double delay=.4){var items=new Inventory(1);items.Slots[0]=item.Copy();return Drop(items,position,delay);}
     public static double[] ItemPosition(Grave grave,int index)
@@ -23,6 +23,7 @@ public sealed partial class WorldState
     public int PickTouchingItems(double[] feet,double height=1.8)
     {
         int picked=0;foreach(var g in State.Graves.ToArray()){
+            if(MultiplayerActive&&g.Death&&g.OwnerId!=null&&g.OwnerId!=ActivePlayerId)continue;
             if(State.Time<g.PickupAfter)continue;
             for(int i=0;i<g.Items.Slots.Length;i++)if(g.Items.Slots[i] is {} item){var p=ItemPosition(g,i);double dx=p[0]-feet[0],dz=p[2]-feet[2];if(dx*dx+dz*dz>.52*.52||p[1]<feet[1]-.18||p[1]>feet[1]+height)continue;
                 if(!CombatGeometry.Clear(this,new((float)p[0],(float)p[1],(float)p[2]),new((float)feet[0],(float)feet[1]+.4f,(float)feet[2])))continue;

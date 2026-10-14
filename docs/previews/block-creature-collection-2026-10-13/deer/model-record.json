@@ -1,0 +1,52 @@
+{
+  "id": "deer",
+  "blocks": 41,
+  "triangles": 1852,
+  "vertices": 4008,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegFrontL",
+    "KneeFrontL",
+    "LegRearL",
+    "KneeRearL",
+    "LegFrontR",
+    "KneeFrontR",
+    "LegRearR",
+    "KneeRearR"
+  ],
+  "textureSize": [
+    1024,
+    1024
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "graze"
+  ],
+  "byteSize": 279972,
+  "sha256": "57aad844bb18b08dd255f8472308b501e0722cec16b07e7880e4036bedb51168",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "branching antlers",
+    "white-spotted back",
+    "pale belly and muzzle",
+    "upright ears",
+    "slender jointed legs"
+  ],
+  "height": 2.398108720779419,
+  "name": "林鹿",
+  "family": "quadruped",
+  "group": "land",
+  "previewClip": "walk",
+  "emissionMask": false,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

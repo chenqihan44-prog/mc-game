@@ -1,0 +1,46 @@
+{
+  "id": "cod",
+  "blocks": 20,
+  "triangles": 880,
+  "vertices": 1896,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "FinL",
+    "FinR"
+  ],
+  "textureSize": [
+    1024,
+    1024
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "swim",
+    "dart"
+  ],
+  "byteSize": 137444,
+  "sha256": "3450ed23b9e8d67ca78461c0e514dfd6d2d4b0e379b8f84d07ef83149a7991a8",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "pale belly stripe",
+    "side eyes and gill slits",
+    "paired pectoral fins",
+    "stepped dorsal fin",
+    "two-lobed tail fan",
+    "swim and dart clips"
+  ],
+  "height": 0.505320817232132,
+  "name": "鳕鱼",
+  "family": "fish",
+  "group": "small_aquatic",
+  "previewClip": "swim",
+  "emissionMask": false,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

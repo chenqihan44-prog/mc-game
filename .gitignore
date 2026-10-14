@@ -32,3 +32,25 @@ Desktop.ini
 *.log
 *.dmp
 **/.saving.lock
+
+# Python cache and Blender automatic backups
+__pycache__/
+*.py[cod]
+*.blend[0-9]*
+
+# Local historical model archive and generated preview galleries
+/model-archive/
+/docs/previews/*/
+!/docs/previews/block-creature-collection-2026-10-13/
+/docs/previews/block-creature-collection-2026-10-13/*
+!/docs/previews/block-creature-collection-2026-10-13/README.txt
+!/docs/previews/block-creature-collection-2026-10-13/manifest.json
+!/docs/previews/block-creature-collection-2026-10-13/*/
+/docs/previews/block-creature-collection-2026-10-13/*/*
+!/docs/previews/block-creature-collection-2026-10-13/*/*.blend
+!/docs/previews/block-creature-collection-2026-10-13/*/*.glb
+!/docs/previews/block-creature-collection-2026-10-13/*/*-atlas.png
+!/docs/previews/block-creature-collection-2026-10-13/*/*-emission.png
+!/docs/previews/block-creature-collection-2026-10-13/*/model-record.json
+!/docs/previews/block-creature-collection-2026-10-13/*/*-concept.png
+!/docs/previews/block-creature-collection-2026-10-13/*/*-reference.png

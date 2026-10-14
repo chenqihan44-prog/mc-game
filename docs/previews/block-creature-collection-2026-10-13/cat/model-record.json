@@ -1,0 +1,54 @@
+{
+  "id": "cat",
+  "blocks": 38,
+  "triangles": 1720,
+  "vertices": 3720,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegFrontL",
+    "KneeFrontL",
+    "LegRearL",
+    "KneeRearL",
+    "LegFrontR",
+    "KneeFrontR",
+    "LegRearR",
+    "KneeRearR",
+    "Jaw",
+    "TailTip"
+  ],
+  "textureSize": [
+    1024,
+    1024
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "look"
+  ],
+  "byteSize": 263036,
+  "sha256": "ac068258c7cbce20d6e432b00b531d210e823dd96be7cb1de661bb47f4dc0d7c",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "layered face and jaw",
+    "white eyes with species eye color",
+    "stepped upright ears",
+    "jointed paws",
+    "segmented upright calico tail"
+  ],
+  "height": 1.255000114440918,
+  "name": "猫",
+  "family": "quadruped",
+  "group": "small_aquatic",
+  "previewClip": "walk",
+  "emissionMask": false,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

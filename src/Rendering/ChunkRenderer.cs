@@ -49,10 +49,14 @@ public partial class ChunkRenderer : Node3D
         plants=new StandardMaterial3D{AlbedoTexture=PlantSprites.CreateAtlas(),TextureFilter=BaseMaterial3D.TextureFilterEnum.Nearest,Transparency=BaseMaterial3D.TransparencyEnum.AlphaScissor,AlphaScissorThreshold=.5f,CullMode=BaseMaterial3D.CullModeEnum.Disabled,Roughness=1};
     }
     public void Stream(Vector3 position)
+        =>Stream(new[]{position});
+    public void Stream(IEnumerable<Vector3> positions)
     {
-        var player=Coordinates.Chunk(new((int)Math.Floor(position.X),(int)Math.Floor(position.Y),(int)Math.Floor(position.Z)));
+        var anchors=positions.Where(p=>float.IsFinite(p.X)&&float.IsFinite(p.Y)&&float.IsFinite(p.Z)).Select(p=>Coordinates.Chunk(new((int)Math.Floor(p.X),(int)Math.Floor(p.Y),(int)Math.Floor(p.Z)))).Distinct().ToArray();
+        if(anchors.Length==0)return;
         desired.Clear();
         // Full height uses sparse empty chunk nodes; data is generated on demand.
+        foreach(var player in anchors)
         for(int dz=-Radius;dz<=Radius;dz++)for(int dx=-Radius;dx<=Radius;dx++)if(dx*dx+dz*dz<=Radius*Radius)
             for(int y=0;y<6;y++)desired.Add(new(player.X+dx,y,player.Z+dz));
         foreach(var c in loaded.Keys.ToArray())if(!desired.Contains(c)){var old=loaded[c];RemoveChild(old);ReleaseResources(c);old.QueueFree();loaded.Remove(c);renderedRevision.Remove(c);renderedCollisionRevision.Remove(c);lightFields.Remove(c);}
@@ -66,7 +70,7 @@ public partial class ChunkRenderer : Node3D
             Apply(c,p.Task.Result);renderedRevision[c]=p.Revision;if(++submits>=2)break;
         }
         var order=desired.Where(c=>!pending.ContainsKey(c)&&(!renderedRevision.TryGetValue(c,out var revision)||revision!=world.Revision(c)))
-            .OrderBy(c=>(c.X-player.X)*(c.X-player.X)+(c.Z-player.Z)*(c.Z-player.Z)+Math.Abs(c.Y-player.Y)*.15).Take(Math.Max(0,4-pending.Count));
+            .OrderBy(c=>anchors.Min(player=>(c.X-player.X)*(c.X-player.X)+(c.Z-player.Z)*(c.Z-player.Z)+Math.Abs(c.Y-player.Y)*.15)).Take(Math.Max(0,4-pending.Count));
         foreach(var c in order){int revision=world.Revision(c);var changes=world.CaptureRegion(c.X*16+8,c.Z*16+8,32);var entities=world.State.Entities.ToDictionary(p=>Cell.Parse(p.Key),p=>(p.Value.Open,p.Value.Kind=="torch"?p.Value.Stage:p.Value.Rotation));
             var crops=world.State.Entities.Where(p=>p.Value.Kind=="crop").ToDictionary(p=>Cell.Parse(p.Key),p=>(p.Value.Stage,p.Value.CropId));
             var burning=ActiveSources();pending[c]=(revision,Task.Run(()=>Build(c,changes,entities,crops,burning)));

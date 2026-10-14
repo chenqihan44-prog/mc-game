@@ -41,7 +41,7 @@ public partial class Game
         foreach(var sample in new[]{("day",300d),("sunset",600d),("night",900d)}){world.State.DayTime=sample.Item2;UpdateDaylight();double brightness=await ScreenShot(sample.Item1);if(sample.Item1=="day")day=brightness;if(sample.Item1=="night")night=brightness;}
         var cell=EmberLighthouse.Player.Explorer.ToCell(player.GlobalPosition)+new Cell(-2,0,-3);world.State.Inventory.Add("torch",1,catalog);world.Set(cell,0);if(!world.Place(cell,"torch",false,out var error))throw new InvalidOperationException(error);renderer!.RefreshEdit(cell);
         double torch=await ScreenShot("night-torch");world.Set(cell,0);world.State.Entities.Remove(cell.ToString());renderer.RefreshEdit(cell);world.State.Inventory.Slots[selected]=new("torch",1);double held=await ScreenShot("night-held-torch");
-        if(!(night<day*.3&&torch>night*1.5&&held<=night*1.3+.005))throw new InvalidOperationException($"rendered lighting contrast failed: day={day}, night={night}, torch={torch}, held={held}");
+        if(!(night<day*.3&&torch>night*1.5&&held>night*1.5+.01))throw new InvalidOperationException($"rendered lighting contrast failed: day={day}, night={night}, torch={torch}, held={held}");
         world.State.Inventory.Slots[selected]=new("wood_pick",1,43);world.State.DayTime=1199.8;world.Advance(.2);UpdateDaylight();await ScreenShot("dawn");
         File.WriteAllText(Path.Combine(folder,"lighting.json"),JsonSerializer.Serialize(new{passed=true,rendered=true,dayLuminance=day,nightLuminance=night,placedTorchLuminance=torch,heldTorchLuminance=held,sampledRegion="central scene below crosshair, excludes HUD",controlledCamera=true},Catalog.JsonOptions));
         ShowInventory();await ScreenShot("inventory-updated");

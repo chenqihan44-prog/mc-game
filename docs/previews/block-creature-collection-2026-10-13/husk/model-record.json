@@ -1,0 +1,52 @@
+{
+  "id": "husk",
+  "blocks": 47,
+  "triangles": 2100,
+  "vertices": 4560,
+  "bones": [
+    "Root",
+    "Body",
+    "Head",
+    "Tail",
+    "LegL",
+    "KneeL",
+    "ArmL",
+    "HandL",
+    "LegR",
+    "KneeR",
+    "ArmR",
+    "HandR"
+  ],
+  "textureSize": [
+    1536,
+    1536
+  ],
+  "materialCount": 1,
+  "skin": "rigid: one bone per vertex",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "melee"
+  ],
+  "byteSize": 361104,
+  "sha256": "1be67c71304d936c3d70298738b1c40383df3b050054da80e4e43a94b82f516f",
+  "gameIntegrated": false,
+  "authoredLocally": true,
+  "revision": 2,
+  "designFeatures": [
+    "hood and torn cloak",
+    "exposed pale face and cold eyes",
+    "bandaged forearms",
+    "jointed fingers",
+    "melee anticipation"
+  ],
+  "height": 1.915499959141016,
+  "name": "荒野游魂",
+  "family": "biped",
+  "group": "enemies",
+  "previewClip": "melee",
+  "emissionMask": true,
+  "gpuRender": true,
+  "scope": "authored asset and preview; no production replacement"
+}

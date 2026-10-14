@@ -31,12 +31,19 @@ public partial class Creature : CharacterBody3D
     public CreatureState State {get;set;}=null!;
     public WorldState World {get;set;}=null!;
     public Explorer Player {get;set;}=null!;
+    public Func<Explorer?>? SelectTarget {get;set;}
+    public bool NetworkReplica {get;set;}
+    private Vector3 replicaPosition;
+    public void ApplyReplicaState(CreatureState snapshot){double lost=State.Health-snapshot.Health;State=snapshot;replicaPosition=new((float)snapshot.Position[0],(float)snapshot.Position[1],(float)snapshot.Position[2]);if(lost>0&&damageLabel!=null)ShowHit(lost);}
     public Action<double> AttackPlayer {get;set;}=null!;
     public Action<Creature> Died {get;set;}=null!;
     public Func<Vector3,bool> ReadyTerrain {get;set;}=null!;
     public Action<string,Vector3>? SoundCue {get;set;}
     public Func<ProjectileState,bool>? FireProjectile {get;set;}
     private CreatureModel model=null!;
+    private CollisionShape3D bodyCollision=null!;
+    private Vector3 adultCollisionSize;
+    private float appearanceScale=1;
     private double clock,pathClock;
     private List<Cell> path=[];
     private int pathIndex;
@@ -45,6 +52,10 @@ public partial class Creature : CharacterBody3D
     private double stuckClock;
     private double hitFlash,idleCueClock=4;
     private Label3D nameLabel=null!;
+    private Label3D damageLabel=null!;
+    private double damageLabelTime;
+    public bool HitFeedbackVisible=>damageLabel!=null&&damageLabel.Visible;
+    public void ShowHit(double amount){hitFlash=.25;damageLabelTime=1.6;damageLabel.Text=amount>0?$"−{amount:0.#}  ·  {State.Health:0.#}/{Definition.Health:0.#}":"护盾阻挡";damageLabel.Modulate=amount>0?new Color("ffd27b"):new Color("a6e1ff");damageLabel.Visible=true;model.Tint(amount>0,false);}
     private MeshInstance3D telegraph=null!;
     private ImmediateMesh telegraphMesh=null!;
     private StandardMaterial3D telegraphMaterial=null!;
@@ -55,7 +66,7 @@ public partial class Creature : CharacterBody3D
     private float AreaRadius=>Definition.Id is "colossus" or "observatory_warden"?4.5f:Definition.Id=="furnace_warden"?3:(float)Definition.AttackRadius;
     private string AttackKind {
         get {
-            if((State.AttackWindup>=0||State.ChargeRemaining>0)&&State.AttackStyle!="")return State.AttackStyle;
+            if((State.AttackWindup>=0||State.ChargeRemaining>0||State.StrikeRemaining>0||State.RecoveryRemaining>0)&&State.AttackStyle!="")return State.AttackStyle;
             if(Definition.Id=="colossus")return World.State.Mainline.Anchors.Count<4?"bolt":((int)(World.State.Mainline.BattleTime/6)%3) switch{0=>"slam",1=>"charge",_=>"bolt"};
             if(Definition.Id=="furnace_warden")return (int)(World.State.Time/5)%2==0?"charge":"bolt";
             if(Definition.Id=="observatory_warden")return (int)(World.State.Time/6)%3==0?"slam":"bolt";
@@ -65,33 +76,53 @@ public partial class Creature : CharacterBody3D
     public string Behavior {get;private set;}="游荡";
     public bool IsPreparingAttack=>State.AttackWindup>=0;
     public bool IsCharging=>State.ChargeRemaining>0;
+    public bool IsStriking=>State.StrikeRemaining>0;
+    public bool IsRecovering=>State.RecoveryRemaining>0;
     public bool IsThreat=>(Definition.Hostile||State.Provoked)&&Definition.Damage>0;
     public Vector3? MarkedArea=>AttackKind=="slam"&&telegraph.Visible?telegraph.GlobalPosition:null;
     public override void _Ready()
     {
         GlobalPosition=new((float)State.Position[0],(float)State.Position[1],(float)State.Position[2]);
+        if(State.FacingYaw is {} yaw)Rotation=new(0,(float)yaw,0);
         bool boss=Definition.Id is "guardian" or "colossus";float size=Definition.Id=="colossus"?4.5f:boss?1.8f:.8f;
         model=CreatureModel.Create(Definition.Id);AddChild(model);
         nameLabel=new(){Text=Definition.Name,Position=new(0,model.LabelHeight,0),Billboard=BaseMaterial3D.BillboardModeEnum.Enabled,FontSize=22,PixelSize=.005f};AddChild(nameLabel);
+        damageLabel=new(){Visible=false,Position=new(0,model.LabelHeight+.28f,0),Billboard=BaseMaterial3D.BillboardModeEnum.Enabled,FontSize=26,PixelSize=.004f,NoDepthTest=false};AddChild(damageLabel);
         // Ordinary creatures need clearance from the open door's 0.15-wide panel.
         // Keep the guardian's larger physical footprint.
-        float collisionWidth=boss?size:.6f;
-        AddChild(new CollisionShape3D{Shape=new BoxShape3D{Size=new(collisionWidth,model.BodyHeight,collisionWidth)},Position=Vector3.Up*model.BodyHeight*.5f});FloorSnapLength=.5f;
+        adultCollisionSize=boss?new Vector3(size,model.BodyHeight,size):model.CollisionSize;
+        bodyCollision=new(){Shape=new BoxShape3D{Size=adultCollisionSize},Position=Vector3.Up*model.BodyHeight*.5f};AddChild(bodyCollision);FloorSnapLength=.5f;
         telegraphMesh=new();telegraphMesh.SurfaceBegin(Mesh.PrimitiveType.Lines);
         if(AttackKind=="slam")for(int i=0;i<64;i++){float a=i*Mathf.Tau/64,b=(i+1)*Mathf.Tau/64,r=(float)Definition.AttackRadius;telegraphMesh.SurfaceAddVertex(new(Mathf.Cos(a)*r,0,Mathf.Sin(a)*r));telegraphMesh.SurfaceAddVertex(new(Mathf.Cos(b)*r,0,Mathf.Sin(b)*r));}
         else if(AttackKind=="charge")foreach(var pair in new[]{(Vector3.Zero,new Vector3(0,0,-4)),(new Vector3(0,0,-4),new Vector3(-.5f,0,-3.3f)),(new Vector3(0,0,-4),new Vector3(.5f,0,-3.3f))}){telegraphMesh.SurfaceAddVertex(pair.Item1);telegraphMesh.SurfaceAddVertex(pair.Item2);}
         else{telegraphMesh.SurfaceAddVertex(new(-.35f,0,0));telegraphMesh.SurfaceAddVertex(new(.35f,0,0));}
         telegraphMesh.SurfaceEnd();telegraphMaterial=new(){AlbedoColor=new("ffae66"),ShadingMode=BaseMaterial3D.ShadingModeEnum.Unshaded};
-        telegraph=new(){Mesh=telegraphMesh,MaterialOverride=telegraphMaterial,Visible=false,CastShadow=GeometryInstance3D.ShadowCastingSetting.Off};AddChild(telegraph);
+        telegraph=new(){Mesh=telegraphMesh,MaterialOverride=telegraphMaterial,Visible=false,TopLevel=true,CastShadow=GeometryInstance3D.ShadowCastingSetting.Off};AddChild(telegraph);
+    }
+    public override void _Process(double delta)
+    {
+        if(model==null)return;
+        if(Player.Enabled&&Visible){damageLabelTime=Math.Max(0,damageLabelTime-delta);hitFlash=Math.Max(0,hitFlash-delta);damageLabel.Visible=damageLabelTime>0;damageLabel.Position=new(0,nameLabel.Position.Y+.28f+(float)(1.6-damageLabelTime)*.08f,0);}
+        if(!NetworkReplica){State.FacingYaw=Rotation.Y;AnimateMotion(delta,Velocity,Player.Enabled&&Visible);return;}
+        var before=GlobalPosition;GlobalPosition=before.DistanceSquaredTo(replicaPosition)>64?replicaPosition:before.Lerp(replicaPosition,1-MathF.Exp(-14*(float)delta));
+        var velocity=delta>0?(GlobalPosition-before)/(float)delta:Vector3.Zero;bool ready=ReadyTerrain(GlobalPosition);Visible=ready;
+        AnimateMotion(delta,velocity,ready&&Player.Enabled);
+        var aim=State.AttackAim is {Length:3} p?new Vector3((float)p[0],(float)p[1],(float)p[2]):Player.GlobalPosition;var facing=aim-GlobalPosition;facing.Y=0;
+        float? targetYaw=State.FacingYaw is {} saved?(float)saved:IsPreparingAttack&&facing.LengthSquared()>.01?Mathf.Atan2(-facing.X,-facing.Z):velocity.LengthSquared()>.01?Mathf.Atan2(-velocity.X,-velocity.Z):null;
+        if(targetYaw.HasValue)Rotation=new(0,Mathf.LerpAngle(Rotation.Y,targetYaw.Value,1-MathF.Exp(-8*(float)delta)),0);
+        nameLabel.Visible=GlobalPosition.DistanceSquaredTo(Player.GlobalPosition)<18*18;nameLabel.Text=Definition.Name+(IsPreparingAttack?"\n攻击预备":"");
+        model.Tint(hitFlash>0,IsPreparingAttack||IsCharging);if(IsPreparingAttack||IsCharging)UpdateTelegraph();else telegraph.Visible=false;
     }
     public override void _PhysicsProcess(double delta)
     {
+        if(NetworkReplica)return;
+        if(SelectTarget!=null){var selectedTarget=SelectTarget();if(selectedTarget==null){Velocity=Vector3.Zero;telegraph.Visible=false;return;}Player=selectedTarget;}
         if(State.Health<=0){Velocity=Vector3.Zero;telegraph.Visible=false;return;}
         if(Player.Enabled&&State.Tamed&&!State.Sitting&&!Mounted&&GlobalPosition.DistanceSquaredTo(Player.GlobalPosition)>28*28){foreach(var offset in new[]{Vector3.Right*4,Vector3.Left*4,Vector3.Back*4,Vector3.Forward*4}){var spot=Player.GlobalPosition+offset;var cell=Explorer.ToCell(spot);if(ReadyTerrain(spot)&&CreaturePopulation.CanStand(World,cell)){GlobalPosition=new(cell.X+.5f,cell.Y,cell.Z+.5f);State.Position=[GlobalPosition.X,GlobalPosition.Y,GlobalPosition.Z];pathClock=0;break;}}}
-        bool ready=ReadyTerrain(GlobalPosition);Visible=ready;model.Animate(delta,Velocity,Player.Enabled&&ready,IsPreparingAttack?(float)(1-State.AttackWindup/Math.Max(.01,Definition.Windup)):0);if(!Player.Enabled||!ready){Velocity=Vector3.Zero;return;}
+        bool ready=ReadyTerrain(GlobalPosition);Visible=ready;if(!Player.Enabled||!ready){Velocity=Vector3.Zero;return;}
         float distance=GlobalPosition.DistanceTo(Player.GlobalPosition);if(distance>55){Velocity=Vector3.Zero;telegraph.Visible=false;return;}
-        clock+=delta;State.AttackCooldown=Math.Max(0,State.AttackCooldown-delta);pathClock-=delta;
-        hitFlash=Math.Max(0,hitFlash-delta);model.Tint(hitFlash>0,IsPreparingAttack||IsCharging);
+        clock+=delta;State.AttackCooldown=Math.Max(0,State.AttackCooldown-delta);State.RecoveryRemaining=Math.Max(0,State.RecoveryRemaining-delta);pathClock-=delta;
+        model.Tint(hitFlash>0,IsPreparingAttack||IsCharging);
         if(TickCommon(delta,distance))return;
         idleCueClock-=delta;if(idleCueClock<=0){idleCueClock=8+Math.Abs(GlobalPosition.X)%7;if(distance<18&&HasLineOfSight(Player.GlobalPosition+Vector3.Up))SoundCue?.Invoke("idle_"+Definition.Id,GlobalPosition);}
         nameLabel.Visible=distance<18;
@@ -99,15 +130,16 @@ public partial class Creature : CharacterBody3D
         bool safe=!CreatureRules.Elite(Definition.Id)&&State.Home==""&&CreaturePopulation.SafeCamp(World,Explorer.ToCell(Player.GlobalPosition));
         bool hostile=IsThreat&&!World.State.Creative&&!safe;
         if(Definition.Id=="creeper"&&Neighbors().Any(c=>c.Definition.Id=="cat"&&c.State.Tamed&&c.GlobalPosition.DistanceSquaredTo(GlobalPosition)<64)){hostile=false;State.Provoked=false;}
-        if(!hostile&&(IsPreparingAttack||IsCharging))CancelAttack();
+        if(!hostile&&(IsPreparingAttack||IsCharging||IsStriking))CancelAttack();
         if(IsPreparingAttack){State.AttackWindup=Math.Max(0,State.AttackWindup-delta);Behavior=AttackKind switch{"charge"=>"冲锋预备","bolt"=>"蓄能射击","slam"=>"范围重击预警",_=>"攻击前摇"};UpdateTelegraph();if(State.AttackWindup<=0)ReleaseAttack();}
-        else if(hostile&&!IsCharging&&AttackKind!="none"&&distance<Definition.Range&&State.AttackCooldown<=0&&HasLineOfSight(Player.GlobalPosition+Vector3.Up)){
-            State.AttackStyle=AttackKind;State.AttackWindup=Windup;State.AttackAim=[Player.GlobalPosition.X,Player.GlobalPosition.Y,Player.GlobalPosition.Z];Velocity=Vector3.Zero;SoundCue?.Invoke("warn_"+Definition.Id,GlobalPosition);UpdateTelegraph();return;
+        else if(IsStriking){State.StrikeRemaining=Math.Max(0,State.StrikeRemaining-delta);Behavior="攻击出手";if(State.StrikeRemaining<=0)ResolveAttack();}
+        else if(hostile&&!IsCharging&&!IsRecovering&&AttackKind!="none"&&distance<Definition.Range&&State.AttackCooldown<=0&&HasLineOfSight(Player.GlobalPosition+Vector3.Up)){
+            BeginAttack(AttackKind,Player.GlobalPosition);UpdateTelegraph();return;
         }
         if(IsCharging){Charge(delta);return;}
         telegraph.Visible=IsPreparingAttack;
         Vector3 destination=Player.GlobalPosition;
-        if(!hostile){Behavior=distance<8?"撤退":"游荡";Vector3 away=(GlobalPosition-Player.GlobalPosition).Normalized();destination=distance<8?GlobalPosition+away*8:GlobalPosition+new Vector3(MathF.Sin((float)clock*.2f)*4,0,MathF.Cos((float)clock*.2f)*4);}
+        if(!hostile){Behavior=distance<8?"撤退":"游荡";Vector3 away=(GlobalPosition-Player.GlobalPosition).Normalized();destination=distance<8?GlobalPosition+away*8:WanderDestination();}
         else if(AttackKind=="bolt"&&!IsPreparingAttack&&HasLineOfSight(Player.GlobalPosition+Vector3.Up)&&distance<11){
             var away=GlobalPosition-Player.GlobalPosition;away.Y=0;away=away.Normalized();var side=new Vector3(-away.Z,0,away.X)*(Math.Sin(clock*.6)>=0?1:-1);
             destination=GlobalPosition+(distance<6?away*3:side*2);Behavior=distance<6?"拉开距离":"侧移射击";
@@ -116,7 +148,7 @@ public partial class Creature : CharacterBody3D
         var target=Explorer.ToCell(destination);
         Cell current=Explorer.ToCell(GlobalPosition);int currentRevision=World.Revision(Coordinates.Chunk(current));
         if(pathClock<=0||currentRevision!=revision||target!=pathTarget&&pathClock<.15){path=VoxelPath.Find(World,current,target);pathIndex=0;pathClock=hostile&&distance<24?.35:.8;revision=currentRevision;pathTarget=target;}
-        Vector3 velocity=Velocity,desired=Vector3.Zero;bool mobile=!IsPreparingAttack||AttackKind is "melee" or "bite";
+        Vector3 velocity=Velocity,desired=Vector3.Zero;bool mobile=!IsStriking&&!IsRecovering&&(!IsPreparingAttack||AttackKind is "melee" or "bite");
         if(mobile){
             Vector3 direction=destination-GlobalPosition;direction.Y=0;
             bool close=hostile&&(AttackKind is "melee" or "bite")&&distance<Definition.Range*.68;
@@ -130,7 +162,8 @@ public partial class Creature : CharacterBody3D
             if(IsPreparingAttack)desired*=.4f;
         }
         if(Definition.Id=="spider"&&hostile&&!IsPreparingAttack){var pursuit=destination-GlobalPosition;pursuit.Y=0;if(pursuit.LengthSquared()>.01)desired=pursuit.Normalized()*(float)Definition.Speed;if(IsOnWall())velocity.Y=5.5f;}
-        if(desired.LengthSquared()>.01)Rotation=new(0,Mathf.LerpAngle(Rotation.Y,Mathf.Atan2(-desired.X,-desired.Z),Mathf.Min(1,(float)delta*10)),0);
+        var facingDirection=IsPreparingAttack||IsStriking?Aim-GlobalPosition:desired;facingDirection.Y=0;
+        if(facingDirection.LengthSquared()>.01)Rotation=new(0,Mathf.LerpAngle(Rotation.Y,Mathf.Atan2(-facingDirection.X,-facingDirection.Z),1-MathF.Exp(-8*(float)delta)),0);
         velocity.X=Mathf.MoveToward(velocity.X,desired.X,(float)delta*18);velocity.Z=Mathf.MoveToward(velocity.Z,desired.Z,(float)delta*18);
         if(!IsOnFloor())velocity.Y-=20*(float)delta;Velocity=velocity;var previous=GlobalPosition;MoveAndSlide();State.Position=[GlobalPosition.X,GlobalPosition.Y,GlobalPosition.Z];
         stuckClock=desired.LengthSquared()>1&&GlobalPosition.DistanceSquaredTo(previous)<.00001?stuckClock+delta:0;
@@ -152,7 +185,7 @@ public partial class Creature : CharacterBody3D
         return CombatGeometry.Clear(World,new(start.X,start.Y,start.Z),new(target.X,target.Y,target.Z));
     }
     private Vector3 Aim=>State.AttackAim is { } aim?new((float)aim[0],(float)aim[1],(float)aim[2]):GlobalPosition;
-    private void CancelAttack(){State.AttackWindup=-1;State.ChargeRemaining=0;State.AttackAim=null;State.AttackCooldown=Math.Max(State.AttackCooldown,.5);telegraph.Visible=false;}
+    private void CancelAttack(){State.AttackWindup=-1;State.ChargeRemaining=0;State.StrikeRemaining=0;State.RecoveryRemaining=.2;State.AttackAim=null;State.AttackTargetId="";State.AttackCooldown=Math.Max(State.AttackCooldown,.5);telegraph.Visible=false;}
     private void UpdateTelegraph()
     {
         if(telegraphStyle!=AttackKind){telegraphStyle=AttackKind;telegraphMesh.ClearSurfaces();telegraphMesh.SurfaceBegin(Mesh.PrimitiveType.Lines);
@@ -164,18 +197,28 @@ public partial class Creature : CharacterBody3D
     }
     private void ReleaseAttack()
     {
-        string attack=AttackKind;State.AttackWindup=-1;State.AttackCooldown=Cooldown;telegraph.Visible=false;
-        if(attack=="explode"){if(GlobalPosition.DistanceTo(Player.GlobalPosition)<Definition.AttackRadius&&HasLineOfSight(Player.GlobalPosition+Vector3.Up))AttackPlayer(Definition.Damage);Explode?.Invoke(this);return;}
+        string attack=AttackKind;State.AttackStyle=attack;State.AttackWindup=-1;State.AttackCooldown=Cooldown;telegraph.Visible=false;
         if(attack=="charge"){State.ChargeRemaining=Definition.Id=="colossus"?.85:Definition.AttackDuration;return;}
+        State.StrikeRemaining=model.StrikeDuration(attack);
+    }
+    private void ResolveAttack()
+    {
+        string attack=State.AttackStyle;State.RecoveryRemaining=model.RecoveryDuration(attack);
+        if(attack=="explode"){if(GlobalPosition.DistanceTo(Player.GlobalPosition)<Definition.AttackRadius&&HasLineOfSight(Player.GlobalPosition+Vector3.Up))AttackPlayer(Definition.Damage);Explode?.Invoke(this);return;}
         if(attack=="bolt"){
-            var origin=GlobalPosition+Vector3.Up*(Definition.Id=="colossus"?5.6f:1.1f);var direction=(Aim+Vector3.Up*.9f-origin).Normalized();
+            var origin=GlobalPosition+Vector3.Up*(model.BodyHeight*.60f);var direction=(Aim+Vector3.Up*.9f-origin).Normalized();
             int count=Definition.Id is "observatory_warden" or "furnace_warden"?3:1;
             for(int i=0;i<count;i++){var v=direction.Rotated(Vector3.Up,(i-(count-1)*.5f)*.1f)*(float)(Definition.Id is "colossus" or "furnace_warden"?12:Definition.AttackSpeed);FireProjectile?.Invoke(new(){Position=[origin.X,origin.Y,origin.Z],Velocity=[v.X,v.Y,v.Z],Damage=Definition.Id=="colossus"?32:Definition.Damage,Remaining=CreatureRules.Elite(Definition.Id)?3:Definition.AttackDuration,Radius=CreatureRules.Elite(Definition.Id)?.12:Definition.AttackRadius,Hostile=true});}
         }else{
-            bool hit=attack=="slam"?CombatGeometry.InArea(new(Player.GlobalPosition.X,Player.GlobalPosition.Y,Player.GlobalPosition.Z),new(Aim.X,Aim.Y,Aim.Z),AreaRadius):GlobalPosition.DistanceTo(Player.GlobalPosition)<Definition.Range+.3;
-            if(hit&&HasLineOfSight(Player.GlobalPosition+Vector3.Up))AttackPlayer(Definition.Damage);
+            var victim=State.AttackTargetId==""?null:Neighbors().FirstOrDefault(c=>c.State.Id==State.AttackTargetId&&c.State.Health>0);
+            Vector3 target=victim?.GlobalPosition??Player.GlobalPosition;
+            bool hit=attack=="slam"?CombatGeometry.InArea(new(target.X,target.Y,target.Z),new(Aim.X,Aim.Y,Aim.Z),AreaRadius):MeleeInFront(target,Definition.Id=="wolf"?2:Math.Min(Definition.Range+.3,2.8));
+            if(hit&&HasLineOfSight(target+Vector3.Up*.7f)){
+                if(Definition.Id=="wolf"){if(State.AttackTargetId!=""){if(victim!=null)victim.Damage(8);}else AttackPlayer(8);}
+                else AttackPlayer(Definition.Damage);
+            }
         }
-        State.AttackAim=null;
+        State.AttackAim=null;State.AttackTargetId="";
     }
     private void Charge(double delta)
     {
@@ -192,7 +235,20 @@ public partial class Creature : CharacterBody3D
         if(CombatGeometry.BodyHit(new(point.X,point.Y,point.Z),new(Player.GlobalPosition.X,Player.GlobalPosition.Y,Player.GlobalPosition.Z),Player.Crouching?1.1f:1.8f,.3f,(Definition.Id=="colossus"?2.5f:(float)Definition.AttackRadius))&&HasLineOfSight(Player.GlobalPosition+Vector3.Up)){AttackPlayer(Definition.Damage);EndCharge();}
         else if(State.ChargeRemaining<=0||GetSlideCollisionCount()>0&&GetLastSlideCollision().GetNormal().Y<.5f)EndCharge();
     }
-    private void EndCharge(){State.ChargeRemaining=0;State.AttackAim=null;State.AttackCooldown=Definition.Cooldown;Velocity=new(0,Velocity.Y,0);}
+    private void EndCharge(){State.ChargeRemaining=0;State.AttackAim=null;State.AttackCooldown=Cooldown;State.RecoveryRemaining=model.RecoveryDuration("charge");Velocity=new(0,Velocity.Y,0);}
     public override void _ExitTree(){telegraphMesh.Dispose();telegraphMaterial.Dispose();}
-    public void Damage(double amount){if(!double.IsFinite(amount)||amount<=0||State.Health<=0)return;if(State.Armor is {} armor){var def=World.Catalog.Items[armor.Id];amount*=Math.Max(.35,1-def.Power*.04);armor.Durability=(armor.Durability??def.Durability)-(int)Math.Max(1,Math.Ceiling(amount));if(armor.Durability<=0)State.Armor=null;}if(State.BabyUntil>World.State.Time)amount*=.8;if(Definition.Id=="armadillo"&&!State.Tamed)amount*=.6;if(Definition.Id=="colossus"){if(World.State.Mainline.Anchors.Count<4){SoundCue?.Invoke("shield",GlobalPosition);return;}if(State.AttackStyle!="slam"||State.AttackCooldown<1.4||State.AttackWindup>=0)amount*=.25;}State.Health=Math.Max(0,State.Health-amount);State.Provoked=!State.Tamed;if(Definition.Id=="creeper"&&IsPreparingAttack)CancelAttack();hitFlash=.15;model.Tint(true,false);if(State.Health<=0)Died(this);}
+    public void Damage(double amount)
+    {
+        if(!double.IsFinite(amount)||amount<=0||State.Health<=0)return;
+        if(State.Armor is {} armor){var def=World.Catalog.Items[armor.Id];amount*=Math.Max(.35,1-def.Power*.04);armor.Durability=(armor.Durability??def.Durability)-(int)Math.Max(1,Math.Ceiling(amount));if(armor.Durability<=0)State.Armor=null;}
+        if(State.BabyUntil>World.State.Time)amount*=.8;
+        if(Definition.Id=="armadillo"&&!State.Tamed)amount*=.6;
+        if(Definition.Id=="colossus"){
+            if(World.State.Mainline.Anchors.Count<4){ShowHit(0);SoundCue?.Invoke("shield",GlobalPosition);return;}
+            if(State.AttackStyle!="slam"||State.AttackCooldown<1.4||State.AttackWindup>=0)amount*=.25;
+        }
+        double before=State.Health;State.Health=Math.Max(0,State.Health-amount);State.Provoked=!State.Tamed;
+        if(Definition.Id=="creeper"&&IsPreparingAttack)CancelAttack();ShowHit(before-State.Health);
+        if(State.Health<=0)Died(this);
+    }
 }
